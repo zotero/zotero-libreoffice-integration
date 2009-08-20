@@ -25,7 +25,31 @@ const URE_PREF = "extensions.zoteroOpenOfficeIntegration.urePath";
 const SOFFICE_PREF = "extensions.zoteroOpenOfficeIntegration.sofficePath";
 var zoteroOpenOfficeIntegration_prefService;
 
+function ZoteroOpenOfficeIntegration_checkVersion(name, url, id, minVersion) {
+	// check Zotero version
+	try {
+		var ext = Components.classes['@mozilla.org/extensions/manager;1']
+		   .getService(Components.interfaces.nsIExtensionManager).getItemForID(id);
+		var comp = Components.classes["@mozilla.org/xpcom/version-comparator;1"]
+			.getService(Components.interfaces.nsIVersionComparator)
+			.compare(ext.version, minVersion);
+	} catch(e) {
+		var comp = -1;
+	}
+	
+	if(comp < 0) {
+		var err = 'This version of Zotero OpenOffice Integration requires '+name+' '+minVersion+
+			' or later to run. Please download the latest version of '+name+' from '+url+'.';
+		var prompts = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
+			.getService(Components.interfaces.nsIPromptService)
+			.alert(null, 'Zotero OpenOffice Integration Error', err);
+		throw err;
+	}
+}
+
 function ZoteroOpenOfficeIntegration_firstRun() {
+	ZoteroOpenOfficeIntegration_checkVersion("Zotero", "zotero.org", "zotero@chnm.gmu.edu", "2.0b7.SVN");
+	
 	const nsIFilePicker = Components.interfaces.nsIFilePicker;
 
 	var OPENOFFICE_LOCATIONS = {
