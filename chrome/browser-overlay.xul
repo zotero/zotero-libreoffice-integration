@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://java-firefox-extension/skin/styles/browser-overlay.css" type="text/css"?>
+
+<!DOCTYPE overlay SYSTEM "chrome://java-firefox-extension/locale/browser-overlay.dtd">
+
+<overlay id="java-firefox-extension-browser-overlay" 
+	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+    <script type="application/x-javascript" src="chrome://zotero/content/include.js"/>
+    <script type="application/x-javascript" src="chrome://zotero-openoffice-integration/content/browser-overlay.js"/>
+</overlay>

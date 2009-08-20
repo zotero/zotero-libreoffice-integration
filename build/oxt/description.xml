@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<description xmlns="http://openoffice.org/extensions/description/2006" 
+xmlns:d="http://openoffice.org/extensions/description/2006"
+xmlns:xlink="http://www.w3.org/1999/xlink">
+ 
+  <version value="3.0a1" />   
+ 
+  <identifier value="org.Zotero.integration.openoffice" />
+ 
+  <dependencies>
+    <OpenOffice.org-minimal-version value="2.4" d:name="OpenOffice.org 2.4"/>
+  </dependencies>
+ 
+  <update-information>
+    <src xlink:href="https://www.zotero.org/download/update-OOo.xml" />
+  </update-information>
+ 
+  <publisher>
+    <name xlink:href="http://www.zotero.org/" 
+    lang="en">Center for History and New Media</name>
+  </publisher>
+ 
+  <release-notes>
+    <src xlink:href="http://www.zotero.org/documentation/changelog" lang="en" />
+  </release-notes>
+ 
+  <display-name>
+    <name lang="en">Zotero OpenOffice Integration</name>
+  </display-name>
+ 
+  <extension-description>
+    <src xlink:href="pkg-desc/pkg-description.txt" lang="en" />
+  </extension-description>
+</description>

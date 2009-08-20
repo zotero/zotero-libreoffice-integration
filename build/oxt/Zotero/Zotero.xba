@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="Zotero" script:language="StarBasic">
+Declare Function FindWindow Lib "user32" Alias _
+    "FindWindowA" (ByVal lpClassName As String, ByVal lpWindowName _
+    As String) As Long
+Declare Function SendMessage Lib "user32" Alias _
+    "SendMessageA" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal _
+    wParam As Long, ByVal lParam As Long) As Long
+Declare Sub CopyMemoryToPtr Lib "kernel32.dll" Alias "RtlMoveMemory" _
+    (ByVal lDest As Long, Source As Any, ByVal Length As Long)
+Declare Function VirtualFree Lib "kernel32" (ByVal lpAddr As Long, _
+    ByVal lSize As Long, ByVal dwFreeType As Long) As Long
+Declare Function VirtualAlloc Lib "kernel32" _
+    (ByVal lpAddr As Long, ByVal lSize As Long, ByVal _
+    flAllocationType As Long, ByVal flProtect As Long) As Long
+
+Private Const WM_COPYDATA = &amp;H4A
+Private Const MEM_COMMIT = &amp;H1000
+Private Const MEM_RELEASE = &amp;H8000
+Private Const PAGE_READWRITE = 4
+    
+Sub ZoteroAddBibliography()
+	Call ZoteroCommand("addBibliography")
+End Sub
+
+Sub ZoteroAddCitation()
+	Call ZoteroCommand("addCitation")
+End Sub
+
+Sub ZoteroEditCitation()
+	Call ZoteroCommand("editCitation")
+End Sub
+
+Sub ZoteroEditBibliography()
+	Call ZoteroCommand("editBibliography")
+End Sub
+
+Sub ZoteroRefresh()
+	Call ZoteroCommand("refresh")
+End Sub
+
+Sub ZoteroRemoveCodes()
+	Call ZoteroCommand("removeCodes")
+End Sub
+
+Sub ZoteroSetDocPrefs()
+	Call ZoteroCommand("setDocPrefs")
+End Sub
+
+Sub ZoteroNotFound()
+	MsgBox("OpenOffice could not communicate with Zotero. Please ensure Firefox is open and try again.", MB_ICONSTOP)
+End Sub
+
+Sub ZoteroCommand(cmd As String)
+	Dim EnvironTest As String
+	EnvironTest = Environ("OS")
+	If EnvironTest &lt;&gt; "" Then
+		' On Windows
+		Dim ThWnd As Long, buf As Long, buf2 As Long, cds As Long, tmp As Long, _
+			tmp2 As Long, a$ As String, totalLen As Long, sfa
+		
+		' Find Firefox message window
+		ThWnd = FindWindow("FirefoxMessageWindow", "")
+		If ThWnd = 0 Then
+			ZoteroNotFound()
+			Exit Sub
+		End If
+		
+		' Pass command-line args
+		a$ = "firefox.exe -silent -ZoteroIntegrationAgent OpenOffice -ZoteroIntegrationCommand " &amp; cmd
+		buf = VirtualAlloc(0, 255, MEM_COMMIT, PAGE_READWRITE)
+		Call CopyMemoryToPtr(buf, a$, Len(a$))
+		totalLen = Len(a$)
+		a$ = "C:\"
+		Call CopyMemoryToPtr(buf+totalLen+1, a$, Len(a$))
+		totalLen = totalLen+Len(a$)+1
+		cds = VirtualAlloc(0, 12, MEM_COMMIT, PAGE_READWRITE)
+		
+		' Copy into COPYDATASTRUCT
+		tmp = 1
+		Call CopyMemoryToPtr(cds, tmp, 4)
+		tmp2 = totalLen + 1
+		Call CopyMemoryToPtr(cds + 4, tmp2, 4)
+		Call CopyMemoryToPtr(cds + 8, buf, 4)
+		
+		' Send message
+		Call SendMessage(ThWnd, WM_COPYDATA, 0, cds)
+		
+		' Free allocated memory
+		Call VirtualFree(buf, 0, MEM_RELEASE)
+		Call VirtualFree(cds, 0, MEM_RELEASE)
+	Else
+		' On another platform
+		On Error GoTo NotFound
+		sfa = CreateUnoService("com.sun.star.ucb.SimpleFileAccess")
+		sfa.getSize("file://" &amp; Environ("HOME") &amp; "/.zoteroIntegrationPipe")
+		Shell "bash -c ""echo 'OpenOffice " &amp; cmd &amp; "' &gt; ~/.zoteroIntegrationPipe"""
+		Exit Sub
+		NotFound:
+			ZoteroNotFound()
+	End If
+End Sub
+</script:module>

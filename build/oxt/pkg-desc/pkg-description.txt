@@ -1,0 +1,1 @@
+Integrates Zotero, an open source research tool, with OpenOffice.org
