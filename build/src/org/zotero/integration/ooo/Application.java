@@ -24,15 +24,18 @@
 
 package org.zotero.integration.ooo;
 
+import com.sun.star.beans.PropertyValue;
 import com.sun.star.comp.helper.Bootstrap;
+import com.sun.star.container.XNameAccess;
 import com.sun.star.frame.XDesktop;
 import com.sun.star.lang.XMultiServiceFactory;
 import com.sun.star.uno.UnoRuntime;
 import com.sun.star.uno.XComponentContext;
 
 public class Application {
-	private XMultiServiceFactory factory;
-	private XDesktop desktop;
+	XMultiServiceFactory factory;
+	XDesktop desktop;
+	String ooName;
 
 	public Application() throws Exception {
 		init();
@@ -40,17 +43,26 @@ public class Application {
 
 	public Document getActiveDocument() throws Exception {
 		try {
-			return new Document(factory, desktop);
+			return new Document(this);
 		} catch(Exception e) {
 			init();
-			return new Document(factory, desktop);
+			return new Document(this);
 		}
 	}
 	
 	private void init() throws Exception {
 		XComponentContext ctx = Bootstrap.bootstrap();
 		factory = (XMultiServiceFactory) UnoRuntime.queryInterface(XMultiServiceFactory.class, ctx.getServiceManager());
-		Object oDesktop = factory.createInstance("com.sun.star.frame.Desktop");
-		desktop = (XDesktop) UnoRuntime.queryInterface(XDesktop.class, oDesktop);
+		desktop = (XDesktop) UnoRuntime.queryInterface(XDesktop.class, 
+				factory.createInstance("com.sun.star.frame.Desktop"));
+		XMultiServiceFactory configProvider = (XMultiServiceFactory) UnoRuntime.queryInterface(XMultiServiceFactory.class,
+				factory.createInstance("com.sun.star.configuration.ConfigurationProvider"));
+		PropertyValue nodepath = new PropertyValue();
+		nodepath.Name = "nodepath";
+		nodepath.Value = "/org.openoffice.Setup/Product";
+		XNameAccess settings = (XNameAccess) UnoRuntime.queryInterface(XNameAccess.class,
+				configProvider.createInstanceWithArguments(
+						"com.sun.star.configuration.ConfigurationAccess", new Object[] {nodepath}));
+		ooName = (String) settings.getByName("ooName");
 	}
 }

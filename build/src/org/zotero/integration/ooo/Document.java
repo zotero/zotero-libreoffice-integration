@@ -65,6 +65,7 @@ public class Document {
 	public static final int NOTE_FOOTNOTE = 1;
 	public static final int NOTE_ENDNOTE = 2;
 	
+	Application app;
 	public XTextRangeCompare textRangeCompare;
 	public XText text;
 	public XDesktop desktop;
@@ -86,9 +87,10 @@ public class Document {
 	
 	public static String ERROR_STRING = "An error occurred communicating with Zotero:";
 	
-    public Document(XMultiServiceFactory aFactory, XDesktop aDesktop) throws Exception {
-    	factory = aFactory;
-		desktop = aDesktop;
+    public Document(Application anApp) throws Exception {
+    	app = anApp;
+    	factory = app.factory;
+		desktop = app.desktop;
 		frame = desktop.getCurrentFrame();
 		component = desktop.getCurrentComponent();
 		controller = frame.getController();
@@ -97,6 +99,8 @@ public class Document {
 		textRangeCompare = (XTextRangeCompare) UnoRuntime.queryInterface(XTextRangeCompare.class, text);
 		properties = new Properties(desktop);
     }
+    
+    public void cleanup() {}
     
     public int displayAlert(String text, int icon, int buttons) {
     	// figure out appropriate buttons
@@ -128,7 +132,14 @@ public class Document {
 		return result;
     }
         
-    public void activate() {}
+    public void activate() {
+    	try {
+	    	if(System.getProperty("os.name").equals("Mac OS X")) {
+	    		Runtime runtime = Runtime.getRuntime();
+	    		runtime.exec(new String[] {"/usr/bin/osascript", "-e", "tell application \""+app.ooName+"\" to activate"});
+	    	}
+    	} catch(Exception e) {}
+    }
     
     public boolean canInsertField(String fieldType) {
     	try {
@@ -155,7 +166,7 @@ public class Document {
 	    }
 	}
 
-	public ReferenceMark cursorInField(String fieldType) {
+    public ReferenceMark cursorInField(String fieldType) {
 		try {
 	    	Object mark;
     		
