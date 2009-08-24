@@ -123,8 +123,8 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	}
 	
 	public void setText(String textString, boolean isRich) {
-		Object[] oldPropertyValues;
-		XPropertySet rangeProps;
+		Object[] oldPropertyValues = null;
+		XPropertySet rangeProps = null;
 		
 		try {
 			boolean multiline = isRich && (textString.contains("\\\n")	|| textString.contains("\\par") || textString.contains("\\\r\n"));
@@ -147,11 +147,13 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 				
 				// move citation to its own paragraph so its formatting isn't altered automatically
 				// because of the text on either side of it
-				int previousLen = range.getString().length();
-				text.insertControlCharacter(range, ControlCharacter.PARAGRAPH_BREAK, false);
-				text.insertControlCharacter(range.getEnd(), ControlCharacter.PARAGRAPH_BREAK, false);
-				cursor.collapseToStart();
-				moveCursorRight(cursor, previousLen);
+				if(isRich) {
+					int previousLen = range.getString().length();
+					text.insertControlCharacter(range, ControlCharacter.PARAGRAPH_BREAK, false);
+					text.insertControlCharacter(range.getEnd(), ControlCharacter.PARAGRAPH_BREAK, false);
+					cursor.collapseToStart();
+					moveCursorRight(cursor, previousLen);
+				}
 			}
 
 			XMultiPropertyStates rangePropStates = (XMultiPropertyStates) UnoRuntime.queryInterface(XMultiPropertyStates.class, cursor);
@@ -194,18 +196,21 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 			reattachMark();
 			
 			if(!multiline) {
-				// remove previously added paragraphs
-				XTextCursor dupRange = text.createTextCursorByRange(range);
-				dupRange.collapseToEnd();
-				dupRange.goRight((short) 1, true);
-				dupRange.setString("");
-
+				if(isRich) {
+					// remove previously added paragraphs
+					XTextCursor dupRange;
+					dupRange = text.createTextCursorByRange(range);
+					dupRange.collapseToEnd();
+					dupRange.goRight((short) 1, true);
+					dupRange.setString("");
+	
+					dupRange = text.createTextCursorByRange(range);
+					dupRange.collapseToStart();
+					dupRange.goLeft((short) 1, true);
+					dupRange.setString("");
+				}
+				
 				getOutOfField();
-
-				dupRange = text.createTextCursorByRange(range);
-				dupRange.collapseToStart();
-				dupRange.goLeft((short) 1, true);
-				dupRange.setString("");
 			}
 		} catch(Exception e) {
 			doc.displayAlert(Document.getErrorString(e), 0, 0);
