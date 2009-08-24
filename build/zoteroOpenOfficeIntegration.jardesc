@@ -11,6 +11,12 @@
 </sealing>
 </manifest>
 <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-<javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo"/>
+<javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{ReferenceMark.java"/>
+<javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{Document.java"/>
+<javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{Bookmark.java"/>
+<javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{Application.java"/>
+<javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{StringInputStream.java"/>
+<javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{MarkEnumerator.java"/>
+<javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{Properties.java"/>
 </selectedElements>
 </jardesc>

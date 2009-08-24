@@ -80,20 +80,6 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		rawCode = named.getName();
 	}
 	
-	public XTextCursor getReplacementCursor() throws Exception {
-		if(isWholeRange()) {
-			XFootnote footnote = (XFootnote) UnoRuntime.queryInterface(XFootnote.class, text);
-			return doc.text.createTextCursorByRange(footnote.getAnchor());
-		} else {
-			XTextCursor cursor = text.createTextCursorByRange(range);
-			if(isDisposable) {
-				// dispose of text section
-				((XComponent) UnoRuntime.queryInterface(XComponent.class, textContent)).dispose();
-			}
-			return cursor;
-		}
-	}
-	
 	public void delete() {
 		try {
 			if(isWholeRange()) {
@@ -226,7 +212,7 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		}
 	}
 
-	public void setCode(String code) throws Exception {
+	public void setCode(String code) {
 		try {
 			rawCode = Document.PREFIXES[0] + code + " RND" + Document.getRandomString(Document.REFMARK_ADD_CHARS);
 			if(isTextSection) {
@@ -242,7 +228,7 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		}
 	}
 	
-	public String getCode() throws Exception {
+	public String getCode() {
 		try {
 			int rnd = rawCode.lastIndexOf(" RND");
 			if(rnd == -1) rnd = rawCode.length()-6;	// for compatibility with old, pre-release Python plug-in
@@ -254,6 +240,16 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 			}
 			
 			throw new Exception("Invalid code prefix");
+		} catch(Exception e) {
+	    	doc.displayAlert(Document.getErrorString(e), 0, 0);
+	    	return null;
+	    }
+	}
+	
+	public Integer getNoteIndex() {
+		try {
+			// TODO: need to figure out how to get footnote index in OOo without massive cost
+			return null;
 		} catch(Exception e) {
 	    	doc.displayAlert(Document.getErrorString(e), 0, 0);
 	    	return null;
@@ -295,6 +291,20 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		}
 		
 		return cmp;
+	}
+	
+	XTextCursor getReplacementCursor() throws Exception {
+		if(isWholeRange()) {
+			XFootnote footnote = (XFootnote) UnoRuntime.queryInterface(XFootnote.class, text);
+			return doc.text.createTextCursorByRange(footnote.getAnchor());
+		} else {
+			XTextCursor cursor = text.createTextCursorByRange(range);
+			if(isDisposable) {
+				// dispose of text section
+				((XComponent) UnoRuntime.queryInterface(XComponent.class, textContent)).dispose();
+			}
+			return cursor;
+		}
 	}
 	
 	protected void prepareMultiline() throws Exception {
