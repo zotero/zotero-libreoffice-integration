@@ -23,6 +23,7 @@
 */
 const URE_PREF = "extensions.zoteroOpenOfficeIntegration.urePath";
 const SOFFICE_PREF = "extensions.zoteroOpenOfficeIntegration.sofficePath";
+const nsIFilePicker = Components.interfaces.nsIFilePicker;
 var zoteroOpenOfficeIntegration_prefService;
 
 function ZoteroOpenOfficeIntegration_checkVersion(name, url, id, minVersion) {
@@ -47,67 +48,93 @@ function ZoteroOpenOfficeIntegration_checkVersion(name, url, id, minVersion) {
 	}
 }
 
-function ZoteroOpenOfficeIntegration_firstRun() {
-	ZoteroOpenOfficeIntegration_checkVersion("Zotero", "zotero.org", "zotero@chnm.gmu.edu", "2.0b7.SVN");
-	
-	const nsIFilePicker = Components.interfaces.nsIFilePicker;
+function ZoteroOpenOfficeIntegration_selectSoffice(parentDirectory) {
+	var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
+	fp.init(window, "Select the directory containing the soffice executable", nsIFilePicker.modeGetFolder);
+	if(Zotero.isWin) {
+		fp.appendFilter("Executable File", "*.exe");
+	} else {
+		fp.appendFilter("Executable File", "*");
+	}
+	if(parentDirectory) fp.displayDirectory = parentDirectory;
+	if(fp.show() != nsIFilePicker.returnOK) throw "User cancelled Zotero OpenOffice Integration install";
+	var ioService = Components.classes["@mozilla.org/network/io-service;1"].
+		getService(Components.interfaces.nsIIOService);
+	zoteroOpenOfficeIntegration_prefService.setCharPref(SOFFICE_PREF, ioService.newFileURI(fp.file).spec);
+}
 
-	var OPENOFFICE_LOCATIONS = {
-		Mac:[
-			"/Applications/OpenOffice.org.app",
-			"/Applications/NeoOffice.app",
-			"/Applications/OpenOffice.org 2.4.app"
-		],
-		Win:[
-			"C:\\Program Files\\OpenOffice.org 3",
-			"C:\\Program Files (x86)\\OpenOffice.org 3",
-			"C:\\Program Files\\OpenOffice.org 2.4",
-			"C:\\Program Files (x86)\\OpenOffice.org 2.4",
-			"C:\\Program Files\\OpenOffice.org 2",
-			"C:\\Program Files (x86)\\OpenOffice.org 2"
-		],
-		Other:[
-			"/usr/local/opt/openoffice.org3.1",
-			"/opt/openoffice.org3.1",
-			"/usr/local/opt/openoffice.org3",
-			"/opt/openoffice.org3",
-			"/usr/lib/openoffice",
-			"/usr/local/opt/openoffice.org2",
-			"/opt/openoffice.org2",
-			"/usr/local/opt/openoffice.org2.4",
-			"/opt/openoffice.org2.4"
-		]
-	};
-	
-	var SOFFICE_LOCATIONS = {
-		Mac:[
-			"Contents/MacOS/soffice"
-		],
-		Win:[
-			"program\\soffice.exe"
-		],
-		Other:[
-			"program/soffice"
-		]
-	};
-	
-	var URE_LOCATIONS = {
-		Mac:[
-			"Contents/basis-link/ure-link/share/java",
-			"Contents/MacOS/classes"
-		],
-		Win:[
-			"URE\\java"
-		],
-		Other:[
-			"basis-link/ure-link/share/java"
-		]
-	};
-	
-	var progressWindow = window.openDialog("chrome://zotero-openoffice-integration/content/progress.xul", "",
-			"chrome,resizable=no,close=no,centerscreen");
-	
+function ZoteroOpenOfficeIntegration_selectURE(parentDirectory) {
+	var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
+	fp.init(window, "Select the directory containing the URE JAR files", nsIFilePicker.modeGetFolder);
+	fp.appendFilter("JAR File", "*.jar");
+	if(parentDirectory) fp.displayDirectory = parentDirectory;
+	if(fp.show() != nsIFilePicker.returnOK) throw "User cancelled Zotero OpenOffice Integration install";
+	var ioService = Components.classes["@mozilla.org/network/io-service;1"].
+		getService(Components.interfaces.nsIIOService);
+	zoteroOpenOfficeIntegration_prefService.setCharPref(URE_PREF, ioService.newFileURI(fp.file).spec);
+}
+
+function ZoteroOpenOfficeIntegration_error() {
+	Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
+		.getService(Components.interfaces.nsIPromptService)
+		.alert(null, 'Zotero OpenOffice Integration Error',
+		'Zotero OpenOffice Integration could not complete installation because an error occurred. Please ensure that OpenOffice is closed, then restart Firefox.');
+}
+
+function ZoteroOpenOfficeIntegration_detectPaths() {
 	try {
+		var OPENOFFICE_LOCATIONS = {
+			Mac:[
+				"/Applications/OpenOffice.org.app",
+				"/Applications/NeoOffice.app",
+				"/Applications/OpenOffice.org 2.4.app"
+			],
+			Win:[
+				"C:\\Program Files\\OpenOffice.org 3",
+				"C:\\Program Files (x86)\\OpenOffice.org 3",
+				"C:\\Program Files\\OpenOffice.org 2.4",
+				"C:\\Program Files (x86)\\OpenOffice.org 2.4",
+				"C:\\Program Files\\OpenOffice.org 2",
+				"C:\\Program Files (x86)\\OpenOffice.org 2"
+			],
+			Other:[
+				"/usr/local/opt/openoffice.org3.1",
+				"/opt/openoffice.org3.1",
+				"/usr/local/opt/openoffice.org3",
+				"/opt/openoffice.org3",
+				"/usr/lib/openoffice",
+				"/usr/local/opt/openoffice.org2",
+				"/opt/openoffice.org2",
+				"/usr/local/opt/openoffice.org2.4",
+				"/opt/openoffice.org2.4"
+			]
+		};
+		
+		var SOFFICE_LOCATIONS = {
+			Mac:[
+				"Contents/MacOS/soffice"
+			],
+			Win:[
+				"program\\soffice.exe"
+			],
+			Other:[
+				"program/soffice"
+			]
+		};
+		
+		var URE_LOCATIONS = {
+			Mac:[
+				"Contents/basis-link/ure-link/share/java",
+				"Contents/MacOS/classes"
+			],
+			Win:[
+				"URE\\java"
+			],
+			Other:[
+				"basis-link/ure-link/share/java"
+			]
+		};
+		
 		if(Zotero.isMac) {
 			var platform = "Mac";
 		} else if(Zotero.isWin) {
@@ -145,7 +172,6 @@ function ZoteroOpenOfficeIntegration_firstRun() {
 			if(bestFile) fp.displayDirectory = bestFile.parent;
 			if(fp.show() != nsIFilePicker.returnOK) throw "User cancelled Zotero OpenOffice Integration install";
 			bestFile = fp.file;
-			progressWindow.focus();
 		}
 		
 		// look for soffice executable and URE libs
@@ -173,34 +199,68 @@ function ZoteroOpenOfficeIntegration_firstRun() {
 		if(!sofficePath || !urePath) {
 			var parentDirectory = bestFile.clone();
 			if(!parentDirectory.isDirectory()) parentDirectory = parentDirectory.parent;
-			
-			if(!sofficePath) {
-				var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
-				fp.init(window, "Select the soffice executable", nsIFilePicker.modeGetFolder);
-				if(Zotero.isWin) fp.appendFilter("Executable File", "*.exe");
-				fp.displayDirectory = parentDirectory;
-				if(fp.show() != nsIFilePicker.returnOK) throw "User cancelled Zotero OpenOffice Integration install";
-				sofficePath = fp.file;
-				progressWindow.focus();
-			}
-			
-			if(!urePath) {
-				var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
-				fp.init(window, "Select the unoloader.jar Java library", nsIFilePicker.modeGetFolder);
-				if(Zotero.isWin) fp.appendFilter("JAR File", "*.jar");
-				fp.displayDirectory = parentDirectory;
-				if(fp.show() != nsIFilePicker.returnOK) throw "User cancelled Zotero OpenOffice Integration install";
-				urePath = fp.file.parent;
-				progressWindow.focus();
-			}
 		}
 		
-		// set the URE and soffice paths
-		var executableDir = sofficePath.parent;
 		var ioService = Components.classes["@mozilla.org/network/io-service;1"].
 			getService(Components.interfaces.nsIIOService);
-		zoteroOpenOfficeIntegration_prefService.setCharPref(URE_PREF, ioService.newFileURI(urePath).spec);
-		zoteroOpenOfficeIntegration_prefService.setCharPref(SOFFICE_PREF, ioService.newFileURI(executableDir).spec);
+		if(!sofficePath) {
+			sofficePath = ZoteroOpenOfficeIntegration_selectSoffice(parentDirectory);
+		} else {
+			zoteroOpenOfficeIntegration_prefService.setCharPref(SOFFICE_PREF, ioService.newFileURI(sofficePath.parent).spec);
+		}
+		
+		if(!urePath) {
+			urePath = ZoteroOpenOfficeIntegration_selectURE(parentDirectory);
+		} else {
+			zoteroOpenOfficeIntegration_prefService.setCharPref(URE_PREF, ioService.newFileURI(urePath).spec);
+		}
+	} catch(e) {
+		if(e != "User cancelled Zotero OpenOffice Integration install") {
+			ZoteroOpenOfficeIntegration_error();
+		}
+		throw e;
+	}
+}
+
+function ZoteroOpenOfficeIntegration_installComponents() {
+	var ioService = Components.classes["@mozilla.org/network/io-service;1"].
+		getService(Components.interfaces.nsIIOService);
+	var executableDir = ioService.getProtocolHandler("file").
+		QueryInterface(Components.interfaces.nsIFileProtocolHandler).
+		getFileFromURLSpec(zoteroOpenOfficeIntegration_prefService.getCharPref(SOFFICE_PREF));
+	
+	// now install the oxt using unopkg
+	var oxt = Components.classes["@mozilla.org/extensions/manager;1"].
+		getService(Components.interfaces.nsIExtensionManager).
+		getInstallLocation("zoteroOpenOfficeIntegration@zotero.org").
+		getItemLocation("zoteroOpenOfficeIntegration@zotero.org");
+	oxt.append("install");
+	oxt.append("Zotero_OpenOffice_Integration.oxt");
+	
+	if(Zotero.isWin) {
+		executableDir.append("unopkg.exe");
+	} else {
+		executableDir.append("unopkg");
+	}
+	var proc = Components.classes["@mozilla.org/process/util;1"].
+			createInstance(Components.interfaces.nsIProcess);
+	proc.init(executableDir);
+	try {
+		proc.run(true, ["remove", "org.Zotero.integration.openoffice"], 2);
+	} catch(e) {}
+	proc.run(true, ["add", oxt.path], 2);
+}
+
+function ZoteroOpenOfficeIntegration_firstRun() {
+	ZoteroOpenOfficeIntegration_checkVersion("Zotero", "zotero.org", "zotero@chnm.gmu.edu", "2.0b7.SVN");
+	
+	const nsIFilePicker = Components.interfaces.nsIFilePicker;
+	
+	var progressWindow = window.openDialog("chrome://zotero-openoffice-integration/content/progress.xul", "",
+			"chrome,resizable=no,close=no,centerscreen");
+	
+	try {
+		ZoteroOpenOfficeIntegration_detectPaths();
 	} catch(e) {
 		progressWindow.close();
 		throw e;
@@ -214,35 +274,22 @@ function ZoteroOpenOfficeIntegration_firstRun() {
 		progressWindow.close();
 	}
 	
+	function error() {}
+	error.prototype.run = ZoteroOpenOfficeIntegration_error;
+	
 	function background() {}
 	background.prototype.run = function() {
 		try {
-			// now install the oxt using unopkg
-			var oxt = Components.classes["@mozilla.org/extensions/manager;1"].
-				getService(Components.interfaces.nsIExtensionManager).
-				getInstallLocation("zoteroOpenOfficeIntegration@zotero.org").
-				getItemLocation("zoteroOpenOfficeIntegration@zotero.org");
-			oxt.append("install");
-			oxt.append("Zotero_OpenOffice_Integration.oxt");
-			
-			if(Zotero.isWin) {
-				executableDir.append("unopkg.exe");
-			} else {
-				executableDir.append("unopkg");
-			}
-			var proc = Components.classes["@mozilla.org/process/util;1"].
-					createInstance(Components.interfaces.nsIProcess);
-			proc.init(executableDir);
-			try {
-				proc.run(true, ["remove", "org.Zotero.integration.openoffice"], 2);
-			} catch(e) {}
-			proc.run(true, ["add", oxt.path], 2);
+			ZoteroOpenOfficeIntegration_installComponents();
+		} catch(e) {
+			mainThread.dispatch(new error(), null);
+			throw e;
 		} finally {
-			mainThread.dispatch(new main(), background.DISPATCH_NORMAL);
+			mainThread.dispatch(new main(), null);
 		}
 	}
 	
-	backgroundThread.dispatch(new background(), background.DISPATCH_NORMAL);
+	backgroundThread.dispatch(new background(), null);
 	document.addEventListener("load", function() { progressWindow.focus() }, true);
 }
 
