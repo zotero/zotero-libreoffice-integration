@@ -7,6 +7,8 @@ Declare Function FindWindow Lib "user32" Alias _
 Declare Function SendMessage Lib "user32" Alias _
     "SendMessageA" (ByVal hwnd As Long, ByVal wMsg As Long, ByVal _
     wParam As Long, ByVal lParam As Long) As Long
+Declare Function SetForegroundWindow Lib "user32" _
+	(ByVal hwnd As Long) As Long
 Declare Sub CopyMemoryToPtr Lib "kernel32.dll" Alias "RtlMoveMemory" _
     (ByVal lDest As Long, Source As Any, ByVal Length As Long)
 Declare Function VirtualFree Lib "kernel32" (ByVal lpAddr As Long, _
@@ -21,38 +23,38 @@ Private Const MEM_RELEASE = &amp;H8000
 Private Const PAGE_READWRITE = 4
     
 Sub ZoteroAddBibliography()
-	Call ZoteroCommand("addBibliography")
+	Call ZoteroCommand("addBibliography", False)
 End Sub
 
 Sub ZoteroAddCitation()
-	Call ZoteroCommand("addCitation")
+	Call ZoteroCommand("addCitation", True)
 End Sub
 
 Sub ZoteroEditCitation()
-	Call ZoteroCommand("editCitation")
+	Call ZoteroCommand("editCitation", True)
 End Sub
 
 Sub ZoteroEditBibliography()
-	Call ZoteroCommand("editBibliography")
+	Call ZoteroCommand("editBibliography", True)
 End Sub
 
 Sub ZoteroRefresh()
-	Call ZoteroCommand("refresh")
+	Call ZoteroCommand("refresh", False)
 End Sub
 
 Sub ZoteroRemoveCodes()
-	Call ZoteroCommand("removeCodes")
+	Call ZoteroCommand("removeCodes", False)
 End Sub
 
 Sub ZoteroSetDocPrefs()
-	Call ZoteroCommand("setDocPrefs")
+	Call ZoteroCommand("setDocPrefs", True)
 End Sub
 
 Sub ZoteroNotFound()
 	MsgBox("OpenOffice could not communicate with Zotero. Please ensure Firefox is open and try again.", MB_ICONSTOP)
 End Sub
 
-Sub ZoteroCommand(cmd As String)
+Sub ZoteroCommand(cmd As String, bringToFront As Boolean)
 	Dim EnvironTest As String
 	EnvironTest = Environ("OS")
 	If EnvironTest &lt;&gt; "" Then
@@ -66,6 +68,9 @@ Sub ZoteroCommand(cmd As String)
 			ZoteroNotFound()
 			Exit Sub
 		End If
+		
+		' Bring to front if desired
+		If bringToFront Then Call SetForegroundWindow(ThWnd)
 		
 		' Pass command-line args
 		a$ = "firefox.exe -silent -ZoteroIntegrationAgent OpenOffice -ZoteroIntegrationCommand " &amp; cmd

@@ -175,12 +175,19 @@ function generateJavaXPCOMWrapper(componentInfo) {
 	var wrappedClass = function(obj) {
 		// initialize all classes if this is the first Java object to be created
 		if(!wrappedClass.prototype.javaClassObj) {
-			var ww = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
-				.getService(Components.interfaces.nsIWindowWatcher);
-			var win = ww.activeWindow;
-			if(!win) {	// no open windows; use hidden window
-				win = Components.classes["@mozilla.org/appshell/appShellService;1"]
-					.getService(Components.interfaces.nsIAppShellService).hiddenDOMWindow;
+			// first try most recent navigator window
+			var win = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+			   .getService(Components.interfaces.nsIWindowMediator)
+			   .getMostRecentWindow("navigator:browser");
+			if(!win) {
+				// next try active window				
+				win = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+					.getService(Components.interfaces.nsIWindowWatcher).activeWindow;
+				if(!win) {
+					// next try hidden DOM window
+					win = Components.classes["@mozilla.org/appshell/appShellService;1"]
+						.getService(Components.interfaces.nsIAppShellService).hiddenDOMWindow;
+				}
 			}
 			initClassLoader(win.java, this);
 		}
