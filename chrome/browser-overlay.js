@@ -24,7 +24,7 @@
 const URE_PREF = "extensions.zoteroOpenOfficeIntegration.urePath";
 const SOFFICE_PREF = "extensions.zoteroOpenOfficeIntegration.sofficePath";
 const nsIFilePicker = Components.interfaces.nsIFilePicker;
-var zoteroOpenOfficeIntegration_prefService;
+var zoteroOpenOfficeIntegration_prefService, zoteroOpenOfficeIntegration_progressWindow;
 
 function ZoteroOpenOfficeIntegration_checkVersion(name, url, id, minVersion) {
 	// check Zotero version
@@ -77,7 +77,7 @@ function ZoteroOpenOfficeIntegration_selectURE(parentDirectory) {
 function ZoteroOpenOfficeIntegration_error() {
 	Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
 		.getService(Components.interfaces.nsIPromptService)
-		.alert(null, 'Zotero OpenOffice Integration Error',
+		.alert(window, 'Zotero OpenOffice Integration Error',
 		'Zotero OpenOffice Integration could not complete installation because an error occurred. Please ensure that OpenOffice is closed, then restart Firefox.');
 }
 
@@ -252,67 +252,54 @@ function ZoteroOpenOfficeIntegration_installComponents() {
 }
 
 function ZoteroOpenOfficeIntegration_firstRun() {
-	ZoteroOpenOfficeIntegration_checkVersion("Zotero", "zotero.org", "zotero@chnm.gmu.edu", "2.0b7.SVN");
+	var focusMe = function() { zoteroOpenOfficeIntegration_progressWindow.focus() };
 	
-	const nsIFilePicker = Components.interfaces.nsIFilePicker;
-	
-	var progressWindow = window.openDialog("chrome://zotero-openoffice-integration/content/progress.xul", "",
-			"chrome,resizable=no,close=no,centerscreen");
-	
-	try {
-		ZoteroOpenOfficeIntegration_detectPaths();
-	} catch(e) {
-		progressWindow.close();
-		throw e;
-	}
-	
-	var mainThread = Zotero.mainThread;
-	var backgroundThread = Components.classes["@mozilla.org/thread-manager;1"].getService().newThread(0);
-	
-	function main() {}
-	main.prototype.run = function() {
-		progressWindow.close();
-		
-		// test install
-		try {
-			var application = Components.classes['@zotero.org/Zotero/integration/application?agent=OpenOffice;1']
-				.getService(Components.interfaces.zoteroIntegrationApplication);
-		} catch(e) {
-			var err = 'Zotero OpenOffice Integration was successfully installed, but it could not be initialized. This might happen if Java is not installed or is not operational, or if there is a problem with your OpenOffice installation. You can test Firefox\'s Java support by going to www.javatester.org.';
-			if(window.navigator.platform.substr(0, 5) == "Linux") {
-				err += "\n\nPlease ensure that an up-to-date version of the Sun Java Plug-in (e.g., sun-java6-plugin) is installed and try again.";
-			} else if(window.navigator.platform.substr(0, 3) == "Win") {
-				err += "\n\nIf you are running Firefox on a 64-bit version of Windows, try disabling the \"next-generation Java plug-in\" in the Java control panel. In Windows Vista, open the control panel, switch to Classic View, and open \"View 32-bit Control Panel Items.\" In Windows 7, select view by \"Small icons.\" The setting is located in the \"Advanced\" tab, under \"Java plug-in\".";
+	window.setTimeout(function() {
+		zoteroOpenOfficeIntegration_progressWindow.focus();
+		window.setTimeout(function() {
+			zoteroOpenOfficeIntegration_progressWindow.focus();
+			try {
+				ZoteroOpenOfficeIntegration_checkVersion("Zotero", "zotero.org", "zotero@chnm.gmu.edu", "2.0b7.SVN");
+			} catch(e) {
+				zoteroOpenOfficeIntegration_progressWindow.close();
+				throw e;
 			}
 			
-			Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
-				.getService(Components.interfaces.nsIPromptService)
-				.alert(null, 'Zotero OpenOffice Integration Error', err);
-			throw e;
-		}
-	}
-	
-	function error() {}
-	error.prototype.run = ZoteroOpenOfficeIntegration_error;
-	
-	function background() {}
-	background.prototype.run = function() {
-		try {
-			ZoteroOpenOfficeIntegration_installComponents();
-		} catch(e) {
-			mainThread.dispatch(new error(), null);
-			throw e;
-		} finally {
-			mainThread.dispatch(new main(), null);
-		}
-	}
-	
-	backgroundThread.dispatch(new background(), null);
-	document.addEventListener("load", function() { progressWindow.focus() }, true);
+			try {
+				ZoteroOpenOfficeIntegration_detectPaths();
+				ZoteroOpenOfficeIntegration_installComponents();
+				zoteroOpenOfficeIntegration_progressWindow.close();
+			} catch(e) {
+				zoteroOpenOfficeIntegration_progressWindow.close();
+				ZoteroOpenOfficeIntegration_error();
+				throw e;
+			}
+						
+			// test install
+			try {
+				var application = Components.classes['@zotero.org/Zotero/integration/application?agent=OpenOffice;1']
+					.getService(Components.interfaces.zoteroIntegrationApplication);
+			} catch(e) {
+				var err = 'Zotero OpenOffice Integration was successfully installed, but it could not be initialized. This might happen if Java is not installed or is not operational, or if there is a problem with your OpenOffice installation. You can test Firefox\'s Java support by going to www.javatester.org.';
+				if(window.navigator.platform.substr(0, 5) == "Linux") {
+					err += "\n\nPlease ensure that an up-to-date version of the Sun Java Plug-in (e.g., sun-java6-plugin) is installed and try again.";
+				} else if(window.navigator.platform.substr(0, 3) == "Win") {
+					err += "\n\nIf you are running Firefox on a 64-bit version of Windows, try disabling the \"next-generation Java plug-in\" in the Java control panel. In Windows Vista, open the control panel, switch to Classic View, and open \"View 32-bit Control Panel Items.\" In Windows 7, select view by \"Small icons.\" The setting is located in the \"Advanced\" tab, under \"Java plug-in\".";
+				}
+				
+				Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
+					.getService(Components.interfaces.nsIPromptService)
+					.alert(window, 'Zotero OpenOffice Integration Error', err);
+				throw e;
+			}
+		}, 500);
+	}, 100);
 }
 
 zoteroOpenOfficeIntegration_prefService = Components.classes["@mozilla.org/preferences-service;1"].
 	getService(Components.interfaces.nsIPrefBranch);
-if(zoteroOpenOfficeIntegration_prefService.getCharPref(URE_PREF) == "" && document.getElementById("appcontent")) {
-	ZoteroOpenOfficeIntegration_firstRun();
-}
+//if(zoteroOpenOfficeIntegration_prefService.getCharPref(URE_PREF) == "" && document.getElementById("appcontent")) {
+	zoteroOpenOfficeIntegration_progressWindow = window.openDialog("chrome://zotero-openoffice-integration/content/progress.xul", "",
+			"chrome,resizable=no,close=no,centerscreen");
+	zoteroOpenOfficeIntegration_progressWindow.addEventListener("load", ZoteroOpenOfficeIntegration_firstRun, false);
+//}
