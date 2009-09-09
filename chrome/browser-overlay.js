@@ -298,8 +298,8 @@ function ZoteroOpenOfficeIntegration_firstRun() {
 
 zoteroOpenOfficeIntegration_prefService = Components.classes["@mozilla.org/preferences-service;1"].
 	getService(Components.interfaces.nsIPrefBranch);
-//if(zoteroOpenOfficeIntegration_prefService.getCharPref(URE_PREF) == "" && document.getElementById("appcontent")) {
+if(zoteroOpenOfficeIntegration_prefService.getCharPref(URE_PREF) == "" && document.getElementById("appcontent")) {
 	zoteroOpenOfficeIntegration_progressWindow = window.openDialog("chrome://zotero-openoffice-integration/content/progress.xul", "",
 			"chrome,resizable=no,close=no,centerscreen");
 	zoteroOpenOfficeIntegration_progressWindow.addEventListener("load", ZoteroOpenOfficeIntegration_firstRun, false);
-//}
+}
