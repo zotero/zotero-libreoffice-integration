@@ -272,6 +272,24 @@ function ZoteroOpenOfficeIntegration_firstRun() {
 	function main() {}
 	main.prototype.run = function() {
 		progressWindow.close();
+		
+		// test install
+		try {
+			var application = Components.classes['@zotero.org/Zotero/integration/application?agent=OpenOffice;1']
+				.getService(Components.interfaces.zoteroIntegrationApplication);
+		} catch(e) {
+			var err = 'Zotero OpenOffice Integration was successfully installed, but it could not be initialized. This might happen if Java is not installed or is not operational, or if there is a problem with your OpenOffice installation. You can test Firefox\'s Java support by going to www.javatester.org.';
+			if(window.navigator.platform.substr(0, 5) == "Linux") {
+				err += "\n\nPlease ensure that an up-to-date version of the Sun Java Plug-in (e.g., sun-java6-plugin) is installed and try again.";
+			} else if(window.navigator.platform.substr(0, 3) == "Win") {
+				err += "\n\nIf you are running Firefox on a 64-bit version of Windows, try disabling the \"next-generation Java plug-in\" in the Java control panel. In Windows Vista, open the control panel, switch to Classic View, and open \"View 32-bit Control Panel Items.\" In Windows 7, select view by \"Small icons.\" The setting is located in the \"Advanced\" tab, under \"Java plug-in\".";
+			}
+			
+			Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
+				.getService(Components.interfaces.nsIPromptService)
+				.alert(null, 'Zotero OpenOffice Integration Error', err);
+			throw e;
+		}
 	}
 	
 	function error() {}
@@ -295,6 +313,6 @@ function ZoteroOpenOfficeIntegration_firstRun() {
 
 zoteroOpenOfficeIntegration_prefService = Components.classes["@mozilla.org/preferences-service;1"].
 	getService(Components.interfaces.nsIPrefBranch);
-if(zoteroOpenOfficeIntegration_prefService.getCharPref(URE_PREF) == "") {
+if(zoteroOpenOfficeIntegration_prefService.getCharPref(URE_PREF) == "" && document.getElementById("appcontent")) {
 	ZoteroOpenOfficeIntegration_firstRun();
 }
