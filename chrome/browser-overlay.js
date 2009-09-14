@@ -100,6 +100,8 @@ function ZoteroOpenOfficeIntegration_detectPaths() {
 			Other:[
 				"/usr/local/opt/openoffice.org3.1",
 				"/opt/openoffice.org3.1",
+				"/usr/lib/ooo3",
+				"/usr/lib64/ooo3",
 				"/usr/local/opt/openoffice.org3",
 				"/opt/openoffice.org3",
 				"/usr/lib/openoffice",
