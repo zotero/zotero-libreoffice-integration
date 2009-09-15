@@ -33,29 +33,6 @@ var loader = null;
  * Glue between LiveConnect and XPCOM. Loads Java classes and maps them to JavaScript/XPCOM objects.
  */
 function initClassLoader(java, me) {
-	/*
-	 * The following function was borrowed from
-	 * https://developer.mozilla.org/en/Java_in_Firefox_Extensions
-	 * and gives JAR files the appropriate permissions to operate
-	 */
-	function policyAdd(loader, urls) {
-		//If have trouble with the policy try changing it to 
-		//edu.mit.simile.javaFirefoxExtensionUtils.URLSetPolicy        
-		var str = 'edu.mit.simile.javaFirefoxExtensionUtils.URLSetPolicy';
-		var policyClass = java.lang.Class.forName(
-			   str,
-			   true,
-			   loader
-		);
-		var policy = policyClass.newInstance();
-		policy.setOuterPolicy(java.security.Policy.getPolicy());
-		java.security.Policy.setPolicy(policy);
-		policy.addPermission(new java.security.AllPermission());
-		for (var j=0; j < urls.length; j++) {
-			policy.addURL(urls[j]);
-		}
-	}
-	
 	// load appropriate classes
 	var extensionLibFile = Components.classes["@mozilla.org/extensions/manager;1"].
 				getService(Components.interfaces.nsIExtensionManager).
@@ -88,11 +65,20 @@ function initClassLoader(java, me) {
 		sofficePath
 	];
 	
-	var urlArray = [new java.net.URL(jarFile) for each(jarFile in jarFiles)];
+	var urlArray = java.lang.reflect.Array.newInstance(java.lang.Class.forName("java.net.URL"), jarFiles.length);
+	[urlArray[i] = new java.net.URL(jarFiles[i]) for(i in jarFiles)];
 	var cl = java.net.URLClassLoader.newInstance(urlArray);
-	
-	// set security policy
-	policyAdd(cl, urlArray);
+
+	var str = 'edu.mit.simile.javaFirefoxExtensionUtils.URLSetPolicy';
+	var policyClass = java.lang.Class.forName(str, true, cl);
+
+	var policy = policyClass.newInstance();
+	policy.setOuterPolicy(java.security.Policy.getPolicy());
+	java.security.Policy.setPolicy(policy);
+	policy.addPermission(new java.security.AllPermission());
+	for (var j=0; j < urlArray.length; j++) {
+		policy.addURL(urlArray[j]);
+	}
 	
 	// proxy Java methods through JavaScript so that they can be used from XPCOM
 	var javaClassObj;
