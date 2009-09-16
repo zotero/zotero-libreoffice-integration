@@ -62,12 +62,12 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	protected boolean isDisposable;
 	public String rawCode;
 	
-	public ReferenceMark(Document aDoc, Object aMark) {
+	public ReferenceMark(Document aDoc, XNamed aMark, String aCode) {
 		doc = aDoc;
 		textContent = (XTextContent) UnoRuntime.queryInterface(XTextContent.class, aMark);
 		range = textContent.getAnchor();
 		text = range.getText();
-		named = ((XNamed) UnoRuntime.queryInterface(XNamed.class, aMark));
+		named = aMark;
 		
 		XServiceInfo serviceInfo = (XServiceInfo) UnoRuntime.queryInterface(XServiceInfo.class, text);
 		isNote = serviceInfo.supportsService("com.sun.star.text.Footnote");
@@ -77,7 +77,7 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		
 		textRangeCompare = (XTextRangeCompare) UnoRuntime.queryInterface(XTextRangeCompare.class, text);
 		
-		rawCode = named.getName();
+		rawCode = aCode;
 	}
 	
 	public void delete() {

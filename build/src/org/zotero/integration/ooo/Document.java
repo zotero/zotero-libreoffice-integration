@@ -217,9 +217,9 @@ public class Document {
 	    			    			String name2 = named.getName();
 	    			    			if(name.equals(name2)) {
 	    			    				if(textPropertyType.equals("ReferenceMark")) {
-	    			    					return new ReferenceMark(this, named);
+	    			    					return new ReferenceMark(this, named, name);
 	    			    				} else {
-	    			    					return new Bookmark(this, named);
+	    			    					return new Bookmark(this, named, name);
 	    			    				}
 	    			    			}
 	    			    		}
@@ -268,7 +268,16 @@ public class Document {
 						referenceMarksSupplier.getReferenceMarks());
 				int count = markIndexAccess.getCount();
 				for(int i = 0; i<count; i++) {
-					marks.add(new ReferenceMark(this, markIndexAccess.getByIndex(i)));
+					Object aMark = markIndexAccess.getByIndex(i);
+					XNamed named = ((XNamed) UnoRuntime.queryInterface(XNamed.class, aMark));
+					String name = named.getName();
+					
+					for(String prefix : Document.PREFIXES) {
+						if(name.startsWith(prefix)) {
+							marks.add(new ReferenceMark(this, named, name));
+							break;
+						}
+					}
 				}
 	    		
 	    		XTextSectionsSupplier textSectionSupplier = (XTextSectionsSupplier) 
@@ -277,7 +286,16 @@ public class Document {
 						textSectionSupplier.getTextSections());
 				count = markIndexAccess.getCount();
 				for(int i = 0; i<count; i++) {
-					marks.add(new ReferenceMark(this, markIndexAccess.getByIndex(i)));
+					Object aMark = markIndexAccess.getByIndex(i);
+					XNamed named = ((XNamed) UnoRuntime.queryInterface(XNamed.class, aMark));
+					String name = named.getName();
+					
+					for(String prefix : Document.PREFIXES) {
+						if(name.startsWith(prefix)) {
+							marks.add(new ReferenceMark(this, named, name));
+							break;
+						}
+					}
 				}
 	    	} else if(fieldType.equals("Bookmark")) {
 	    		XBookmarksSupplier bookmarksSupplier = (XBookmarksSupplier) 
@@ -286,7 +304,16 @@ public class Document {
 	    				bookmarksSupplier.getBookmarks());
 				int count = markIndexAccess.getCount();
 				for(int i = 0; i<count; i++) {
-					marks.add(new Bookmark(this, markIndexAccess.getByIndex(i)));
+					Object aMark = markIndexAccess.getByIndex(i);
+					XNamed named = ((XNamed) UnoRuntime.queryInterface(XNamed.class, aMark));
+					String name = named.getName();
+					
+					for(String prefix : Document.PREFIXES) {
+						if(name.startsWith(prefix)) {
+							marks.add(new Bookmark(this, named, name));
+							break;
+						}
+					}
 				}
 	    	} else {
 	    		throw new Exception("Invalid field type "+fieldType);
@@ -342,6 +369,7 @@ public class Document {
     
     private ReferenceMark insertMarkAtRange(String fieldType, int noteType, XTextCursor rangeToInsert, String code, String customBookmarkName) throws Exception {    	
     	XNamed mark;
+    	String rawCode;
 
     	// handle null code
     	if(code == null) {
@@ -368,17 +396,18 @@ public class Document {
     	if(fieldType.equals("ReferenceMark")) {
     		mark = (XNamed) UnoRuntime.queryInterface(XNamed.class,
     				docFactory.createInstance("com.sun.star.text.ReferenceMark"));
-    		mark.setName(code + " RND" + Document.getRandomString(Document.REFMARK_ADD_CHARS));
+    		rawCode = code + " RND" + Document.getRandomString(Document.REFMARK_ADD_CHARS);
+    		mark.setName(rawCode);
     	} else if(fieldType.equals("Bookmark")) {
         	// determine appropriate name for the bookmark
-        	String bookmarkName = customBookmarkName;
-        	if(bookmarkName == null) {
-        		bookmarkName = BOOKMARK_REFERENCE_PROPERTY+getRandomString(BOOKMARK_ADD_CHARS);
+        	rawCode = customBookmarkName;
+        	if(rawCode == null) {
+        		rawCode = BOOKMARK_REFERENCE_PROPERTY+getRandomString(BOOKMARK_ADD_CHARS);
         	}
         	
     		mark = (XNamed) UnoRuntime.queryInterface(XNamed.class,
     				docFactory.createInstance("com.sun.star.text.Bookmark"));
-    		mark.setName(bookmarkName);
+    		mark.setName(rawCode);
     	} else {
     		throw new Exception("Invalid field type "+fieldType);
     	}
@@ -389,11 +418,11 @@ public class Document {
 
     	// refmarks have code already set
     	if(fieldType.equals("ReferenceMark")) {
-    		return new ReferenceMark(this, mark);
+    		return new ReferenceMark(this, mark, rawCode);
     	}
 
     	// set code for a bookmark
-    	ReferenceMark newMark = new Bookmark(this, mark);
+    	ReferenceMark newMark = new Bookmark(this, mark, rawCode);
     	if(customBookmarkName == null) newMark.setCode(code);
     	return newMark;
     }

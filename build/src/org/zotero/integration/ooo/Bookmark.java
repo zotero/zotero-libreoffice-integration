@@ -29,8 +29,8 @@ import com.sun.star.text.XTextContent;
 import com.sun.star.uno.UnoRuntime;
 
 public class Bookmark extends ReferenceMark {
-	public Bookmark(Document aDoc, Object aMark) {
-		super(aDoc, aMark);
+	public Bookmark(Document aDoc, XNamed aMark, String aCode) {
+		super(aDoc, aMark, aCode);
 		isDisposable = true;
 	}
 	
