@@ -21,8 +21,12 @@
     
     ***** END LICENSE BLOCK *****
 */
+
+const ZOTEROOPENOFFICEINTEGRATION_ID = "zoteroOpenOfficeIntegration@zotero.org";
+const ZOTEROOPENOFFICEINTEGRATION_PREF = "extensions.zoteroOpenOfficeIntegration.version";
 const URE_PREF = "extensions.zoteroOpenOfficeIntegration.urePath";
 const SOFFICE_PREF = "extensions.zoteroOpenOfficeIntegration.sofficePath";
+
 const nsIFilePicker = Components.interfaces.nsIFilePicker;
 var zoteroOpenOfficeIntegration_prefService, zoteroOpenOfficeIntegration_progressWindow;
 
@@ -133,10 +137,12 @@ function ZoteroOpenOfficeIntegration_detectPaths() {
 				"Contents/MacOS/classes"
 			],
 			Win:[
-				"URE\\java"
+				"URE\\java",
+				"program\\classes"
 			],
 			Other:[
-				"basis-link/ure-link/share/java"
+				"basis-link/ure-link/share/java",
+				"program/classes"
 			]
 		};
 		
@@ -271,8 +277,12 @@ function ZoteroOpenOfficeIntegration_firstRun() {
 			}
 			
 			try {
-				ZoteroOpenOfficeIntegration_detectPaths();
+				if(zoteroOpenOfficeIntegration_prefService.getCharPref(SOFFICE_PREF) == "" ||
+				   zoteroOpenOfficeIntegration_prefService.getCharPref(URE_PREF) == "") {
+					ZoteroOpenOfficeIntegration_detectPaths();
+				}
 				ZoteroOpenOfficeIntegration_installComponents();
+				zoteroOpenOfficeIntegration_prefService.setCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF, ext.version);
 				zoteroOpenOfficeIntegration_progressWindow.close();
 			} catch(e) {
 				zoteroOpenOfficeIntegration_progressWindow.close();
@@ -301,9 +311,11 @@ function ZoteroOpenOfficeIntegration_firstRun() {
 	}, 100);
 }
 
+var ext = Components.classes['@mozilla.org/extensions/manager;1']
+   .getService(Components.interfaces.nsIExtensionManager).getItemForID(ZOTEROOPENOFFICEINTEGRATION_ID);
 zoteroOpenOfficeIntegration_prefService = Components.classes["@mozilla.org/preferences-service;1"].
 	getService(Components.interfaces.nsIPrefBranch);
-if(zoteroOpenOfficeIntegration_prefService.getCharPref(URE_PREF) == "" && document.getElementById("appcontent")) {
+if(zoteroOpenOfficeIntegration_prefService.getCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF) != ext.version) {
 	zoteroOpenOfficeIntegration_progressWindow = window.openDialog("chrome://zotero-openoffice-integration/content/progress.xul", "",
 			"chrome,resizable=no,close=no,centerscreen");
 	zoteroOpenOfficeIntegration_progressWindow.addEventListener("load", ZoteroOpenOfficeIntegration_firstRun, false);
