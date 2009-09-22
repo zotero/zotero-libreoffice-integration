@@ -49,8 +49,7 @@ function initClassLoader(java, me) {
 	var sofficePath = prefService.getCharPref(SOFFICE_PREF);
 	
 	var jarFiles = [
-		// for privileges
-		extensionLibPath+"javaFirefoxExtensionUtils.jar",
+		//extensionLibPath+"javaFirefoxExtensionUtils.jar",
 		// UNO libraries
 		urelinkPath+"ridl.jar",
 		urelinkPath+"unoloader.jar",
@@ -65,20 +64,57 @@ function initClassLoader(java, me) {
 		sofficePath
 	];
 	
+	// the jar files, as an array of URLs
 	var urlArray = java.lang.reflect.Array.newInstance(java.lang.Class.forName("java.net.URL"), jarFiles.length);
 	[urlArray[i] = new java.net.URL(jarFiles[i]) for(i in jarFiles)];
-	var cl = java.net.URLClassLoader.newInstance(urlArray);
+	
+	// first, load just the PrivilegedURLClassLoader out of the zip file
+	var emptyArray = java.lang.reflect.Array.newInstance(java.lang.Class.forName("java.net.URL"), 0);
+	var bootstrapCl = new java.net.URLClassLoader(emptyArray);
+	var jarFile = new java.util.zip.ZipFile(new java.io.File(new java.net.URI(extensionLibPath+"zoteroOpenOfficeIntegration.jar")));
+	var jarEntry = jarFile.getEntry("org/zotero/integration/ooo/PrivilegedURLClassLoader.class");
+	var jarInputStream = jarFile.getInputStream(jarEntry);
+	var jarSize = jarEntry.getSize();
+	var bytes = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, jarSize);
+	var jarRead = jarInputStream.read(bytes);
+	
+	// load the PrivilegedURLClassLoader class
+	var classClass = java.lang.Class.forName("java.lang.Class");
+	var objectClass = java.lang.Class.forName("java.lang.Object");
+	var defineClassParamTypes = java.lang.reflect.Array.newInstance(classClass, 5);
+	var defineClassParams = java.lang.reflect.Array.newInstance(objectClass, 5);
+	defineClassParams[0] = "org.zotero.integration.ooo.PrivilegedURLClassLoader";
+	defineClassParamTypes[0] = java.lang.Class.forName("java.lang.String");
+	defineClassParams[1] = bytes;
+	defineClassParamTypes[1] = bytes.getClass();
+	defineClassParams[2] = new java.lang.Integer(0);
+	defineClassParamTypes[2] = java.lang.Integer.TYPE;
+	defineClassParams[3] = new java.lang.Integer(jarSize);
+	defineClassParamTypes[3] = java.lang.Integer.TYPE;
+	defineClassParams[4] = classClass.getProtectionDomain();
+	defineClassParamTypes[4] = defineClassParams[4].getClass();
+	var defineClassMethod = java.lang.Class.forName("java.lang.ClassLoader").getDeclaredMethod("defineClass", defineClassParamTypes);
+	defineClassMethod.setAccessible(true);
+	var privclClass = defineClassMethod.invoke(bootstrapCl, defineClassParams);
+	
+	// get the constructor
+	var constructorParamTypes = java.lang.reflect.Array.newInstance(classClass, 1);
+	var constructorParams = java.lang.reflect.Array.newInstance(objectClass, 1);
+	constructorParamTypes[0] = urlArray.getClass();
+	constructorParams[0] = urlArray;
+	var privclConstructor = privclClass.getConstructor(constructorParamTypes);
+	cl = privclConstructor.newInstance(constructorParams);
 
-	var str = 'edu.mit.simile.javaFirefoxExtensionUtils.URLSetPolicy';
+	/*var str = 'edu.mit.simile.javaFirefoxExtensionUtils.URLSetPolicy';
 	var policyClass = java.lang.Class.forName(str, true, cl);
-
+	
 	var policy = policyClass.newInstance();
 	policy.setOuterPolicy(java.security.Policy.getPolicy());
 	java.security.Policy.setPolicy(policy);
 	policy.addPermission(new java.security.AllPermission());
 	for (var j=0; j < urlArray.length; j++) {
 		policy.addURL(urlArray[j]);
-	}
+	}*/
 	
 	// proxy Java methods through JavaScript so that they can be used from XPCOM
 	var javaClassObj;
@@ -86,6 +122,7 @@ function initClassLoader(java, me) {
 		// load appropriate class
 		var isThisClass = me.javaClass == javaXPCOMClass.prototype.javaClass;
 		javaClassObj = javaXPCOMClass.prototype.javaClassObj = cl.loadClass(javaXPCOMClass.prototype.javaClass);
+		//dump(javaClassObj.getProtectionDomain().getPermissions().toString()+"\n")
 		delete javaXPCOMClass.initClassLoader;
 		
 		var methods = javaClassObj.getDeclaredMethods();
