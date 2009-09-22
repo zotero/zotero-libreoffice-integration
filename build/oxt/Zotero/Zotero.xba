@@ -65,7 +65,7 @@ Sub ZoteroCommand(cmd As String, bringToFront As Boolean)
 		' Find Firefox message window
 		Dim appNames(4)
 		appNames(1) = "Firefox"
-		appNames(2) = "Flock"
+		appNames(2) = "Browser"
 		appNames(3) = "Minefield"
 		appNames(4) = "Namoroka"
 		For i = 1 To 4
