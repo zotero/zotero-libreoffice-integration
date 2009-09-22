@@ -63,7 +63,17 @@ Sub ZoteroCommand(cmd As String, bringToFront As Boolean)
 			tmp2 As Long, a$ As String, totalLen As Long, sfa
 		
 		' Find Firefox message window
-		ThWnd = FindWindow("FirefoxMessageWindow", "")
+		Dim appNames(4)
+		appNames(1) = "Firefox"
+		appNames(2) = "Flock"
+		appNames(3) = "Minefield"
+		appNames(4) = "Namoroka"
+		For i = 1 To 4
+			ThWnd = FindWindow(appNames(i) &amp; "MessageWindow", "")
+			If ThWnd &lt;&gt; 0 Then
+				Exit For
+			End If
+		Next
 		If ThWnd = 0 Then
 			ZoteroNotFound()
 			Exit Sub
