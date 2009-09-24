@@ -28,7 +28,7 @@ const URE_PREF = "extensions.zoteroOpenOfficeIntegration.urePath";
 const SOFFICE_PREF = "extensions.zoteroOpenOfficeIntegration.sofficePath";
 
 const nsIFilePicker = Components.interfaces.nsIFilePicker;
-var zoteroOpenOfficeIntegration_prefService, zoteroOpenOfficeIntegration_progressWindow;
+var zoteroOpenOfficeIntegration_prefService, zoteroOpenOfficeIntegration_progressWindow, ext;
 
 function ZoteroOpenOfficeIntegration_checkVersion(name, url, id, minVersion) {
 	// check Zotero version
@@ -311,11 +311,11 @@ function ZoteroOpenOfficeIntegration_firstRun() {
 	}, 100);
 }
 
-var ext = Components.classes['@mozilla.org/extensions/manager;1']
+ext = Components.classes['@mozilla.org/extensions/manager;1']
    .getService(Components.interfaces.nsIExtensionManager).getItemForID(ZOTEROOPENOFFICEINTEGRATION_ID);
 zoteroOpenOfficeIntegration_prefService = Components.classes["@mozilla.org/preferences-service;1"].
 	getService(Components.interfaces.nsIPrefBranch);
-if(zoteroOpenOfficeIntegration_prefService.getCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF) != ext.version) {
+if(zoteroOpenOfficeIntegration_prefService.getCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF) != ext.version && document.getElementById("appcontent")) {
 	zoteroOpenOfficeIntegration_progressWindow = window.openDialog("chrome://zotero-openoffice-integration/content/progress.xul", "",
 			"chrome,resizable=no,close=no,centerscreen");
 	zoteroOpenOfficeIntegration_progressWindow.addEventListener("load", ZoteroOpenOfficeIntegration_firstRun, false);
