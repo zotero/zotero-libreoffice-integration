@@ -255,39 +255,60 @@ function ZoteroOpenOfficeIntegration_installComponents(callback) {
 		executableDir.append("unopkg");
 	}
 	
+	var updateLabel = !!zoteroOpenOfficeIntegration_progressWindowLabel;
+	
 	if(Zotero.isFx30) {
+		// need to use nsIProcess (synchronous) for FF 3.0
 		var proc = Components.classes["@mozilla.org/process/util;1"].
 				createInstance(Components.interfaces.nsIProcess);
 		proc.init(executableDir);
-		zoteroOpenOfficeIntegration_progressWindowLabel.value = "Removing Old OpenOffice.org Extensions...";
+		if(updateLabel) zoteroOpenOfficeIntegration_progressWindowLabel.value = "Removing Old OpenOffice.org Extensions...";
 		try {
 			proc.run(true, ["remove", "org.Zotero.integration.openoffice"], 2);
 		} catch(e) {}
-		zoteroOpenOfficeIntegration_progressWindowLabel.value = "Adding OpenOffice.org Extension...";
+		if(updateLabel) zoteroOpenOfficeIntegration_progressWindowLabel.value = "Adding OpenOffice.org Extension...";
 		proc.run(true, ["add", oxt.path], 2);
 		zoteroOpenOfficeIntegration_prefService.setCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF, ext.version);
-		callback();
+		callback(true);
 	} else {
+		// use nsIProcess2 (asynchronous) for FF 3.0
 		var proc = Components.classes["@mozilla.org/process/util;1"].
 				createInstance(Components.interfaces.nsIProcess2);
 		proc.init(executableDir);
-		zoteroOpenOfficeIntegration_progressWindowLabel.value = "Removing Old OpenOffice.org Extensions...";
+		if(updateLabel) zoteroOpenOfficeIntegration_progressWindowLabel.value = "Removing Old Zotero OpenOffice.org Extension...";
 		proc.runAsync(["remove", "org.Zotero.integration.openoffice"], 2, {"observe":function() {
-			zoteroOpenOfficeIntegration_progressWindowLabel.value = "Adding OpenOffice.org Extension...";
-			proc.runAsync(["add", oxt.path], 2, {"observe":function() {
+			if(updateLabel) zoteroOpenOfficeIntegration_progressWindowLabel.value = "Adding Zotero OpenOffice.org Extension...";
+			proc.runAsync(["add", oxt.path], 2, {"observe":function(process, topic) {
 				zoteroOpenOfficeIntegration_prefService.setCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF, ext.version);
-				callback();
+				callback(topic == "process-finished" && !process.exitValue);
 			}});
 		}});
+	}
+}
+
+function ZoteroOpenOfficeIntegration_reinstallComponents() {
+	try {
+		ZoteroOpenOfficeIntegration_installComponents(function(success) {
+			if(success) {
+				Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
+					.getService(Components.interfaces.nsIPromptService)
+					.alert(window, 'Zotero OpenOffice Integration',
+					'Zotero OpenOffice Integration was successfully installed.');
+			} else {
+				ZoteroOpenOfficeIntegration_error();
+				throw "An error occurred running unopkg";
+			}
+		});
+	} catch(e) {
+		ZoteroOpenOfficeIntegration_error();
+		throw e;
 	}
 }
 
 function ZoteroOpenOfficeIntegration_testInstall() {
 	// test install
 	try {
-		var application = Components.classes['@zotero.org/Zotero/integration/application?agent=OpenOffice;1']
-			.getService(Components.interfaces.zoteroIntegrationApplication);
-		application = undefined;
+		java.lang;
 	} catch(e) {
 		var err = 'Zotero OpenOffice Integration was successfully installed, but it could not be initialized. This might happen if Java is not installed or is not operational, or if there is a problem with your OpenOffice installation. You can test Firefox\'s Java support by going to www.javatester.org.';
 		if(window.navigator.platform.substr(0, 5) == "Linux") {
@@ -322,7 +343,11 @@ function ZoteroOpenOfficeIntegration_firstRunListener() {
 				   	zoteroOpenOfficeIntegration_progressWindowLabel.value = "Detecting OpenOffice.org Paths...";
 					ZoteroOpenOfficeIntegration_detectPaths();
 				}
-				ZoteroOpenOfficeIntegration_installComponents(function() {
+				ZoteroOpenOfficeIntegration_installComponents(function(success) {
+					if(!success) {
+						ZoteroOpenOfficeIntegration_error();
+						throw "An error occurred running unopkg";
+					}
 					zoteroOpenOfficeIntegration_progressWindow.close();
 					ZoteroOpenOfficeIntegration_testInstall();
 				});
