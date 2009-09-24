@@ -10,7 +10,7 @@
 		</preferences>
 		<hbox pack="center">
 			<button label="Detect OpenOffice.org Paths" oncommand="ZoteroOpenOfficeIntegration_detectPaths()"/>
-			<button label="Reinstall OpenOffice.org Components" oncommand="try { ZoteroOpenOfficeIntegration_installComponents(); } catch(e) { ZoteroOpenOfficeIntegration_error(); throw e }"/>
+			<button label="Reinstall OpenOffice.org Components" oncommand="ZoteroOpenOfficeIntegration_firstRun();"/>
 		</hbox>
 		<grid>
 			<columns>
