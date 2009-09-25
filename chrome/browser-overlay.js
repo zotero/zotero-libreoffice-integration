@@ -29,7 +29,7 @@ const SOFFICE_PREF = "extensions.zoteroOpenOfficeIntegration.sofficePath";
 
 const nsIFilePicker = Components.interfaces.nsIFilePicker;
 var zoteroOpenOfficeIntegration_prefService, zoteroOpenOfficeIntegration_progressWindow,
-	zoteroOpenOfficeIntegration_progressWindowLabel, ext;
+	zoteroOpenOfficeIntegration_progressWindowLabel, zoteroOpenOfficeIntegration_ext;
 
 function ZoteroOpenOfficeIntegration_checkVersion(name, url, id, minVersion) {
 	// check Zotero version
@@ -268,7 +268,7 @@ function ZoteroOpenOfficeIntegration_installComponents(callback) {
 		} catch(e) {}
 		if(updateLabel) zoteroOpenOfficeIntegration_progressWindowLabel.value = "Adding OpenOffice.org Extension...";
 		proc.run(true, ["add", oxt.path], 2);
-		zoteroOpenOfficeIntegration_prefService.setCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF, ext.version);
+		zoteroOpenOfficeIntegration_prefService.setCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF, zoteroOpenOfficeIntegration_ext.version);
 		callback(true);
 	} else {
 		// use nsIProcess2 (asynchronous) for FF 3.0
@@ -279,7 +279,7 @@ function ZoteroOpenOfficeIntegration_installComponents(callback) {
 		proc.runAsync(["remove", "org.Zotero.integration.openoffice"], 2, {"observe":function() {
 			if(updateLabel) zoteroOpenOfficeIntegration_progressWindowLabel.value = "Adding Zotero OpenOffice.org Extension...";
 			proc.runAsync(["add", oxt.path], 2, {"observe":function(process, topic) {
-				zoteroOpenOfficeIntegration_prefService.setCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF, ext.version);
+				zoteroOpenOfficeIntegration_prefService.setCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF, zoteroOpenOfficeIntegration_ext.version);
 				callback(topic == "process-finished" && !process.exitValue);
 			}});
 		}});
@@ -366,10 +366,10 @@ function ZoteroOpenOfficeIntegration_firstRun() {
 	zoteroOpenOfficeIntegration_progressWindow.addEventListener("load", ZoteroOpenOfficeIntegration_firstRunListener, false);
 }
 
-ext = Components.classes['@mozilla.org/extensions/manager;1']
+zoteroOpenOfficeIntegration_ext = Components.classes['@mozilla.org/extensions/manager;1']
    .getService(Components.interfaces.nsIExtensionManager).getItemForID(ZOTEROOPENOFFICEINTEGRATION_ID);
 zoteroOpenOfficeIntegration_prefService = Components.classes["@mozilla.org/preferences-service;1"].
 	getService(Components.interfaces.nsIPrefBranch);
-if(zoteroOpenOfficeIntegration_prefService.getCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF) != ext.version && document.getElementById("appcontent")) {
+if(zoteroOpenOfficeIntegration_prefService.getCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF) != zoteroOpenOfficeIntegration_ext.version && document.getElementById("appcontent")) {
 	ZoteroOpenOfficeIntegration_firstRun();
 }
