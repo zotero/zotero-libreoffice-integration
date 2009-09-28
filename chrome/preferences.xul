@@ -20,7 +20,7 @@
 			</columns>
 			<rows>
 				<row align="center">
-					<label value="Java URE Directory:"/>
+					<label value="Java UNO Runtime Directory:"/>
 					<textbox id="text-urePath" preference="pref-urePath" size="50"/>
 					<button label="Choose..." oncommand="ZoteroOpenOfficeIntegration_selectURE(); "/>
 				</row>

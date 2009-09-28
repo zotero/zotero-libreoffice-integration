@@ -310,7 +310,7 @@ function ZoteroOpenOfficeIntegration_testInstall() {
 	try {
 		java.lang;
 	} catch(e) {
-		var err = 'Zotero OpenOffice Integration was successfully installed, but it could not be initialized. This might happen if Java is not installed or is not operational, or if there is a problem with your OpenOffice installation. You can test Firefox\'s Java support by going to www.javatester.org.';
+		var err = 'Zotero OpenOffice Integration was successfully installed, but it will not operate properly because Java is not installed or is not operational. You can test Firefox\'s Java support by going to www.javatester.org.';
 		if(window.navigator.platform.substr(0, 5) == "Linux") {
 			err += "\n\nPlease ensure that an up-to-date version of the Sun Java Plug-in (e.g., sun-java6-plugin) is installed and try again.";
 		} else if(window.navigator.platform.substr(0, 3) == "Win") {

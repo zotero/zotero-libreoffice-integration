@@ -26,8 +26,52 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 	
 const URE_PREF = "extensions.zoteroOpenOfficeIntegration.urePath";
 const SOFFICE_PREF = "extensions.zoteroOpenOfficeIntegration.sofficePath";
+const ioService = Components.classes["@mozilla.org/network/io-service;1"].
+	getService(Components.interfaces.nsIIOService);
 var javaXPCOMClasses = {};
 var loader = null;
+
+/**
+ * Show an error message and throw an error
+ */
+function throwError(err) {
+	Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
+		.getService(Components.interfaces.nsIPromptService)
+		.alert(null, 'Zotero OpenOffice Integration Error', err);
+	throw err;
+}
+
+/**
+ * Verify that a directory exists and contains the appropriate files.
+ */
+function verifyDir(dirName, uri, fileNames) {	
+	const errStart = "Zotero OpenOffice Integration could not communicate with OpenOffice.org "+
+		"because the "+dirName+" specified in the Zotero OpenOffice Integration preferences ";
+	const errEnd = "\n\nSee the Zotero word processor plugin troubleshooting page for information "+
+		"on how to locate the appropriate directory.";
+	
+	var dir = null;
+	try {
+		dir = ioService.getProtocolHandler("file").
+			QueryInterface(Components.interfaces.nsIFileProtocolHandler).getFileFromURLSpec(uri);
+	} catch(e) {}
+	
+	if(!dir || !dir.exists()) throwError(errStart+"does not exist."+errEnd);
+	if(!dir.isDirectory()) throwError(errStart+"is not a directory."+errEnd);
+	
+	var exists = false;
+	for each(var fileName in fileNames) {
+		var file = dir.clone();
+		file.append(fileName);
+		if(file.exists()) {
+			exists = true;
+			break;
+		}
+	}
+	if(!exists) throwError(errStart+'does not contain a "'+fileName+'" file.'+errEnd);
+	
+	return ioService.newFileURI(dir).spec;
+}
 
 /**
  * Glue between LiveConnect and XPCOM. Loads Java classes and maps them to JavaScript/XPCOM objects.
@@ -40,13 +84,12 @@ function initClassLoader(java, me) {
 				getItemLocation("zoteroOpenOfficeIntegration@zotero.org");
 	extensionLibFile.append("lib");
 	
-	var extensionLibPath = Components.classes["@mozilla.org/network/io-service;1"].
-		getService(Components.interfaces.nsIIOService).newFileURI(extensionLibFile).spec;
+	var extensionLibPath = ioService.newFileURI(extensionLibFile).spec;
 	
 	var prefService = Components.classes["@mozilla.org/preferences-service;1"].
 		getService(Components.interfaces.nsIPrefBranch);
-	var urelinkPath = prefService.getCharPref(URE_PREF);
-	var sofficePath = prefService.getCharPref(SOFFICE_PREF);
+	var urelinkPath = verifyDir("Java UNO runtime directory", prefService.getCharPref(URE_PREF), ["ridl.jar"]);
+	var sofficePath = verifyDir("soffice executable directory", prefService.getCharPref(SOFFICE_PREF), ["soffice.exe", "soffice"]);
 	
 	var jarFiles = [
 		//extensionLibPath+"javaFirefoxExtensionUtils.jar",
@@ -63,6 +106,11 @@ function initClassLoader(java, me) {
 		// necessary to bootstrap OOo
 		sofficePath
 	];
+	
+	if(!java.lang) {
+		throwError('Zotero OpenOffice Integration could not communicate with OpenOffice.org '+
+			'because Java is not installed or not operational within Firefox.');
+	}
 	
 	// the jar files, as an array of URLs
 	var urlArray = java.lang.reflect.Array.newInstance(java.lang.Class.forName("java.net.URL"), jarFiles.length);
