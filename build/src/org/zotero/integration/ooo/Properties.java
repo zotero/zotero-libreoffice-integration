@@ -33,6 +33,7 @@ import com.sun.star.document.XDocumentInfo;
 import com.sun.star.document.XDocumentInfoSupplier;
 import com.sun.star.frame.XDesktop;
 import com.sun.star.lang.XComponent;
+import com.sun.star.uno.Any;
 import com.sun.star.uno.UnoRuntime;
 
 public class Properties {
@@ -51,13 +52,20 @@ public class Properties {
 	public String getProperty(String propertyName) throws Exception {
 		int i = 0;
 		String propertyValue = "";
+		Object val;
 		
 		while(true) {
 			i++;
 			try {
-				propertyValue += propertySet.getPropertyValue(propertyName+"_"+i);
+				val = propertySet.getPropertyValue(propertyName+"_"+i);
 			} catch(UnknownPropertyException e) {
 				break;
+			}
+			
+			if(val.getClass() == Any.class && val.equals(Any.VOID)) {
+				break;
+			} else {
+				propertyValue += val;
 			}
 		}
 		
