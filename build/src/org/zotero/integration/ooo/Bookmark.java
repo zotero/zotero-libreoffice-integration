@@ -63,6 +63,20 @@ public class Bookmark extends ReferenceMark {
 	public String getCode() {
 		try {
 			String property = doc.properties.getProperty(rawCode);
+			
+			// necessary since OOo adds a number to copy and pasted citations
+			if(property == "") {
+				for(int i=1; i<=3 && property == ""; i++) {
+					property = doc.properties.getProperty(rawCode.substring(0, rawCode.length()-i));
+				}
+
+				if(property == "") {
+					return "";
+				} else {
+					doc.properties.setProperty(rawCode, property);
+				}
+			}
+			
 			for(String prefix : Document.PREFIXES) {
 				if(property.startsWith(prefix)) {
 					return property.substring(prefix.length());
