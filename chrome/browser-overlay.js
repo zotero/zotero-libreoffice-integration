@@ -258,7 +258,7 @@ function ZoteroOpenOfficeIntegration_installComponents(callback) {
 	var updateLabel = !!zoteroOpenOfficeIntegration_progressWindowLabel;
 	
 	if(Zotero.isFx30) {
-		// need to use nsIProcess (synchronous) for FF 3.0
+		// use synchronous run() for Fx3.0
 		var proc = Components.classes["@mozilla.org/process/util;1"].
 				createInstance(Components.interfaces.nsIProcess);
 		proc.init(executableDir);
@@ -271,9 +271,16 @@ function ZoteroOpenOfficeIntegration_installComponents(callback) {
 		zoteroOpenOfficeIntegration_prefService.setCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF, zoteroOpenOfficeIntegration_ext.version);
 		callback(true);
 	} else {
-		// use nsIProcess2 (asynchronous) for FF 3.0
-		var proc = Components.classes["@mozilla.org/process/util;1"].
-				createInstance(Components.interfaces.nsIProcess2);
+		// use runAsync() from nsIProcess2 for Fx3.5
+		if(Zotero.isFx35) {
+			var proc = Components.classes["@mozilla.org/process/util;1"].
+					createInstance(Components.interfaces.nsIProcess2);
+		}
+		// use runAsync() from nsIProcess in Fx3.6 and later
+		else {
+			var proc = Components.classes["@mozilla.org/process/util;1"].
+					createInstance(Components.interfaces.nsIProcess);
+		}
 		proc.init(executableDir);
 		if(updateLabel) zoteroOpenOfficeIntegration_progressWindowLabel.value = "Removing Old Zotero OpenOffice.org Extension...";
 		proc.runAsync(["remove", "org.Zotero.integration.openoffice"], 2, {"observe":function() {
