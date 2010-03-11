@@ -83,7 +83,7 @@ function ZoteroOpenOfficeIntegration_error() {
 	Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
 		.getService(Components.interfaces.nsIPromptService)
 		.alert(window, 'Zotero OpenOffice Integration Error',
-		'Zotero OpenOffice Integration could not complete installation because an error occurred. Please ensure that OpenOffice is closed, then restart Firefox.');
+		'Zotero OpenOffice Integration could not complete installation because an error occurred. Please ensure that OpenOffice is closed, and then restart Firefox.');
 }
 
 function ZoteroOpenOfficeIntegration_detectPaths() {
