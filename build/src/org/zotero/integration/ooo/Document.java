@@ -216,11 +216,13 @@ public class Document {
 	    			    			named = (XNamed) UnoRuntime.queryInterface(XNamed.class, mark);
 	    			    			String name2 = named.getName();
 	    			    			if(name.equals(name2)) {
-	    			    				if(textPropertyType.equals("ReferenceMark")) {
-	    			    					return new ReferenceMark(this, named, name);
-	    			    				} else {
-	    			    					return new Bookmark(this, named, name);
-	    			    				}
+	    			    				try {
+		    			    				if(textPropertyType.equals("ReferenceMark")) {
+		    			    					return new ReferenceMark(this, named, name);
+		    			    				} else {
+		    			    					return new Bookmark(this, named, name);
+		    			    				}
+	    			    				} catch(IllegalArgumentException e) {}
 	    			    			}
 	    			    		}
 	    			    	}
@@ -274,7 +276,9 @@ public class Document {
 					
 					for(String prefix : Document.PREFIXES) {
 						if(name.startsWith(prefix)) {
-							marks.add(new ReferenceMark(this, named, name));
+							try {
+								marks.add(new ReferenceMark(this, named, name));
+							} catch (IllegalArgumentException e) {}
 							break;
 						}
 					}
@@ -292,7 +296,9 @@ public class Document {
 					
 					for(String prefix : Document.PREFIXES) {
 						if(name.startsWith(prefix)) {
-							marks.add(new ReferenceMark(this, named, name));
+							try {
+								marks.add(new ReferenceMark(this, named, name));
+							} catch (IllegalArgumentException e) {}
 							break;
 						}
 					}
@@ -310,7 +316,9 @@ public class Document {
 					
 					for(String prefix : Document.PREFIXES) {
 						if(name.startsWith(prefix)) {
-							marks.add(new Bookmark(this, named, name));
+							try {
+								marks.add(new Bookmark(this, named, name));
+							} catch (IllegalArgumentException e) {}
 							break;
 						}
 					}

@@ -65,4 +65,10 @@ public class Application {
 						"com.sun.star.configuration.ConfigurationAccess", new Object[] {nodepath}));
 		ooName = (String) settings.getByName("ooName");
 	}
+	
+	/*public static void main(String[] args) throws Exception {
+		Application app = new Application();
+		Document doc = app.getActiveDocument();
+		MarkEnumerator me = doc.getFields("ReferenceMark");
+	}*/
 }

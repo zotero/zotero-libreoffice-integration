@@ -33,7 +33,6 @@ import com.sun.star.container.XNamed;
 import com.sun.star.document.XDocumentInsertable;
 import com.sun.star.frame.XDispatchHelper;
 import com.sun.star.frame.XDispatchProvider;
-import com.sun.star.lang.IllegalArgumentException;
 import com.sun.star.lang.XComponent;
 import com.sun.star.lang.XServiceInfo;
 import com.sun.star.text.ControlCharacter;
@@ -62,10 +61,13 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	protected boolean isDisposable;
 	public String rawCode;
 	
-	public ReferenceMark(Document aDoc, XNamed aMark, String aCode) {
+	public ReferenceMark(Document aDoc, XNamed aMark, String aCode) throws IllegalArgumentException {
 		doc = aDoc;
 		textContent = (XTextContent) UnoRuntime.queryInterface(XTextContent.class, aMark);
 		range = textContent.getAnchor();
+		if(range == null) {
+			throw new IllegalArgumentException("no anchor for textContent");
+		}
 		text = range.getText();
 		named = aMark;
 		
@@ -283,14 +285,14 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		int cmp;
 		try {
 			cmp = doc.textRangeCompare.compareRegionStarts(range2, range1);
-		} catch (IllegalArgumentException e) {
+		} catch (com.sun.star.lang.IllegalArgumentException e) {
 			return 0;
 		}
 		
 		if(cmp == 0 && isNote && o.isNote) {
 			try {
 				cmp = textRangeCompare.compareRegionStarts(o.range, range);
-			} catch (IllegalArgumentException e) {
+			} catch (com.sun.star.lang.IllegalArgumentException e) {
 				return 0;
 			}
 		}

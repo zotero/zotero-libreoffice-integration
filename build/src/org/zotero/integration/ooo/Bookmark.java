@@ -29,7 +29,7 @@ import com.sun.star.text.XTextContent;
 import com.sun.star.uno.UnoRuntime;
 
 public class Bookmark extends ReferenceMark {
-	public Bookmark(Document aDoc, XNamed aMark, String aCode) {
+	public Bookmark(Document aDoc, XNamed aMark, String aCode) throws IllegalArgumentException {
 		super(aDoc, aMark, aCode);
 		isDisposable = true;
 	}
