@@ -128,7 +128,7 @@ Sub ZoteroCommand(cmd As String, bringToFront As Boolean)
 			GoTo NotFound
 		End If
 		
-		Shell &quot;bash -c &quot;&quot;echo &apos;OpenOffice &quot; &amp; cmd &amp; &quot;&apos; &gt; &quot; &amp; path$ &amp; &quot;&quot;&quot;&quot;
+		Shell &quot;bash -c &quot;&quot;echo &apos;OpenOffice &quot; &amp; cmd &amp; &quot;&apos; &gt; '&quot; &amp; path$ &amp; &quot;'&quot;&quot;&quot;
 		Exit Sub
 		
 		ClearPath:
