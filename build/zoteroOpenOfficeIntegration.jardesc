@@ -1,23 +1,23 @@
-<?xml version="1.0" encoding="MacRoman"?>
+<?xml version="1.0" encoding="MacRoman" standalone="no"?>
 <jardesc>
-<jar path="/Users/simon/Library/Application Support/Firefox/Profiles/hhx7fskk.Main Profile/extensions/zoteroOpenOfficeIntegration@zotero.org/lib/zoteroOpenOfficeIntegration.jar"/>
-<options buildIfNeeded="true" compress="true" descriptionLocation="/Zotero OpenOffice Integration/zoteroOpenOfficeIntegration.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
-<storedRefactorings deprecationInfo="true" structuralOnly="false"/>
-<selectedProjects/>
-<manifest generateManifest="true" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
-<sealing sealJar="false">
-<packagesToSeal/>
-<packagesToUnSeal/>
-</sealing>
-</manifest>
-<selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-<javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{ReferenceMark.java"/>
-<javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{Document.java"/>
-<javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{Bookmark.java"/>
-<javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{StringInputStream.java"/>
-<javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{Application.java"/>
-<javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{MarkEnumerator.java"/>
-<javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{PrivilegedURLClassLoader.java"/>
-<javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{Properties.java"/>
-</selectedElements>
+    <jar path="/Users/simon/Library/Application Support/Firefox/Profiles/hhx7fskk.Main Profile/extensions/zoteroOpenOfficeIntegration@zotero.org/lib/zoteroOpenOfficeIntegration.jar"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/Zotero OpenOffice Integration/zoteroOpenOfficeIntegration.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
+    <selectedProjects/>
+    <manifest generateManifest="true" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
+        <sealing sealJar="false">
+            <packagesToSeal/>
+            <packagesToUnSeal/>
+        </sealing>
+    </manifest>
+    <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
+        <javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{Application.java"/>
+        <javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{ReferenceMark.java"/>
+        <javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{StringInputStream.java"/>
+        <javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{Properties.java"/>
+        <javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{PrivilegedURLClassLoader.java"/>
+        <javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{Document.java"/>
+        <javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{Bookmark.java"/>
+        <javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{MarkEnumerator.java"/>
+    </selectedElements>
 </jardesc>

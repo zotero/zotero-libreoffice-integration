@@ -255,7 +255,12 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	
 	public Integer getNoteIndex() {
 		try {
-			// TODO: need to figure out how to get footnote index in OOo without massive cost
+			if(isNote) {
+				// Only works for numbered notes; won't work if a note is referenced by a letter
+				try {
+					return Integer.parseInt(((XFootnote) UnoRuntime.queryInterface(XFootnote.class, text)).getAnchor().getString());
+				} catch(NumberFormatException e) {}
+			}
 			return null;
 		} catch(Exception e) {
 	    	doc.displayAlert(Document.getErrorString(e), 0, 0);
