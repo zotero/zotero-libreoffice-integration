@@ -70,5 +70,8 @@ public class Application {
 		Application app = new Application();
 		Document doc = app.getActiveDocument();
 		MarkEnumerator me = doc.getFields("ReferenceMark");
+		while(me.hasMoreElements()) {
+			System.out.println(me.getNext().getCode());
+		}
 	}*/
 }

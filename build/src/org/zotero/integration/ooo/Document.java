@@ -67,6 +67,7 @@ public class Document {
 	
 	Application app;
 	public XTextRangeCompare textRangeCompare;
+	public XTextDocument textDocument;
 	public XText text;
 	public XDesktop desktop;
 	public XMultiServiceFactory docFactory;
@@ -86,6 +87,7 @@ public class Document {
 	public static String BIBLIOGRAPHY_CODE = "BIBL";
 	
 	public static String ERROR_STRING = "An error occurred communicating with Zotero:";
+	TextTableManager textTableManager;
 	
     public Document(Application anApp) throws Exception {
     	app = anApp;
@@ -95,7 +97,8 @@ public class Document {
 		component = desktop.getCurrentComponent();
 		controller = frame.getController();
 		docFactory = (XMultiServiceFactory) UnoRuntime.queryInterface(XMultiServiceFactory.class, component); 
-		text = ((XTextDocument) UnoRuntime.queryInterface(XTextDocument.class, component)).getText();
+		textDocument = (XTextDocument) UnoRuntime.queryInterface(XTextDocument.class, component);
+		text = textDocument.getText();
 		textRangeCompare = (XTextRangeCompare) UnoRuntime.queryInterface(XTextRangeCompare.class, text);
 		properties = new Properties(desktop);
     }
@@ -159,7 +162,7 @@ public class Document {
 	    	// Also make sure that the cursor is not in any other place we can't insert a citation
 	    	String position = getRangePosition(selection);
 	    	// TODO: tables?
-			return (position.equals("SwXBodyText") || (!fieldType.equals("Bookmark") && position.equals("SwXFootnote")));
+			return (position.equals("SwXBodyText") || position.equals("SwXCell") || (!fieldType.equals("Bookmark") && position.equals("SwXFootnote")));
     	} catch(Exception e) {
 	    	displayAlert(getErrorString(e), 0, 0);
 	    	return false;
@@ -326,7 +329,7 @@ public class Document {
 	    	} else {
 	    		throw new Exception("Invalid field type "+fieldType);
 	    	}
-	    	
+
 	    	Collections.sort(marks);
 	    	return new MarkEnumerator(marks);
     	} catch(Exception e) {

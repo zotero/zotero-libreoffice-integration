@@ -13,6 +13,7 @@
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
         <javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{Application.java"/>
         <javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{ReferenceMark.java"/>
+        <javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{TextTableManager.java"/>
         <javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{StringInputStream.java"/>
         <javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{Properties.java"/>
         <javaElement handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo{PrivilegedURLClassLoader.java"/>

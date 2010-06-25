@@ -25,14 +25,18 @@
 package org.zotero.integration.ooo;
 
 import java.io.UnsupportedEncodingException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.sun.star.beans.PropertyValue;
+import com.sun.star.beans.UnknownPropertyException;
 import com.sun.star.beans.XMultiPropertyStates;
 import com.sun.star.beans.XPropertySet;
 import com.sun.star.container.XNamed;
 import com.sun.star.document.XDocumentInsertable;
 import com.sun.star.frame.XDispatchHelper;
 import com.sun.star.frame.XDispatchProvider;
+import com.sun.star.lang.WrappedTargetException;
 import com.sun.star.lang.XComponent;
 import com.sun.star.lang.XServiceInfo;
 import com.sun.star.text.ControlCharacter;
@@ -53,10 +57,11 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	protected Document doc;
 	protected XTextRangeCompare textRangeCompare;
 	protected XTextContent textContent;
-	public XTextRange range;
+	XTextRange range;
 	protected XText text;
 	protected XNamed named;
 	protected boolean isNote;
+	XTextContent table;
 	protected boolean isTextSection;
 	protected boolean isDisposable;
 	public String rawCode;
@@ -73,9 +78,24 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		
 		XServiceInfo serviceInfo = (XServiceInfo) UnoRuntime.queryInterface(XServiceInfo.class, text);
 		isNote = serviceInfo.supportsService("com.sun.star.text.Footnote");
+		if(serviceInfo.supportsService("com.sun.star.text.CellProperties")) {
+			// is in a table
+			try {
+				table = (XTextContent) UnoRuntime.queryInterface(XTextContent.class,
+						((XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, range)).getPropertyValue("TextTable"));
+			} catch (UnknownPropertyException e) {
+				throw new IllegalArgumentException("TextTable property unknown on an apparent TextTable");
+			} catch (WrappedTargetException e) {
+				throw new IllegalArgumentException("WrappedTargetException on an apparent TextTable");
+			}
+		} else {
+			table = null;
+		}
 		serviceInfo = (XServiceInfo) UnoRuntime.queryInterface(XServiceInfo.class, aMark);
 		isTextSection = serviceInfo.supportsService("com.sun.star.text.TextSection");
 		isDisposable = isTextSection;
+		
+		serviceInfo = (XServiceInfo) UnoRuntime.queryInterface(XServiceInfo.class, aMark);
 		
 		textRangeCompare = (XTextRangeCompare) UnoRuntime.queryInterface(XTextRangeCompare.class, text);
 		
@@ -272,33 +292,84 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		return compareTo(o) == 0;
 	}
 	
+	XTextRange getDocumentRange() {
+		if(isNote) {
+			return ((XTextContent) UnoRuntime.queryInterface(XTextContent.class, text)).getAnchor();
+		} else if(table != null) {
+			String tableName = ((XNamed) UnoRuntime.queryInterface(XNamed.class, table)).getName();
+			if(doc.textTableManager == null) doc.textTableManager = new TextTableManager(doc.textDocument);
+			return doc.textTableManager.getRangeForTable(tableName);
+		} else {
+			return range;
+		}
+	}
+	
 	public int compareTo(ReferenceMark o) {
 		XTextRange range1, range2;
+		range1 = getDocumentRange();
+		range2 = o.getDocumentRange();
 		
-		if(isNote) {
-			range1 = ((XTextContent) UnoRuntime.queryInterface(XTextContent.class, text)).getAnchor();
-		} else {
-			range1 = range;
-		}
-		
-		if(o.isNote) {
-			range2 = ((XTextContent) UnoRuntime.queryInterface(XTextContent.class, o.text)).getAnchor();
-		} else {
-			range2 = o.range;
-		}
-		
-		int cmp;
+		int cmp = 0;
 		try {
 			cmp = doc.textRangeCompare.compareRegionStarts(range2, range1);
 		} catch (com.sun.star.lang.IllegalArgumentException e) {
+			doc.displayAlert(Document.getErrorString(e), 0, 0);
 			return 0;
 		}
 		
-		if(cmp == 0 && isNote && o.isNote) {
-			try {
-				cmp = textRangeCompare.compareRegionStarts(o.range, range);
-			} catch (com.sun.star.lang.IllegalArgumentException e) {
-				return 0;
+		if(cmp == 0) {
+			if(isNote && o.isNote) {
+				try {
+					cmp = textRangeCompare.compareRegionStarts(o.range, range);
+				} catch (com.sun.star.lang.IllegalArgumentException e) {
+					doc.displayAlert(Document.getErrorString(e), 0, 0);
+					return 0;
+				}
+			} else if(table != null && o.table != null) {
+				// This ought to mean they are both in the same table
+				
+				// First, get cell names
+				XPropertySet cell1 = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, text);
+				XPropertySet cell2 = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, o.text);
+				String cell1Name, cell2Name;
+				try {
+					cell1Name = (String) cell1.getPropertyValue("CellName");
+					cell2Name = (String) cell2.getPropertyValue("CellName");
+				} catch (UnknownPropertyException e) {
+					doc.displayAlert(Document.getErrorString(e), 0, 0);
+					return 0;
+				} catch (WrappedTargetException e) {
+					doc.displayAlert(Document.getErrorString(e), 0, 0);
+					return 0;
+				}
+				
+				if(cell1Name.equals(cell2Name)) {
+					// should be in the same cell; compare ranges directly
+					try {
+						cmp = textRangeCompare.compareRegionStarts(o.range, range);
+					} catch (com.sun.star.lang.IllegalArgumentException e) {
+						doc.displayAlert(Document.getErrorString(e), 0, 0);
+						return 0;
+					}
+				} else {
+					// different cells in the same table
+					// split apart names with regular expressions
+					Pattern p = Pattern.compile("([^0-9]+)([0-9]+)");
+					Matcher m1 = p.matcher(cell1Name);
+					Matcher m2 = p.matcher(cell2Name);
+					if(!m1.matches() || !m2.matches()) {
+						return cell1Name.compareTo(cell2Name);
+					}
+					Integer int1 = Integer.parseInt(m1.group(2));
+					Integer int2 = Integer.parseInt(m2.group(2));
+					if(int1 == int2) {
+						// compare column numbers
+						return m1.group(1).compareTo(m2.group(1));
+					} else {
+						// compare row numbers
+						return int1.compareTo(int2);
+					}
+				}
 			}
 		}
 		
