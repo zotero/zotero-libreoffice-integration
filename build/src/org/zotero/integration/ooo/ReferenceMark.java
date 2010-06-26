@@ -209,6 +209,7 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 						dupRange.goLeft((short) 1, true);
 						dupRange.setString("");
 					}
+					cursor.collapseToStart();
 					moveCursorRight(cursor, previousLen-removeLastNewLine);
 				}
 			} else {
