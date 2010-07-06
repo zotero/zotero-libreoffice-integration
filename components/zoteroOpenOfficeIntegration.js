@@ -22,7 +22,16 @@
     ***** END LICENSE BLOCK *****
 */
 
+const GUID = "zoteroOpenOfficeIntegration@zotero.org";
+
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+var appInfo = Components.classes["@mozilla.org/xre/app-info;1"].
+                         getService(Components.interfaces.nsIXULAppInfo);
+if(appInfo.platformVersion[0] == 2) {
+	Components.utils.import("resource://gre/modules/AddonManager.jsm");
+} else {
+	var AddonManager = false;
+}
 	
 const URE_PREF = "extensions.zoteroOpenOfficeIntegration.urePath";
 const SOFFICE_PREF = "extensions.zoteroOpenOfficeIntegration.sofficePath";
@@ -73,18 +82,27 @@ function verifyDir(dirName, uri, fileNames) {
 	return ioService.newFileURI(dir).spec;
 }
 
+var extensionLibPath;
+/**
+ * Called when we have info about the addon coming in from AddonManager (Fx 4.0+)
+ */
+function haveAddonInfo(addon) {
+	extensionLibPath = addon.getResourceURI();
+}
+
 /**
  * Glue between LiveConnect and XPCOM. Loads Java classes and maps them to JavaScript/XPCOM objects.
  */
 function initClassLoader(java, me) {
-	// load appropriate classes
-	var extensionLibFile = Components.classes["@mozilla.org/extensions/manager;1"].
-				getService(Components.interfaces.nsIExtensionManager).
-				getInstallLocation("zoteroOpenOfficeIntegration@zotero.org").
-				getItemLocation("zoteroOpenOfficeIntegration@zotero.org");
-	extensionLibFile.append("lib");
-	
-	var extensionLibPath = ioService.newFileURI(extensionLibFile).spec;
+	if(!AddonManager) {
+		// load appropriate classes
+		var extensionLibFile = Components.classes["@mozilla.org/extensions/manager;1"].
+					getService(Components.interfaces.nsIExtensionManager).
+					getInstallLocation(GUID).
+					getItemLocation(GUID);
+		extensionLibFile.append("lib");		
+		extensionLibPath = ioService.newFileURI(extensionLibFile).spec;
+	}
 	
 	var prefService = Components.classes["@mozilla.org/preferences-service;1"].
 		getService(Components.interfaces.nsIPrefBranch);
@@ -322,11 +340,23 @@ var ZoteroOpenOfficeEnumerator = generateJavaXPCOMWrapper({
 });
 
 
-function NSGetModule(comMgr, fileSpec) {
-	return XPCOMUtils.generateModule([
-		ZoteroOpenOfficeApplication,
-		ZoteroOpenOfficeField,
-		ZoteroOpenOfficeDocument,
-		ZoteroOpenOfficeEnumerator
-	]);
+/**
+* XPCOMUtils.generateNSGetFactory was introduced in Mozilla 2 (Firefox 4).
+* XPCOMUtils.generateNSGetModule is for Mozilla 1.9.2 (Firefox 3.6).
+*/
+var classes = [
+	ZoteroOpenOfficeApplication,
+	ZoteroOpenOfficeField,
+	ZoteroOpenOfficeDocument,
+	ZoteroOpenOfficeEnumerator
+];
+
+if(AddonManager) {
+	AddonManager.getAddonByID(GUID, haveAddonInfo);
+}
+
+if(XPCOMUtils.generateNSGetFactory) {
+	var NSGetFactory = XPCOMUtils.generateNSGetFactory(classes);
+} else {
+	var NSGetModule = XPCOMUtils.generateNSGetModule(classes);
 }
