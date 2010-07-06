@@ -69,6 +69,8 @@ public class Application {
 	/*public static void main(String[] args) throws Exception {
 		Application app = new Application();
 		Document doc = app.getActiveDocument();
+		int tabStops[] = { 1440 };
+		doc.setBibliographyStyle(0, 720, 0, 0, tabStops, 1);
 		MarkEnumerator me = doc.getFields("ReferenceMark");
 		while(me.hasMoreElements()) {
 			System.out.println(me.getNext().getCode());

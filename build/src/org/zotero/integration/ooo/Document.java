@@ -39,6 +39,8 @@ import com.sun.star.beans.XPropertySet;
 import com.sun.star.container.XEnumeration;
 import com.sun.star.container.XEnumerationAccess;
 import com.sun.star.container.XIndexAccess;
+import com.sun.star.container.XNameAccess;
+import com.sun.star.container.XNameContainer;
 import com.sun.star.container.XNamed;
 import com.sun.star.frame.XController;
 import com.sun.star.frame.XDesktop;
@@ -46,6 +48,12 @@ import com.sun.star.frame.XFrame;
 import com.sun.star.lang.XComponent;
 import com.sun.star.lang.XMultiServiceFactory;
 import com.sun.star.lang.XServiceInfo;
+import com.sun.star.style.LineSpacing;
+import com.sun.star.style.LineSpacingMode;
+import com.sun.star.style.TabAlign;
+import com.sun.star.style.TabStop;
+import com.sun.star.style.XStyle;
+import com.sun.star.style.XStyleFamiliesSupplier;
 import com.sun.star.text.XBookmarksSupplier;
 import com.sun.star.text.XParagraphCursor;
 import com.sun.star.text.XReferenceMarksSupplier;
@@ -82,9 +90,11 @@ public class Document {
 	public static final String FIELD_PLACEHOLDER = "{Citation}";
 	public static final String BOOKMARK_REFERENCE_PROPERTY = "ZOTERO_BREF_";
 	
-	public static int BOOKMARK_ADD_CHARS = 12;
-	public static int REFMARK_ADD_CHARS = 10;
-	public static String BIBLIOGRAPHY_CODE = "BIBL";
+	public static final int BOOKMARK_ADD_CHARS = 12;
+	public static final int REFMARK_ADD_CHARS = 10;
+	public static final String BIBLIOGRAPHY_CODE = "BIBL";
+	
+	public static final double MM_PER_100_TWIP = 25.4/1440*100;
 	
 	public static String ERROR_STRING = "An error occurred communicating with Zotero:";
 	TextTableManager textTableManager;
@@ -373,7 +383,62 @@ public class Document {
 	    }
     }
     
-    public XTextViewCursor getSelection() {
+    public void setBibliographyStyle(int firstLineIndent, int bodyIndent, int lineSpacing,
+    		int entrySpacing, int[] tabStops, int tabStopCount) { 
+    	try {
+    		XStyleFamiliesSupplier styleFamilies = (XStyleFamiliesSupplier) UnoRuntime.queryInterface(
+    				XStyleFamiliesSupplier.class, component);
+    		XNameAccess styleFamilyNames = styleFamilies.getStyleFamilies();
+    		XNameAccess paraStyleNames = (XNameAccess) UnoRuntime.queryInterface(
+    				XNameAccess.class, styleFamilyNames.getByName("ParagraphStyles"));
+    		XPropertySet styleProps;
+    		
+    		try {
+    			// use "Bibliography 1" if available
+    			styleProps = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class,
+    					paraStyleNames.getByName("Bibliography 1"));
+    		} catch(Exception e) {
+    			// otherhttp://api.openoffice.org/servlets/ProjectMailingListListwise, create it
+    			XStyle style = (XStyle) UnoRuntime.queryInterface(XStyle.class,
+    					docFactory.createInstance("com.sun.star.style.ParagraphStyle")); 
+        	    XNameContainer styleNameContainer = (XNameContainer) UnoRuntime.queryInterface(XNameContainer.class,
+        	    		styleFamilyNames.getByName("ParagraphStyles")); 
+    			styleNameContainer.insertByName("Bibliography 1", style);
+    			style.setParentStyle("Default");
+    			styleProps = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, style);
+    		}
+    		
+    		// first line indent
+    		styleProps.setPropertyValue("ParaFirstLineIndent", (int) (firstLineIndent*MM_PER_100_TWIP));
+    		
+    		// indent
+    		styleProps.setPropertyValue("ParaLeftMargin", (int) (bodyIndent*MM_PER_100_TWIP));
+    		
+    		// line spacing
+    		LineSpacing lineSpacingStruct = new LineSpacing();
+    		lineSpacingStruct.Mode = LineSpacingMode.MINIMUM;
+    		lineSpacingStruct.Height = (short) (lineSpacing*MM_PER_100_TWIP);
+    		styleProps.setPropertyValue("ParaLineSpacing", lineSpacingStruct);
+    		
+    		// entry spacing
+    		styleProps.setPropertyValue("ParaBottomMargin", (int) (entrySpacing*MM_PER_100_TWIP));
+    		
+    		// tab stops
+    		TabStop[] tabStopStruct = new TabStop[tabStopCount];
+    		for(int i=0; i<tabStopCount; i++) {
+    			tabStopStruct[i] = new TabStop();
+    			tabStopStruct[i].Position = (int) (tabStops[i]*MM_PER_100_TWIP);
+    			tabStopStruct[i].Alignment = TabAlign.LEFT;
+    		}
+    		styleProps.setPropertyValue("ParaTabStops", tabStopStruct);
+    		
+    		// this takes less than half as many lines in py-appscript!
+    	} catch(Exception e) {
+	    	displayAlert(getErrorString(e), 0, 0);
+	    }
+    }
+    
+    XTextViewCursor getSelection() {
     	XTextViewCursorSupplier supplier = (XTextViewCursorSupplier) UnoRuntime.queryInterface(XTextViewCursorSupplier.class, controller);
     	return supplier.getViewCursor();
     }
@@ -445,14 +510,14 @@ public class Document {
 
 	private static final String randomCharacterSet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 	private static Random rand = null;
-    public static String getRandomString(int len) {
+    static String getRandomString(int len) {
     	if(rand == null) rand = new Random();
     	StringBuilder sb = new StringBuilder(len);
     	for(int i = 0; i < len; i++) sb.append(randomCharacterSet.charAt(rand.nextInt(randomCharacterSet.length())));
     	return sb.toString();
     }
     
-    public static String getErrorString(Exception e) {
+    static String getErrorString(Exception e) {
     	StringWriter sw = new StringWriter();
     	e.printStackTrace(new PrintWriter(sw));
     	return "An error occurred communicating with Zotero:\n"+sw.toString();

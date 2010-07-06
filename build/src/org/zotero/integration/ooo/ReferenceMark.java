@@ -145,28 +145,17 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	}
 	
 	public void setText(String textString, boolean isRich) {
-		Object[] oldPropertyValues = null;
-		XPropertySet rangeProps = null;
-		
 		try {
-			boolean multiline = isRich && (textString.contains("\\\n")	|| textString.contains("\\par") || textString.contains("\\\r\n"));
+			boolean isBibliography = getCode().startsWith("BIBL");
 			
-			if(multiline) {
+			if(isBibliography) {
 				prepareMultiline();
 			}
 			
 			XTextCursor cursor = text.createTextCursorByRange(range);
 			range = cursor;
 			
-			if(!multiline) {
-				oldPropertyValues = new Object[PROPERTIES_CHANGE_TO_DEFAULT.length];
-				
-				// store properties
-				rangeProps = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, range);
-				for(int i=0; i<PROPERTIES_CHANGE_TO_DEFAULT.length; i++) {
-					oldPropertyValues[i] = rangeProps.getPropertyValue(PROPERTIES_CHANGE_TO_DEFAULT[i]);
-				}
-				
+			if(!isBibliography) {
 				// move citation to its own paragraph so its formatting isn't altered automatically
 				// because of the text on either side of it
 				if(isRich) {
@@ -182,17 +171,17 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 			rangePropStates.setPropertiesToDefault(PROPERTIES_CHANGE_TO_DEFAULT);
 
 			if(isRich) {
-				if(multiline) {
+				/*if(isBibliography) {
 					// Add a new line to the start of the bibliography so that the paragraph format
 					// for the first entry will be correct. Without the new line, when converting
 					// citation styles, the first entry of the bibliography will keep the same paragraph
 					// formatting as the previous citation style
 					textString = "{\\rtf\\\n" + textString.substring(6);
-				}
+				}*/
 
 				insertRTF(textString, cursor);
 
-				if(multiline) {
+				if(isBibliography) {
 					// Remove the new line from the bibliography (added above). Have to remove the
 					// new line before the textSection and then adjust the range so the new line
 					// starting the textSection is outside of the range so that the 
@@ -200,7 +189,6 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 					//  extra new line at the end of the textSection.
 					String rangeString = cursor.getString();
 					int previousLen = rangeString.length();
-					System.out.println(previousLen);
 					int removeLastNewLine = 0;
 					if(rangeString.codePointAt(previousLen-1) == 10) {
 						removeLastNewLine = 1;
@@ -211,6 +199,8 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 					}
 					cursor.collapseToStart();
 					moveCursorRight(cursor, previousLen-removeLastNewLine);
+					XPropertySet rangeProps = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, range);
+					rangeProps.setPropertyValue("ParaStyleName", "Bibliography 1");
 				}
 			} else {
 				range.setString(textString);
@@ -218,7 +208,7 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 
 			reattachMark();
 			
-			if(!multiline) {
+			if(!isBibliography) {
 				if(isRich) {
 					// remove previously added paragraphs
 					XTextCursor dupRange;
@@ -260,13 +250,16 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		try {
 			int rnd = rawCode.lastIndexOf(" RND");
 			if(rnd == -1) rnd = rawCode.length()-6;	// for compatibility with old, pre-release Python plug-in
-			
 			for(String prefix : Document.PREFIXES) {
 				if(rawCode.startsWith(prefix)) {
-					return rawCode.substring(prefix.length(), rnd);
+					if(rnd > 0) {
+						return rawCode.substring(prefix.length(), rnd);
+					} else {
+						return rawCode;
+					}
 				}
 			}
-			
+				
 			throw new Exception("Invalid code prefix");
 		} catch(Exception e) {
 	    	doc.displayAlert(Document.getErrorString(e), 0, 0);
@@ -418,18 +411,13 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	}
 	
 	protected void reattachMark() throws Exception {
-		if(isTextSection) {
-			XTextCursor cursor = doc.text.createTextCursorByRange(range);
-			cursor.collapseToStart();
-			cursor.goRight((short)1, true);
-			cursor.setString("");
-		} else {
-			named = (XNamed) UnoRuntime.queryInterface(XNamed.class,
-					doc.docFactory.createInstance("com.sun.star.text.ReferenceMark"));
-			named.setName(rawCode);
-			textContent = (XTextContent) UnoRuntime.queryInterface(XTextContent.class, named);
-			textContent.attach(range);
-		}
+		if(isTextSection) return;
+	
+		named = (XNamed) UnoRuntime.queryInterface(XNamed.class,
+				doc.docFactory.createInstance("com.sun.star.text.ReferenceMark"));
+		named.setName(rawCode);
+		textContent = (XTextContent) UnoRuntime.queryInterface(XTextContent.class, named);
+		textContent.attach(range);
 	}
 	
 	protected void moveCursorRight(XTextCursor cursor, int length) {
