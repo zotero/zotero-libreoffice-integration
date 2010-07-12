@@ -31,7 +31,7 @@ const REQUIRED_ADDONS = [{
 	name: "Zotero",
 	url: "zotero.org",
 	id: "zotero@chnm.gmu.edu",
-	minVersion: "2.0b7.SVN"
+	minVersion: "2.1a1.SVN"
 }];
 
 const nsIFilePicker = Components.interfaces.nsIFilePicker;

@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="MacRoman" standalone="no"?>
 <jardesc>
-    <jar path="/Users/simon/Library/Application Support/Firefox/Profiles/hhx7fskk.Main Profile/extensions/zoteroOpenOfficeIntegration@zotero.org/lib/zoteroOpenOfficeIntegration.jar"/>
+    <jar path="/Users/simon/Desktop/Development/FS/zotero/integration/xpcom/OpenOffice/branches/3.0/lib/zoteroOpenOfficeIntegration.jar"/>
     <options buildIfNeeded="true" compress="true" descriptionLocation="/Zotero OpenOffice Integration/zoteroOpenOfficeIntegration.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>
     <manifest generateManifest="true" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
         <sealing sealJar="false">
-            <packagesToSeal/>
+            <packagesToSeal>
+                <package handleIdentifier="=Zotero OpenOffice Integration/src&lt;org.zotero.integration.ooo"/>
+            </packagesToSeal>
             <packagesToUnSeal/>
         </sealing>
     </manifest>
