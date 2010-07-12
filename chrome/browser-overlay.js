@@ -27,29 +27,48 @@ const ZOTEROOPENOFFICEINTEGRATION_PREF = "extensions.zoteroOpenOfficeIntegration
 const URE_PREF = "extensions.zoteroOpenOfficeIntegration.urePath";
 const SOFFICE_PREF = "extensions.zoteroOpenOfficeIntegration.sofficePath";
 
-const nsIFilePicker = Components.interfaces.nsIFilePicker;
-var zoteroOpenOfficeIntegration_prefService, zoteroOpenOfficeIntegration_progressWindow,
-	zoteroOpenOfficeIntegration_progressWindowLabel, zoteroOpenOfficeIntegration_ext;
+const REQUIRED_ADDONS = [{
+	name: "Zotero",
+	url: "zotero.org",
+	id: "zotero@chnm.gmu.edu",
+	minVersion: "2.0b7.SVN"
+}];
 
-function ZoteroOpenOfficeIntegration_checkVersion(name, url, id, minVersion) {
-	// check Zotero version
-	try {
-		var ext = Components.classes['@mozilla.org/extensions/manager;1']
-		   .getService(Components.interfaces.nsIExtensionManager).getItemForID(id);
-		var comp = Components.classes["@mozilla.org/xpcom/version-comparator;1"]
-			.getService(Components.interfaces.nsIVersionComparator)
-			.compare(ext.version, minVersion);
-	} catch(e) {
-		var comp = -1;
-	}
-	
-	if(comp < 0) {
-		var err = 'This version of Zotero OpenOffice Integration requires '+name+' '+minVersion+
-			' or later to run. Please download the latest version of '+name+' from '+url+'.';
-		var prompts = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
-			.getService(Components.interfaces.nsIPromptService)
-			.alert(null, 'Zotero OpenOffice Integration Error', err);
-		throw err;
+const nsIFilePicker = Components.interfaces.nsIFilePicker;
+
+var zoteroOpenOfficeIntegration_prefService, zoteroOpenOfficeIntegration_progressWindow,
+	zoteroOpenOfficeIntegration_progressWindowLabel, zoteroOpenOfficeIntegration_version,
+	zoteroOpenOfficeIntegration_addons;
+
+var appInfo = Components.classes["@mozilla.org/xre/app-info;1"].
+                         getService(Components.interfaces.nsIXULAppInfo);
+if(appInfo.platformVersion[0] == 2) {
+	Components.utils.import("resource://gre/modules/AddonManager.jsm");
+} else {
+	var AddonManager = false;
+}
+
+function ZoteroOpenOfficeIntegration_checkVersions() {
+	for(var i=0; i<REQUIRED_ADDONS.length; i++) {
+		var addon = REQUIRED_ADDONS[i];
+		
+		// check Zotero version
+		try {
+			var comp = Components.classes["@mozilla.org/xpcom/version-comparator;1"]
+				.getService(Components.interfaces.nsIVersionComparator)
+				.compare(zoteroOpenOfficeIntegration_addons[i+1].version, addon.minVersion);
+		} catch(e) {
+			var comp = -1;
+		}
+		
+		if(comp < 0) {
+			var err = 'This version of Zotero OpenOffice Integration requires '+addon.name+' '+addon.minVersion+
+				' or later to run. Please download the latest version of '+addon.name+' from '+addon.url+'.';
+			var prompts = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
+				.getService(Components.interfaces.nsIPromptService)
+				.alert(null, 'Zotero OpenOffice Integration Error', err);
+			throw err;
+		}
 	}
 }
 
@@ -242,10 +261,15 @@ function ZoteroOpenOfficeIntegration_installComponents(callback) {
 		getFileFromURLSpec(zoteroOpenOfficeIntegration_prefService.getCharPref(SOFFICE_PREF));
 	
 	// now install the oxt using unopkg
-	var oxt = Components.classes["@mozilla.org/extensions/manager;1"].
-		getService(Components.interfaces.nsIExtensionManager).
-		getInstallLocation("zoteroOpenOfficeIntegration@zotero.org").
-		getItemLocation("zoteroOpenOfficeIntegration@zotero.org");
+	if(AddonManager) {
+		var oxt = zoteroOpenOfficeIntegration_addons[0].getResourceURI().
+			QueryInterface(Components.interfaces.nsIFileURL).file;
+	} else {
+		var oxt = Components.classes["@mozilla.org/extensions/manager;1"].
+			getService(Components.interfaces.nsIExtensionManager).
+			getInstallLocation("zoteroOpenOfficeIntegration@zotero.org").
+			getItemLocation("zoteroOpenOfficeIntegration@zotero.org");
+	}
 	oxt.append("install");
 	oxt.append("Zotero_OpenOffice_Integration.oxt");
 	
@@ -268,7 +292,7 @@ function ZoteroOpenOfficeIntegration_installComponents(callback) {
 		} catch(e) {}
 		if(updateLabel) zoteroOpenOfficeIntegration_progressWindowLabel.value = "Adding OpenOffice.org Extension...";
 		proc.run(true, ["add", oxt.path], 2);
-		zoteroOpenOfficeIntegration_prefService.setCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF, zoteroOpenOfficeIntegration_ext.version);
+		zoteroOpenOfficeIntegration_prefService.setCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF, zoteroOpenOfficeIntegration_version);
 		callback(true);
 	} else {
 		// use runAsync() from nsIProcess2 for Fx3.5
@@ -286,7 +310,7 @@ function ZoteroOpenOfficeIntegration_installComponents(callback) {
 		proc.runAsync(["remove", "org.Zotero.integration.openoffice"], 2, {"observe":function() {
 			if(updateLabel) zoteroOpenOfficeIntegration_progressWindowLabel.value = "Adding Zotero OpenOffice.org Extension...";
 			proc.runAsync(["add", oxt.path], 2, {"observe":function(process, topic) {
-				zoteroOpenOfficeIntegration_prefService.setCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF, zoteroOpenOfficeIntegration_ext.version);
+				zoteroOpenOfficeIntegration_prefService.setCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF, zoteroOpenOfficeIntegration_version);
 				callback(topic == "process-finished" && !process.exitValue);
 			}});
 		}});
@@ -338,7 +362,7 @@ function ZoteroOpenOfficeIntegration_firstRunListener() {
 		window.setTimeout(function() {
 			zoteroOpenOfficeIntegration_progressWindow.focus();
 			try {
-				ZoteroOpenOfficeIntegration_checkVersion("Zotero", "zotero.org", "zotero@chnm.gmu.edu", "2.0b7.SVN");
+				ZoteroOpenOfficeIntegration_checkVersions();
 			} catch(e) {
 				zoteroOpenOfficeIntegration_progressWindow.close();
 				throw e;
@@ -367,16 +391,26 @@ function ZoteroOpenOfficeIntegration_firstRunListener() {
 	}, 100);
 }
 
-function ZoteroOpenOfficeIntegration_firstRun() {
-	zoteroOpenOfficeIntegration_progressWindow = window.openDialog("chrome://zotero-openoffice-integration/content/progress.xul", "",
-			"chrome,resizable=no,close=no,centerscreen");
-	zoteroOpenOfficeIntegration_progressWindow.addEventListener("load", ZoteroOpenOfficeIntegration_firstRunListener, false);
+function ZoteroOpenOfficeIntegration_checkFirstRun(version) {
+	zoteroOpenOfficeIntegration_version = zoteroOpenOfficeIntegration_addons[0].version;
+	if(zoteroOpenOfficeIntegration_prefService.getCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF) != version && document.getElementById("appcontent")) {
+		zoteroOpenOfficeIntegration_progressWindow = window.openDialog("chrome://zotero-openoffice-integration/content/progress.xul", "",
+				"chrome,resizable=no,close=no,centerscreen");
+		zoteroOpenOfficeIntegration_progressWindow.addEventListener("load", ZoteroOpenOfficeIntegration_firstRunListener, false);
+	}
 }
 
-zoteroOpenOfficeIntegration_ext = Components.classes['@mozilla.org/extensions/manager;1']
-   .getService(Components.interfaces.nsIExtensionManager).getItemForID(ZOTEROOPENOFFICEINTEGRATION_ID);
 zoteroOpenOfficeIntegration_prefService = Components.classes["@mozilla.org/preferences-service;1"].
 	getService(Components.interfaces.nsIPrefBranch);
-if(zoteroOpenOfficeIntegration_prefService.getCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF) != zoteroOpenOfficeIntegration_ext.version && document.getElementById("appcontent")) {
-	ZoteroOpenOfficeIntegration_firstRun();
+var zoteroOpenOfficeIntegration_ids = [ZOTEROOPENOFFICEINTEGRATION_ID].concat([req.id for each(req in REQUIRED_ADDONS)]);
+if(AddonManager) {
+	AddonManager.getAddonsByIDs(zoteroOpenOfficeIntegration_ids, function(addons) {
+		zoteroOpenOfficeIntegration_addons = addons;
+		ZoteroOpenOfficeIntegration_checkFirstRun();
+	});
+} else {
+	var extMan = Components.classes['@mozilla.org/extensions/manager;1'].
+	                        getService(Components.interfaces.nsIExtensionManager)
+	zoteroOpenOfficeIntegration_addons = [extMan.getItemForID(id) for each(id in zoteroOpenOfficeIntegration_ids)];
+	ZoteroOpenOfficeIntegration_checkFirstRun();
 }
