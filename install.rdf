@@ -21,5 +21,12 @@
 			<em:maxVersion>3.6.*</em:maxVersion>
 		</Description>
 	</em:targetApplication>
+	<em:targetApplication>
+		<Description>
+			<em:id>zotero@chnm.gmu.edu</em:id>
+			<em:minVersion>2.1.SVN.r7003</em:minVersion>
+			<em:maxVersion>2.1.*</em:maxVersion>
+		</Description>
+	</em:targetApplication>
 </Description>
 </RDF>
