@@ -1,5 +1,9 @@
 <?xml version="1.0"?>
-<overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" onload="ZoteroOpenOfficeIntegration_firstRun()">
+<overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
     <script type="application/x-javascript" src="chrome://zotero/content/include.js"/>
-    <script type="application/x-javascript" src="chrome://zotero-openoffice-integration/content/browser-overlay.js"/>
+    <script type="application/x-javascript" src="chrome://zotero-openoffice-integration/content/common.js"/>
+    <script type="application/x-javascript" src="chrome://zotero-openoffice-integration/content/macWord.js"/>
+    <script type="application/x-javascript">
+    	new ZoteroPluginInstaller(ZoteroOpenOfficeIntegration);
+    </script>
 </overlay>

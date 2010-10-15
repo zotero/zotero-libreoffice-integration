@@ -7,7 +7,7 @@
 	id="zotero-progress">
 	<vbox style="padding:10px">
 		<hbox align="stretch">
-			<label id="progress-label" flex="1" value="Installing Zotero OpenOffice Integration..."/>
+			<label id="progress-label" flex="1"/>
 		</hbox>
 		<progressmeter id="progress-indicator" mode="undetermined" />
 	</vbox>

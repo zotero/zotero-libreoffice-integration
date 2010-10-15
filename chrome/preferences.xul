@@ -1,37 +1,56 @@
 <?xml version="1.0"?>
-<?xml-stylesheet href="chrome://global/skin/global.css"?>
-<?xml-stylesheet href="chrome://browser/skin/preferences/preferences.css"?>
-<prefwindow title="Integration Preferences" onload="moveToAlertPosition();"
-		xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-	<prefpane id="zotero-openoffice-integration-general">
-		<preferences>
-			<preference id="pref-urePath" name="extensions.zoteroOpenOfficeIntegration.urePath" type="string" instantApply="true"/>
-			<preference id="pref-sofficePath" name="extensions.zoteroOpenOfficeIntegration.sofficePath" type="string" instantApply="true"/>
-		</preferences>
-		<hbox pack="center">
-			<button label="Detect OpenOffice.org Paths" oncommand="ZoteroOpenOfficeIntegration_detectPaths()"/>
-			<button label="Reinstall OpenOffice.org Components" oncommand="ZoteroOpenOfficeIntegration_reinstallComponents()"/>
-		</hbox>
-		<grid>
-			<columns>
-				<column/>
-				<column flex="1"/>
-				<column/>
-			</columns>
-			<rows>
-				<row align="center">
-					<label value="Java UNO Runtime Directory:"/>
-					<textbox id="text-urePath" preference="pref-urePath" size="50"/>
-					<button label="Choose..." oncommand="ZoteroOpenOfficeIntegration_selectURE(); "/>
-				</row>
-				<row align="center">
-					<label value="soffice Executable Directory:"/>
-					<textbox id="text-urePath" preference="pref-sofficePath" size="50"/>
-					<button label="Choose..." oncommand="ZoteroOpenOfficeIntegration_selectSoffice()"/>
-				</row>
-			</rows>
-		</grid>
-	</prefpane>
-    <script type="application/x-javascript" src="chrome://zotero/content/include.js"/>
-	<script type="application/x-javascript" src="chrome://zotero-openoffice-integration/content/browser-overlay.js"/>
-</prefwindow>
+<overlay id="openOfficeIntegration"
+         xmlns:html="http://www.w3.org/1999/xhtml"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+	<preferences id="zotero-preferences-cite">
+		<preference id="pref-urePath" name="extensions.zoteroOpenOfficeIntegration.urePath" type="string" instantApply="true"/>
+		<preference id="pref-sofficePath" name="extensions.zoteroOpenOfficeIntegration.sofficePath" type="string" instantApply="true"/>
+	</preferences>
+	<tabpanel id="wordProcessors">
+		<groupbox id="wordProcessors-openOfficeIntegration" position="1">
+			<caption label="OpenOffice.org/LibreOffice/NeoOffice"/>
+			<description id="wordProcessors-openOffice-description" width="45em" />
+			<hbox pack="center">
+				<button label="Detect Paths" oncommand="ZoteroOpenOfficeIntegration.detectPaths()"/>
+				<button id="wordProcessors-openOffice-install" oncommand="updateOpenOfficeIntegration(new ZoteroPluginInstaller(ZoteroOpenOfficeIntegration, false, true))"/>
+			</hbox>
+			<grid>
+				<columns>
+					<column/>
+					<column flex="1"/>
+					<column/>
+				</columns>
+				<rows>
+					<row align="center">
+						<label value="UNO Directory:"/>
+						<textbox id="text-urePath" preference="pref-urePath"/>
+						<button label="Choose..." oncommand="ZoteroOpenOfficeIntegration.selectURE(); "/>
+					</row>
+					<row align="center">
+						<label value="soffice Directory:"/>
+						<textbox id="text-urePath" preference="pref-sofficePath"/>
+						<button label="Choose..." oncommand="ZoteroOpenOfficeIntegration.selectSoffice()"/>
+					</row>
+				</rows>
+			</grid>
+			<script src="chrome://zotero-openoffice-integration/content/common.js"/>
+			<script src="chrome://zotero-openoffice-integration/content/openOffice.js"/>
+			<script>
+			<![CDATA[
+			window.addEventListener("load", function() {
+				var zpi = new ZoteroPluginInstaller(ZoteroOpenOfficeIntegration, true);
+				updateOpenOfficeIntegration(zpi);
+			}, false);
+			
+			function updateOpenOfficeIntegration(zpi) {
+				var isInstalled = zpi.isInstalled();
+				document.getElementById("wordProcessors-openOffice-description").textContent =
+					"The Zotero OpenOffice.org/LibreOffice/NeoOffice extension is "+(isInstalled ? "" : "not ")+"currently installed.";
+				document.getElementById("wordProcessors-openOffice-install").label =
+					(isInstalled ? "Reinstall" : "Install")+" Extension";
+			}
+			]]>
+			</script>
+		</groupbox>
+	</tabpanel>
+</overlay>
