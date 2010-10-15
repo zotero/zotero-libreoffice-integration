@@ -69,7 +69,7 @@ ZoteroPluginInstaller.prototype = {
 		if(this._force || (
 				(
 					this.prefService.getCharPref(this._addon.EXTENSION_PREF_BRANCH+".version") != this._version
-					|| (!Zotero.isStandalone && !this.prefService.getBooleanPref(this._addon.EXTENSION_PREF_BRANCH+".installed"))
+					|| (!Zotero.isStandalone && !this.prefService.getBoolPref(this._addon.EXTENSION_PREF_BRANCH+".installed"))
 				) && document.getElementById("appcontent"))) {
 			var me = this;
 			this._progressWindow = window.openDialog("chrome://"+this._addon.EXTENSION_DIR+"/content/progress.xul", "",

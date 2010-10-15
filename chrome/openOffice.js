@@ -45,7 +45,7 @@ var ZoteroOpenOfficeIntegration = new function() {
 	
 	this.install = function(zpi) {
 		if(installing) throw this.EXTENSION_STRING+" installation already in progress; aborting";
-		var installing = true;
+		installing = true;
 		
 		zoteroPluginInstaller = zpi;
 		
