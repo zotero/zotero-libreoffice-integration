@@ -32,8 +32,8 @@ if(appInfo.platformVersion[0] == 2) {
 
 var ZoteroPluginInstaller = function(addon, failSilently, force) {
 	this._addon = addon;
-	this._failSilently = failSilently;
-	this._force = force;
+	this.failSilently = failSilently;
+	this.force = force;
 	
 	var prefService = Components.classes["@mozilla.org/preferences-service;1"].
 			getService(Components.interfaces.nsIPrefService);
@@ -67,7 +67,7 @@ ZoteroPluginInstaller.prototype = {
 			return;
 		}
 		
-		if(this._force || (
+		if(this.force || (
 				(
 					this.prefBranch.getCharPref("version") != this._version
 					|| (!Zotero.isStandalone && !this.prefBranch.getBoolPref("installed"))
@@ -112,7 +112,7 @@ ZoteroPluginInstaller.prototype = {
 		this.closeProgressWindow();
 		this.prefBranch.setCharPref("version", this._version);
 		this.prefBranch.setBoolPref("installed", true);
-		if(this._force) {
+		if(this.force) {
 			Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
 				.getService(Components.interfaces.nsIPromptService)
 				.alert(window, this._addon.EXTENSION_STRING,
@@ -124,7 +124,7 @@ ZoteroPluginInstaller.prototype = {
 		this.closeProgressWindow();
 		this.prefBranch.setCharPref("version", this._version);
 		this.prefBranch.setBoolPref("installed", false);
-		if(this._failSilently) return;
+		if(this.failSilently) return;
 		if(this._errorDisplayed) return;
 		Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
 			.getService(Components.interfaces.nsIPromptService)
@@ -167,7 +167,7 @@ ZoteroPluginInstaller.prototype = {
 				var err = 'This version of '+this._addon.EXTENSION_STRING+' requires '+checkAddon.name+' '+checkAddon.minVersion+
 					' or later to run. Please download the latest version of '+checkAddon.name+' from '+checkAddon.url+'.';
 				this.error(err);
-				if(this._failSilently) {
+				if(this.failSilently) {
 					throw err;
 				} else {
 					Zotero.debug("Not installing "+this._addon.EXTENSION_STRING+": requires "+checkAddon.name+" "+checkAddon.minVersion);

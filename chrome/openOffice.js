@@ -53,7 +53,7 @@ var ZoteroOpenOfficeIntegration = new function() {
 		if(prefBranch.getCharPref(SOFFICE_PREF) == "" ||
 		   prefBranch.getCharPref(URE_PREF) == "") {
 			zoteroPluginInstaller.setProgressWindowLabel("Detecting OpenOffice.org Paths...");
-			this.detectPaths();
+			this.detectPaths(zpi.failSilently);
 		}
 		
 		pathToAddon = zoteroPluginInstaller.getAddonPath(this.EXTENSION_ID);
@@ -97,7 +97,7 @@ var ZoteroOpenOfficeIntegration = new function() {
 		prefBranch.setCharPref(URE_PREF, ioService.newFileURI(fp.file).spec);
 	}
 	
-	this.detectPaths = function detectPaths() {
+	this.detectPaths = function detectPaths(failSilently) {
 		try {
 			var OPENOFFICE_LOCATIONS = {
 				Mac:[
@@ -180,7 +180,13 @@ var ZoteroOpenOfficeIntegration = new function() {
 					if(!bestFile) bestFile = file;
 				}
 			} while(appLocations.length);
-				
+			
+			// if 0 installations and we should silently fail, then silently fail
+			if(i == 0 && failSilently) {
+				if(zoteroPluginInstaller) zoteroPluginInstaller.error();
+				return;
+			}
+			
 			// if we have 0 or >1 found OpenOffice installations, ask user to pick
 			if(i != 1) {
 				var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(Components.interfaces.nsIFilePicker);
