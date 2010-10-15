@@ -35,8 +35,9 @@ var ZoteroPluginInstaller = function(addon, failSilently, force) {
 	this._failSilently = failSilently;
 	this._force = force;
 	
-	this.prefService = Components.classes["@mozilla.org/preferences-service;1"].
-			getService(Components.interfaces.nsIPrefBranch);
+	var prefService = Components.classes["@mozilla.org/preferences-service;1"].
+			getService(Components.interfaces.nsIPrefService);
+	this.prefBranch = prefService.getBranch(this._addon.EXTENSION_PREF_BRANCH);
 	
 	var me = this;
 	var extensionIDs = [this._addon.EXTENSION_ID].concat([req.id for each(req in this._addon.REQUIRED_ADDONS)]);
@@ -68,8 +69,8 @@ ZoteroPluginInstaller.prototype = {
 		
 		if(this._force || (
 				(
-					this.prefService.getCharPref(this._addon.EXTENSION_PREF_BRANCH+".version") != this._version
-					|| (!Zotero.isStandalone && !this.prefService.getBoolPref(this._addon.EXTENSION_PREF_BRANCH+".installed"))
+					this.prefBranch.getCharPref("version") != this._version
+					|| (!Zotero.isStandalone && !this.prefBranch.getBoolPref("installed"))
 				) && document.getElementById("appcontent"))) {
 			var me = this;
 			this._progressWindow = window.openDialog("chrome://"+this._addon.EXTENSION_DIR+"/content/progress.xul", "",
@@ -79,8 +80,8 @@ ZoteroPluginInstaller.prototype = {
 	},
 	
 	"isInstalled":function() {
-		return this.prefService.getCharPref(this._addon.EXTENSION_PREF_BRANCH+".version") == this._version && 
-			this.prefService.getBoolPref(this._addon.EXTENSION_PREF_BRANCH+".installed");
+		return this.prefBranch.getCharPref("version") == this._version && 
+			this.prefBranch.getBoolPref("installed");
 	},
 	
 	"getAddonPath":function(addonID) {
@@ -109,8 +110,8 @@ ZoteroPluginInstaller.prototype = {
 	
 	"success":function() {
 		this.closeProgressWindow();
-		this.prefService.setCharPref(this._addon.EXTENSION_PREF_BRANCH+".version", this._version);
-		this.prefService.setBoolPref(this._addon.EXTENSION_PREF_BRANCH+".installed", true);
+		this.prefBranch.setCharPref("version", this._version);
+		this.prefBranch.setBoolPref("installed", true);
 		if(this._force) {
 			Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
 				.getService(Components.interfaces.nsIPromptService)
@@ -121,8 +122,8 @@ ZoteroPluginInstaller.prototype = {
 	
 	"error":function(error) {
 		this.closeProgressWindow();
-		this.prefService.setCharPref(this._addon.EXTENSION_PREF_BRANCH+".version", this._version);
-		this.prefService.setBoolPref(this._addon.EXTENSION_PREF_BRANCH+".installed", false);
+		this.prefBranch.setCharPref("version", this._version);
+		this.prefBranch.setBoolPref("installed", false);
 		if(this._failSilently) return;
 		if(this._errorDisplayed) return;
 		Components.classes["@mozilla.org/embedcomp/prompt-service;1"]

@@ -23,8 +23,8 @@
 */
 
 var ZoteroOpenOfficeIntegration = new function() {
-	const URE_PREF = "extensions.zoteroOpenOfficeIntegration.urePath";
-	const SOFFICE_PREF = "extensions.zoteroOpenOfficeIntegration.sofficePath";
+	const URE_PREF = "urePath";
+	const SOFFICE_PREF = "sofficePath";
 	
 	this.EXTENSION_STRING = "Zotero OpenOffice Integration";
 	this.EXTENSION_ID = "zoteroOpenOfficeIntegration@zotero.org";
@@ -39,7 +39,7 @@ var ZoteroOpenOfficeIntegration = new function() {
 		minVersion: "2.1a1.SVN"
 	}];
 	
-	var zoteroPluginInstaller, pathToAddon, installing;
+	var zoteroPluginInstaller, pathToAddon, installing, prefBranch;
 	
 	this.verifyNotCorrupt = function() {}
 	
@@ -48,9 +48,10 @@ var ZoteroOpenOfficeIntegration = new function() {
 		installing = true;
 		
 		zoteroPluginInstaller = zpi;
+		prefBranch = zoteroPluginInstaller.prefBranch;
 		
-		if(zoteroPluginInstaller.prefService.getCharPref(SOFFICE_PREF) == "" ||
-		   zoteroPluginInstaller.prefService.getCharPref(URE_PREF) == "") {
+		if(prefBranch.getCharPref(SOFFICE_PREF) == "" ||
+		   prefBranch.getCharPref(URE_PREF) == "") {
 			zoteroPluginInstaller.setProgressWindowLabel("Detecting OpenOffice.org Paths...");
 			detectPaths();
 		}
@@ -82,7 +83,7 @@ var ZoteroOpenOfficeIntegration = new function() {
 		if(fp.show() != Components.interfaces.nsIFilePicker.returnOK) throw "User cancelled Zotero OpenOffice Integration install";
 		var ioService = Components.classes["@mozilla.org/network/io-service;1"].
 			getService(Components.interfaces.nsIIOService);
-		zoteroPluginInstaller.prefService.setCharPref(SOFFICE_PREF, ioService.newFileURI(fp.file).spec);
+		prefBranch.setCharPref(SOFFICE_PREF, ioService.newFileURI(fp.file).spec);
 	}
 	
 	this.selectURE = function selectURE(parentDirectory) {
@@ -93,7 +94,7 @@ var ZoteroOpenOfficeIntegration = new function() {
 		if(fp.show() != Components.interfaces.nsIFilePicker.returnOK) throw "User cancelled Zotero OpenOffice Integration install";
 		var ioService = Components.classes["@mozilla.org/network/io-service;1"].
 			getService(Components.interfaces.nsIIOService);
-		zoteroPluginInstaller.prefService.setCharPref(URE_PREF, ioService.newFileURI(fp.file).spec);
+		prefBranch.setCharPref(URE_PREF, ioService.newFileURI(fp.file).spec);
 	}
 	
 	this.detectPaths = function detectPaths() {
@@ -223,20 +224,24 @@ var ZoteroOpenOfficeIntegration = new function() {
 				if(!parentDirectory.isDirectory()) parentDirectory = parentDirectory.parent;
 			}
 			
-			var prefService = Components.classes["@mozilla.org/preferences-service;1"].
-				getService(Components.interfaces.nsIPrefBranch);
+			if(!prefBranch) {
+				var prefService = Components.classes["@mozilla.org/preferences-service;1"].
+					getService(Components.interfaces.nsIPrefService);
+				prefBranch = prefService.getBranch(this.EXTENSION_PREF_BRANCH);
+			}
+			
 			var ioService = Components.classes["@mozilla.org/network/io-service;1"].
 				getService(Components.interfaces.nsIIOService);
 			if(!sofficePath) {
 				sofficePath = selectSoffice(parentDirectory);
 			} else {
-				prefService.setCharPref(SOFFICE_PREF, ioService.newFileURI(sofficePath.parent).spec);
+				prefBranch.setCharPref(SOFFICE_PREF, ioService.newFileURI(sofficePath.parent).spec);
 			}
 			
 			if(!urePath) {
 				urePath = selectURE(parentDirectory);
 			} else {
-				prefService.setCharPref(URE_PREF, ioService.newFileURI(urePath).spec);
+				prefBranch.setCharPref(URE_PREF, ioService.newFileURI(urePath).spec);
 			}
 		} catch(e) {
 			installing = false;
@@ -252,7 +257,7 @@ var ZoteroOpenOfficeIntegration = new function() {
 			getService(Components.interfaces.nsIIOService);
 		var executableDir = ioService.getProtocolHandler("file").
 			QueryInterface(Components.interfaces.nsIFileProtocolHandler).
-			getFileFromURLSpec(zoteroPluginInstaller.prefService.getCharPref(SOFFICE_PREF));
+			getFileFromURLSpec(prefBranch.getCharPref(SOFFICE_PREF));
 		
 		// now install the oxt using unopkg
 		var oxt = pathToAddon.clone();
