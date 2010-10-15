@@ -66,7 +66,11 @@ ZoteroPluginInstaller.prototype = {
 			return;
 		}
 		
-		if(this._force || (this.prefService.getCharPref(this._addon.EXTENSION_PREF_BRANCH+".version") != this._version && document.getElementById("appcontent"))) {
+		if(this._force || (
+				(
+					this.prefService.getCharPref(this._addon.EXTENSION_PREF_BRANCH+".version") != this._version
+					|| (!Zotero.isStandalone && !this.prefService.getBooleanPref(this._addon.EXTENSION_PREF_BRANCH+".installed"))
+				) && document.getElementById("appcontent"))) {
 			var me = this;
 			this._progressWindow = window.openDialog("chrome://"+this._addon.EXTENSION_DIR+"/content/progress.xul", "",
 							"chrome,resizable=no,close=no,centerscreen");
@@ -75,7 +79,8 @@ ZoteroPluginInstaller.prototype = {
 	},
 	
 	"isInstalled":function() {
-		return this.prefService.getCharPref(this._addon.EXTENSION_PREF_BRANCH+".version") == this._version;
+		return this.prefService.getCharPref(this._addon.EXTENSION_PREF_BRANCH+".version") == this._version && 
+			this.prefService.getBoolPref(this._addon.EXTENSION_PREF_BRANCH+".installed");
 	},
 	
 	"getAddonPath":function(addonID) {
@@ -103,8 +108,9 @@ ZoteroPluginInstaller.prototype = {
 	},
 	
 	"success":function() {
-		this.prefService.setCharPref(this._addon.EXTENSION_PREF_BRANCH+".version", this._version);
 		this.closeProgressWindow();
+		this.prefService.setCharPref(this._addon.EXTENSION_PREF_BRANCH+".version", this._version);
+		this.prefService.setBoolPref(this._addon.EXTENSION_PREF_BRANCH+".installed", true);
 		if(this._force) {
 			Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
 				.getService(Components.interfaces.nsIPromptService)
@@ -115,6 +121,8 @@ ZoteroPluginInstaller.prototype = {
 	
 	"error":function(error) {
 		this.closeProgressWindow();
+		this.prefService.setCharPref(this._addon.EXTENSION_PREF_BRANCH+".version", this._version);
+		this.prefService.setBoolPref(this._addon.EXTENSION_PREF_BRANCH+".installed", false);
 		if(this._failSilently) return;
 		if(this._errorDisplayed) return;
 		Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
@@ -131,8 +139,6 @@ ZoteroPluginInstaller.prototype = {
 			me._progressWindow.focus();
 			window.setTimeout(function() {
 				me._progressWindow.focus();
-				Zotero.debug("about to install");
-				Zotero.debug(me.prefService.toSource());
 				try {
 					me._addon.install(me);
 				} catch(e) {
