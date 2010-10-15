@@ -309,7 +309,7 @@ var ZoteroOpenOfficeIntegration = new function() {
 				err += "\n\nIf you are running Firefox on a 64-bit version of Windows, try disabling the \"next-generation Java plug-in\" in the Java control panel. In Windows Vista, open the control panel, switch to Classic View, and open \"View 32-bit Control Panel Items.\" In Windows 7, select view by \"Small icons.\" The setting is located in the \"Advanced\" tab, under \"Java plug-in\".";
 			}
 			
-			zoteroPluginInstaller.error(err);
+			zoteroPluginInstaller.error(err, true);
 			
 			installing = false;
 			throw e;
