@@ -110,7 +110,7 @@ ZoteroPluginInstaller.prototype = {
 	
 	"success":function() {
 		this.closeProgressWindow();
-		this.prefBranch.setCharPref("version", this._version);
+		this.prefBranch.setCharPref("version", ""+this._version);
 		this.prefBranch.setBoolPref("installed", true);
 		if(this._force) {
 			Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
@@ -122,7 +122,7 @@ ZoteroPluginInstaller.prototype = {
 	
 	"error":function(error) {
 		this.closeProgressWindow();
-		this.prefBranch.setCharPref("version", this._version);
+		this.prefBranch.setCharPref("version", ""+this._version);
 		this.prefBranch.setBoolPref("installed", false);
 		if(this._failSilently) return;
 		if(this._errorDisplayed) return;

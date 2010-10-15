@@ -28,7 +28,7 @@ var ZoteroOpenOfficeIntegration = new function() {
 	
 	this.EXTENSION_STRING = "Zotero OpenOffice Integration";
 	this.EXTENSION_ID = "zoteroOpenOfficeIntegration@zotero.org";
-	this.EXTENSION_PREF_BRANCH = "extensions.zoteroOpenOfficeIntegration";
+	this.EXTENSION_PREF_BRANCH = "extensions.zoteroOpenOfficeIntegration.";
 	this.EXTENSION_DIR = "zotero-openoffice-integration";
 	this.APP = 'OpenOffice.org';
 	
@@ -44,7 +44,7 @@ var ZoteroOpenOfficeIntegration = new function() {
 	this.verifyNotCorrupt = function() {}
 	
 	this.install = function(zpi) {
-		if(installing) throw this.EXTENSION_STRING+" installation already in progress; aborting";
+		if(installing) return;
 		installing = true;
 		
 		zoteroPluginInstaller = zpi;
@@ -53,7 +53,7 @@ var ZoteroOpenOfficeIntegration = new function() {
 		if(prefBranch.getCharPref(SOFFICE_PREF) == "" ||
 		   prefBranch.getCharPref(URE_PREF) == "") {
 			zoteroPluginInstaller.setProgressWindowLabel("Detecting OpenOffice.org Paths...");
-			detectPaths();
+			this.detectPaths();
 		}
 		
 		pathToAddon = zoteroPluginInstaller.getAddonPath(this.EXTENSION_ID);

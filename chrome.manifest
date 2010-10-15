@@ -1,7 +1,7 @@
 overlay    chrome://browser/content/browser.xul chrome://zotero-openoffice-integration/content/overlay.xul
 overlay    chrome://zotero/content/standalone.xul chrome://zotero-openoffice-integration/content/overlay.xul
 overlay    chrome://zotero/content/preferences/preferences.xul chrome://zotero-openoffice-integration/content/preferences.xul
-content    zotero-macword-integration chrome/
+
 content    zotero-openoffice-integration chrome/
 
 interfaces  components/zoteroIntegration.xpt
