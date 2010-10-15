@@ -65,9 +65,9 @@ Sub ZoteroCommand(cmd As String, bringToFront As Boolean)
 		&apos; Find Firefox message window
 		Dim appNames(4)
 		appNames(1) = &quot;Firefox&quot;
-		appNames(2) = &quot;Browser&quot;
-		appNames(3) = &quot;Minefield&quot;
-		appNames(4) = &quot;Namoroka&quot;
+		appNames(2) = &quot;Zotero&quot;
+		appNames(3) = &quot;Browser&quot;
+		appNames(4) = &quot;Minefield&quot;
 		For i = 1 To 4
 			ThWnd = FindWindow(appNames(i) &amp; &quot;MessageWindow&quot;, &quot;&quot;)
 			If ThWnd &lt;&gt; 0 Then
