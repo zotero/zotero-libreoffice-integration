@@ -65,9 +65,9 @@ var ZoteroOpenOfficeIntegration = new function() {
 				throw "An error occurred running unopkg";
 			}
 			zoteroPluginInstaller.closeProgressWindow();
+			zoteroPluginInstaller.success();
 			testInstall();
 			installing = false;
-			zoteroPluginInstaller.success();
 		});
 	}
 	
