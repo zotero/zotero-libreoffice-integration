@@ -58,9 +58,9 @@ ZoteroPluginInstaller.prototype = {
 	"_errorDisplayed":false,
 	
 	"_addonInfoAvailable":function() {
-		this._checkVersions();
-		
 		this._version = this._addons[0].version;
+		if(!this._checkVersions()) return;
+		
 		try {
 			this._addon.verifyNotCorrupt(this);
 		} catch(e) {
@@ -110,7 +110,7 @@ ZoteroPluginInstaller.prototype = {
 	
 	"success":function() {
 		this.closeProgressWindow();
-		this.prefBranch.setCharPref("version", ""+this._version);
+		this.prefBranch.setCharPref("version", this._version);
 		this.prefBranch.setBoolPref("installed", true);
 		if(this._force) {
 			Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
@@ -122,7 +122,7 @@ ZoteroPluginInstaller.prototype = {
 	
 	"error":function(error) {
 		this.closeProgressWindow();
-		this.prefBranch.setCharPref("version", ""+this._version);
+		this.prefBranch.setCharPref("version", this._version);
 		this.prefBranch.setBoolPref("installed", false);
 		if(this._failSilently) return;
 		if(this._errorDisplayed) return;
@@ -154,11 +154,11 @@ ZoteroPluginInstaller.prototype = {
 		for(var i=0; i<this._addon.REQUIRED_ADDONS.length; i++) {
 			var checkAddon = this._addon.REQUIRED_ADDONS[i];
 			
-			// check Zotero version
+			// check versions
 			try {
 				var comp = Components.classes["@mozilla.org/xpcom/version-comparator;1"]
 					.getService(Components.interfaces.nsIVersionComparator)
-					.compare(this._addons[i+1].version, checkAddon.minVersion);
+					.compare((checkAddon.id == "zotero@chnm.gmu.edu" ? Zotero.version : this._addons[i+1].version), checkAddon.minVersion);
 			} catch(e) {
 				var comp = -1;
 			}
@@ -167,8 +167,15 @@ ZoteroPluginInstaller.prototype = {
 				var err = 'This version of '+this._addon.EXTENSION_STRING+' requires '+checkAddon.name+' '+checkAddon.minVersion+
 					' or later to run. Please download the latest version of '+checkAddon.name+' from '+checkAddon.url+'.';
 				this.error(err);
-				if(!this._failSilently) throw err;
+				if(this._failSilently) {
+					throw err;
+				} else {
+					Zotero.debug("Not installing "+this._addon.EXTENSION_STRING+": requires "+checkAddon.name+" "+checkAddon.minVersion);
+					return false;
+				}
 			}
 		}
+		
+		return true;
 	}
 }
