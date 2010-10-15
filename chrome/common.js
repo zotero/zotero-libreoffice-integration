@@ -72,9 +72,12 @@ ZoteroPluginInstaller.prototype = {
 					this.prefBranch.getCharPref("version") != this._version
 					|| (!Zotero.isStandalone && !this.prefBranch.getBoolPref("installed"))
 				) && document.getElementById("appcontent"))) {
+				
 			var me = this;
-			this._progressWindow = window.openDialog("chrome://"+this._addon.EXTENSION_DIR+"/content/progress.xul", "",
-							"chrome,resizable=no,close=no,centerscreen");
+			this._progressWindow = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+				.getService(Components.interfaces.nsIWindowWatcher)
+				.openWindow(null, "chrome://"+this._addon.EXTENSION_DIR+"/content/progress.xul", '',
+					"chrome,resizable=no,close=no,centerscreen", null);	
 			this._progressWindow.addEventListener("load", function() { me._firstRunListener() }, false);
 		}
 	},
