@@ -2,8 +2,10 @@
 <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
     <script type="application/x-javascript" src="chrome://zotero/content/include.js"/>
     <script type="application/x-javascript" src="chrome://zotero-openoffice-integration/content/common.js"/>
-    <script type="application/x-javascript" src="chrome://zotero-openoffice-integration/content/macWord.js"/>
+    <script type="application/x-javascript" src="chrome://zotero-openoffice-integration/content/openOffice.js"/>
     <script type="application/x-javascript">
-    	new ZoteroPluginInstaller(ZoteroOpenOfficeIntegration);
+    	window.addEventListener("load", function() {
+	    	new ZoteroPluginInstaller(ZoteroOpenOfficeIntegration);
+	    }, false);
     </script>
 </overlay>
