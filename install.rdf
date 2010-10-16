@@ -17,6 +17,7 @@
 	</em:optionsURL>
     <em:description>Integrates Zotero with OpenOffice.org 2.4 or later</em:description>
 	<em:type>2</em:type> <!-- type=extension --> 
+	<em:unpack>true</em:unpack>
 	
 	<em:targetApplication>
 		<Description>
