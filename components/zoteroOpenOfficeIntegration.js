@@ -150,9 +150,9 @@ function initClassLoader(me) {
 			'<html:applet width="0" height="1" id="applet" archive="'+extensionLibPath+'zoteroOpenOfficeIntegration.jar" code="org.zotero.integration.ooo.ZoteroApplet"/>'+
 			'</vbox></overlay>';
 		var loaded = false;
-		win.document.loadOverlay("data:text/xul;charset=utf-8,"+encodeURI(xul), function() {
+		win.document.loadOverlay("data:text/xul;charset=utf-8,"+encodeURI(xul), {"observe":function() {
 			loaded = true;
-		});
+		}});
 		while(!loaded) Zotero.mainThread.processNextEvent(true);
 		
 		// on OS X, running win.document.getElementById('applet') on an applet that isn't yet
