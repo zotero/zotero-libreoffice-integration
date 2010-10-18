@@ -66,7 +66,7 @@ var ZoteroOpenOfficeIntegration = new function() {
 			}
 			zoteroPluginInstaller.closeProgressWindow();
 			zoteroPluginInstaller.success();
-			testInstall();
+			//testInstall();
 			installing = false;
 		});
 	}
