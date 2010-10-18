@@ -82,26 +82,85 @@ function verifyDir(dirName, uri, fileNames) {
 	return ioService.newFileURI(dir).spec;
 }
 
-var extensionLibPath;
+var extensionFile = null;
+var applet = null;
+
 /**
  * Called when we have info about the addon coming in from AddonManager (Fx 4.0+)
  */
 function haveAddonInfo(addon) {
-	extensionLibPath = addon.getResourceURI();
+	try {
+		extensionFile = addon.getResourceURI().QueryInterface(Components.interfaces.nsIFileURL).file;
+	} catch(e) {}
+	if(!extensionFile) extensionFile = false;
 }
 
 /**
  * Glue between LiveConnect and XPCOM. Loads Java classes and maps them to JavaScript/XPCOM objects.
  */
-function initClassLoader(java, me) {
+function initClassLoader(me) {
+	var Zotero = Components.classes["@zotero.org/Zotero;1"]
+		.getService(Components.interfaces.nsISupports)
+		.wrappedJSObject;
+	
 	if(!AddonManager) {
 		// load appropriate classes
-		var extensionLibFile = Components.classes["@mozilla.org/extensions/manager;1"].
+		extensionFile = Components.classes["@mozilla.org/extensions/manager;1"].
 					getService(Components.interfaces.nsIExtensionManager).
 					getInstallLocation(GUID).
 					getItemLocation(GUID);
-		extensionLibFile.append("lib");		
-		extensionLibPath = ioService.newFileURI(extensionLibFile).spec;
+	} else if(extensionFile === null) {
+		// ugh. we get called before haveAddonInfo(), so we have to wait for that...
+		// i really wonder how anyone could possibly deal with this extension API without
+		// processNextEvent() or using callbacks for just about every function
+		while(extensionFile === null) Zotero.mainThread.processNextEvent(true);
+	}
+	extensionPath = ioService.newFileURI(extensionFile).spec;
+	extensionLibPath = extensionPath+"lib/";
+		
+	// first try most recent navigator window
+	if(!applet) {
+		var win = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+		   .getService(Components.interfaces.nsIWindowMediator)
+		   .getMostRecentWindow("navigator:browser");
+		if(!win) {
+			// next try active window				
+			win = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+				.getService(Components.interfaces.nsIWindowWatcher).activeWindow;
+			if(!win) {
+				// next try hidden DOM window
+				win = Components.classes["@mozilla.org/appshell/appShellService;1"]
+					.getService(Components.interfaces.nsIAppShellService).hiddenDOMWindow;
+			}
+		}
+		
+		/*applet = win.document.createElementNS("http://www.w3.org/1999/xhtml", "applet");
+		applet.setAttribute("width", "1");
+		applet.setAttribute("height", "1");
+		dump(extensionLibPath+"zoteroOpenOfficeIntegration.jar");
+		applet.setAttribute("archive", extensionLibPath+"zoteroOpenOfficeIntegration.jar");
+		applet.setAttribute("code", "org.zotero.integration.ooo.ZoteroApplet");
+		win.document.getElementById('appcontent').appendChild(applet);
+		win.document.getElementById('appletContainer').innerHTML += '<html:applet width="0" height="1" id="applet" archive="file:///Users/simon/Desktop/Development/FS/zotero/integration/xpcom/OpenOffice/trunk/lib/zoteroOpenOfficeIntegration.jar" code="org.zotero.integration.ooo.ZoteroApplet"/>'
+		*/
+		
+		// load overlay
+		// note that just adding the applet using appendChild doesn't work for some unknowable reason
+		var xul = '<overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" xmlns:html="http://www.w3.org/1999/xhtml"><vbox id="appcontent">'+
+			'<html:applet width="0" height="1" id="applet" archive="'+extensionLibPath+'zoteroOpenOfficeIntegration.jar" code="org.zotero.integration.ooo.ZoteroApplet"/>'+
+			'</vbox></overlay>';
+		var loaded = false;
+		win.document.loadOverlay("data:text/xul;charset=utf-8,"+encodeURI(xul), function() {
+			loaded = true;
+		});
+		while(!loaded) Zotero.mainThread.processNextEvent(true);
+		
+		// on OS X, running win.document.getElementById('applet') on an applet that isn't yet
+		// fully loaded prevents it from loading completely, so we wait for it here.
+		Zotero.sleep(2000);
+		
+		applet = win.document.getElementById('applet');
+		applet.height = 0;
 	}
 	
 	var prefService = Components.classes["@mozilla.org/preferences-service;1"].
@@ -125,14 +184,13 @@ function initClassLoader(java, me) {
 		sofficePath
 	];
 	
-	if(!java.lang) {
-		throwError('Zotero OpenOffice Integration could not communicate with OpenOffice.org '+
-			'because Java is not installed or not operational within Firefox.');
-	}
+	//if(!java.lang) {
+	//	throwError('Zotero OpenOffice Integration could not communicate with OpenOffice.org '+
+	//		'because Java is not installed or not operational within Firefox.');
+	//}
 	
 	// the jar files, as an array of URLs
-	var urlArray = java.lang.reflect.Array.newInstance(java.lang.Class.forName("java.net.URL"), jarFiles.length);
-	[urlArray[i] = new java.net.URL(jarFiles[i]) for(i in jarFiles)];
+	/*
 	
 	// first, load just the PrivilegedURLClassLoader out of the zip file
 	var emptyArray = java.lang.reflect.Array.newInstance(java.lang.Class.forName("java.net.URL"), 0);
@@ -182,6 +240,12 @@ function initClassLoader(java, me) {
 		policy.addURL(urlArray[j]);
 	}*/
 	
+	var java = applet.Packages.java;
+	
+	var urlArray = java.lang.reflect.Array.newInstance(java.lang.Class.forName("java.net.URL"), jarFiles.length);
+	[urlArray[i] = new java.net.URL(jarFiles[i]) for(i in jarFiles)];
+	cl = new applet.Packages.org.zotero.integration.ooo.PrivilegedURLClassLoader(urlArray);
+	
 	// proxy Java methods through JavaScript so that they can be used from XPCOM
 	var javaClassObj;
 	for each(var javaXPCOMClass in javaXPCOMClasses) {
@@ -191,7 +255,7 @@ function initClassLoader(java, me) {
 		//dump(javaClassObj.getProtectionDomain().getPermissions().toString()+"\n")
 		delete javaXPCOMClass.initClassLoader;
 		
-		var methods = javaClassObj.getDeclaredMethods();
+		var methods = javaClassObj.getDeclaredMethods();		
 		for(let i=0; i<methods.length; i++) {
 			let method = methods[i];
 			let methodName = method.getName();
@@ -264,21 +328,7 @@ function generateJavaXPCOMWrapper(componentInfo) {
 	var wrappedClass = function(obj) {
 		// initialize all classes if this is the first Java object to be created
 		if(!wrappedClass.prototype.javaClassObj) {
-			// first try most recent navigator window
-			var win = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-			   .getService(Components.interfaces.nsIWindowMediator)
-			   .getMostRecentWindow("navigator:browser");
-			if(!win) {
-				// next try active window				
-				win = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
-					.getService(Components.interfaces.nsIWindowWatcher).activeWindow;
-				if(!win) {
-					// next try hidden DOM window
-					win = Components.classes["@mozilla.org/appshell/appShellService;1"]
-						.getService(Components.interfaces.nsIAppShellService).hiddenDOMWindow;
-				}
-			}
-			initClassLoader(win.java, this);
+			initClassLoader(this);
 		}
 		
 		if(obj) this.javaObj = obj;
