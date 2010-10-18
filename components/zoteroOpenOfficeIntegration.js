@@ -84,6 +84,7 @@ function verifyDir(dirName, uri, fileNames) {
 
 var extensionFile = null;
 var applet = null;
+var win = null;
 
 /**
  * Called when we have info about the addon coming in from AddonManager (Fx 4.0+)
@@ -119,8 +120,8 @@ function initClassLoader(me) {
 	extensionLibPath = extensionPath+"lib/";
 		
 	// first try most recent navigator window
-	if(!applet) {
-		var win = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+	if(!applet || !win || win.closed) {
+		win = Components.classes["@mozilla.org/appshell/window-mediator;1"]
 		   .getService(Components.interfaces.nsIWindowMediator)
 		   .getMostRecentWindow("navigator:browser");
 		if(!win) {
@@ -301,6 +302,9 @@ function initClassLoader(me) {
 			
 			if(javaXPCOMClasses[returnTypeName]) {
 				javaXPCOMClass.prototype[methodName] = function() {
+					if(!applet || !win || win.closed) {
+						initClassLoader(this);
+					}
 					var args = cleanArgs(Array.prototype.slice.call(arguments));
 					dump("zoteroOpenOfficeIntegration: Instantiating "+returnTypeName+" in response to "+methodName+" call\n\n");
 					var result = this.javaObj[methodName].apply(this.javaObj, args);
@@ -308,6 +312,9 @@ function initClassLoader(me) {
 				};
 			} else {								// otherwise, return unwrapped result
 				javaXPCOMClass.prototype[methodName] = function() {
+					if(!applet || !win || win.closed) {
+						initClassLoader(this);
+					}
 					var args = cleanArgs(Array.prototype.slice.call(arguments));
 					dump("zoteroOpenOfficeIntegration: Passing through "+methodName+" call\n\n");
 					return this.javaObj[methodName].apply(this.javaObj, args);
