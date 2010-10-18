@@ -171,7 +171,7 @@ ZoteroPluginInstaller.prototype = {
 			if(comp < 0) {
 				var err = 'This version of '+this._addon.EXTENSION_STRING+' requires '+checkAddon.name+' '+checkAddon.minVersion+
 					' or later to run. Please download the latest version of '+checkAddon.name+' from '+checkAddon.url+'.';
-				this.error(err);
+				this.error(err, true);
 				if(this.failSilently) {
 					throw err;
 				} else {

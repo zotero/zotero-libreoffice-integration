@@ -60,7 +60,7 @@ var ZoteroOpenOfficeIntegration = new function() {
 		
 		installComponents(function(success) {
 			if(!success) {
-				error();
+				zoteroPluginInstaller.error();
 				installing = false;
 				throw "An error occurred running unopkg";
 			}
