@@ -109,11 +109,14 @@ function ZoteroOpenOfficeIntegration_detectPaths() {
 	try {
 		var OPENOFFICE_LOCATIONS = {
 			Mac:[
+				"/Applications/LibreOffice.app",
 				"/Applications/OpenOffice.org.app",
 				"/Applications/NeoOffice.app",
 				"/Applications/OpenOffice.org 2.4.app"
 			],
 			Win:[
+				"C:\\Program Files\\LibreOffice 3",
+				"C:\\Program Files (x86)\\LibreOffice 3",
 				"C:\\Program Files\\OpenOffice.org 3",
 				"C:\\Program Files (x86)\\OpenOffice.org 3",
 				"C:\\Program Files\\OpenOffice.org 2.4",
@@ -122,15 +125,19 @@ function ZoteroOpenOfficeIntegration_detectPaths() {
 				"C:\\Program Files (x86)\\OpenOffice.org 2"
 			],
 			Other:[
-				"/usr/local/opt/openoffice.org3.1",
+				"/opt/libreoffice3",
+				"/opt/openoffice.org3.3",
+				"/usr/local/opt/openoffice.org3.3",
+				"/opt/openoffice.org3.2",
+				"/usr/local/opt/openoffice.org3.2",
 				"/opt/openoffice.org3.1",
+				"/usr/local/opt/openoffice.org3.1",
 				"/opt/openoffice.org3",
+				"/usr/local/opt/openoffice.org3",
 				"/usr/lib64/ooo3",
 				"/usr/lib/ooo3",
 				"/usr/lib64/openoffice.org3",
 				"/usr/lib/openoffice.org3",
-				"/usr/local/opt/openoffice.org3",
-				"/opt/openoffice.org3",
 				"/usr/lib/openoffice",
 				"/usr/local/opt/openoffice.org2",
 				"/opt/openoffice.org2",
