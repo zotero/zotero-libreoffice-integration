@@ -398,9 +398,9 @@ function ZoteroOpenOfficeIntegration_firstRunListener() {
 	}, 100);
 }
 
-function ZoteroOpenOfficeIntegration_checkFirstRun(version) {
+function ZoteroOpenOfficeIntegration_checkFirstRun() {
 	zoteroOpenOfficeIntegration_version = zoteroOpenOfficeIntegration_addons[0].version;
-	if(zoteroOpenOfficeIntegration_prefService.getCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF) != version && document.getElementById("appcontent")) {
+	if(zoteroOpenOfficeIntegration_prefService.getCharPref(ZOTEROOPENOFFICEINTEGRATION_PREF) != zoteroOpenOfficeIntegration_version && document.getElementById("appcontent")) {
 		zoteroOpenOfficeIntegration_progressWindow = window.openDialog("chrome://zotero-openoffice-integration/content/progress.xul", "",
 				"chrome,resizable=no,close=no,centerscreen");
 		zoteroOpenOfficeIntegration_progressWindow.addEventListener("load", ZoteroOpenOfficeIntegration_firstRunListener, false);
