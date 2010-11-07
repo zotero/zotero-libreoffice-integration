@@ -10,7 +10,7 @@
 	<em:homepageURL>http://www.zotero.org</em:homepageURL>
 	<em:updateURL>https://www.zotero.org/download/update-svn.rdf</em:updateURL>
 	<em:iconURL>chrome://zotero/skin/zotero_z_32px.png</em:iconURL>
-    <em:optionsURL>zotero://preferences/zotero-prefpane-cite</em:optionsURL>
+    <em:optionsURL>chrome://zotero/content/preferences/preferences.xul#cite</em:optionsURL>
     <em:description>Integrates Zotero with OpenOffice.org 2.4 or later</em:description>
 	<em:type>2</em:type> <!-- type=extension --> 
 	<em:unpack>true</em:unpack>

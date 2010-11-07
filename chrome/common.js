@@ -131,6 +131,7 @@ ZoteroPluginInstaller.prototype = {
 		}
 		if(this.failSilently) return;
 		if(this._errorDisplayed) return;
+		this._errorDisplayed = true;
 		Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
 			.getService(Components.interfaces.nsIPromptService)
 			.alert(null, this._addon.EXTENSION_STRING,
