@@ -91,8 +91,8 @@ ZoteroPluginInstaller.prototype = {
 	"getAddonPath":function(addonID) {
 		if(AddonManager) {
 			for each(var addon in this._addons) {
-				if(addon.id == addonID) {
-					return this._addons[0].getResourceURI().
+				if(addon && addon.id == addonID) {
+					return addon.getResourceURI().
 						QueryInterface(Components.interfaces.nsIFileURL).file;
 				}
 			}
