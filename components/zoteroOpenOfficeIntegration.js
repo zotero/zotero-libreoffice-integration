@@ -154,7 +154,7 @@ function initClassLoader(me) {
 			// note that just adding the applet using appendChild doesn't work for some unknowable reason
 			var xul = '<overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" xmlns:html="http://www.w3.org/1999/xhtml"><vbox id="appcontent">'+
 				'<html:applet width="0" height="1" id="applet" archive="'+extensionLibPath+'zoteroOpenOfficeIntegration.jar" code="org.zotero.integration.ooo.ZoteroApplet">'+
-					'<html:param name="java_arguments" value="-d32"/>'+
+					(Zotero.isMac || Zotero.isWin ? '<html:param name="java_arguments" value="-d32"/>' : '')+
 				'</html:applet></vbox></overlay>';
 			var loaded = false;
 			win.document.loadOverlay("data:text/xul;charset=utf-8,"+encodeURI(xul), {"observe":function() {
