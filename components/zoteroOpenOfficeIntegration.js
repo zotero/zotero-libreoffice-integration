@@ -136,14 +136,26 @@ function initClassLoader(me) {
 			}
 		}
 		
-		if(win.java) {
+		var tryGlobalJavaObject = true;
+		if(Zotero.isMac) {
+			// On OS X, we need to run the applet instead of using the global Java object on 64-bit
+			// systems, since we would otherwise probably end up trying to load x86 code in a x86_64
+			// JVM, which doesn't work. This will need updating if there is ever an x86_64
+			// OOo/NeoOffice/LibreOffice for Mac.
+			var xpcomABI = Components.classes["@mozilla.org/xre/app-info;1"]
+				.getService(Components.interfaces.nsIXULRuntime).XPCOMABI;
+			tryGlobalJavaObject = xpcomABI !== "x86_64-gcc3";
+		}
+		
+		if(tryGlobalJavaObject && win.java) {
 			java = win.java;
 		} else {
 			// load overlay
 			// note that just adding the applet using appendChild doesn't work for some unknowable reason
 			var xul = '<overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" xmlns:html="http://www.w3.org/1999/xhtml"><vbox id="appcontent">'+
-				'<html:applet width="0" height="1" id="applet" archive="'+extensionLibPath+'zoteroOpenOfficeIntegration.jar" code="org.zotero.integration.ooo.ZoteroApplet"/>'+
-				'</vbox></overlay>';
+				'<html:applet width="0" height="1" id="applet" archive="'+extensionLibPath+'zoteroOpenOfficeIntegration.jar" code="org.zotero.integration.ooo.ZoteroApplet">'+
+					'<html:param name="java_arguments" value="-d32"/>'+
+				'</html:applet></vbox></overlay>';
 			var loaded = false;
 			win.document.loadOverlay("data:text/xul;charset=utf-8,"+encodeURI(xul), {"observe":function() {
 				loaded = true;
