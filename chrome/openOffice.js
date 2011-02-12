@@ -117,6 +117,7 @@ var ZoteroOpenOfficeIntegration = new function() {
 					"C:\\Program Files (x86)\\OpenOffice.org 2"
 				],
 				Other:[
+					"/opt/libreoffice",
 					"/opt/libreoffice3",
 					"/opt/openoffice.org3.3",
 					"/usr/local/opt/openoffice.org3.3",
