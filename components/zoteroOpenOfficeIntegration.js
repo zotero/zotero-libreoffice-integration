@@ -22,9 +22,76 @@
     ***** END LICENSE BLOCK *****
 */
 
+/**
+ * The GUID of this extension
+ */
 const GUID = "zoteroOpenOfficeIntegration@zotero.org";
 
+
+/**
+ * Info regarding the OpenOffice.org directories and their paths
+ */
+const DIR_INFO = {
+	"URE":{
+		pref:"extensions.zoteroOpenOfficeIntegration.urePath",
+		dirName:"Java UNO runtime directory",
+		files:["ridl.jar"],
+		locations:{
+			Mac:[
+				"Contents/MacOS/soffice"
+			],
+			Win:[
+				"program\\soffice.exe"
+			],
+			Other:[
+				"program/soffice"
+			]
+		}
+	},
+	"Soffice":{
+		pref:"extensions.zoteroOpenOfficeIntegration.sofficePath",
+		dirName:"soffice executable directory",
+		files:["soffice.exe", "soffice"],
+		locations:{
+			Mac:[
+				"Contents/basis-link/ure-link/share/java",
+				"Contents/MacOS/classes"
+			],
+			Win:[
+				"URE\\java",
+				"program\\classes"
+			],
+			Other:[
+				"basis-link/ure-link/share/java",
+				"program/classes"
+			]
+		}
+	}
+};
+
+// the manual paths preference
+const MANUAL_PREF = "extensions.zoteroOpenOfficeIntegration.manualPaths";
+
+// some global variables
+var javaXPCOMClasses = {};
+var loader = null;
+var paths = {
+	"URE":null,
+	"Soffice":null
+};
+var extensionFile = null;
+var applet = null;
+var win = null;
+var java = null;
+
+// set up things we will always need for integration
+const ioService = Components.classes["@mozilla.org/network/io-service;1"].
+	getService(Components.interfaces.nsIIOService);
+const prefBranch = Components.classes["@mozilla.org/preferences-service;1"].
+	getService(Components.interfaces.nsIPrefBranch);
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+
+// properly fetch the addonManager and import it on Fx 4
 var appInfo = Components.classes["@mozilla.org/xre/app-info;1"].
                          getService(Components.interfaces.nsIXULAppInfo);
 if(appInfo.platformVersion[0] == 2) {
@@ -32,19 +99,12 @@ if(appInfo.platformVersion[0] == 2) {
 } else {
 	var AddonManager = false;
 }
-	
-const URE_PREF = "extensions.zoteroOpenOfficeIntegration.urePath";
-const SOFFICE_PREF = "extensions.zoteroOpenOfficeIntegration.sofficePath";
-const ioService = Components.classes["@mozilla.org/network/io-service;1"].
-	getService(Components.interfaces.nsIIOService);
-var javaXPCOMClasses = {};
-var loader = null;
 
 /**
  * Show an error message and throw an error
  */
-function throwError(err) {
-	Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
+function throwError(err, showAlert) {
+	if(showAlert !== false) Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
 		.getService(Components.interfaces.nsIPromptService)
 		.alert(null, 'Zotero OpenOffice Integration Error', err);
 	throw err;
@@ -53,39 +113,43 @@ function throwError(err) {
 /**
  * Verify that a directory exists and contains the appropriate files.
  */
-function verifyDir(dirName, uri, fileNames) {	
-	const errStart = "Zotero OpenOffice Integration could not communicate with OpenOffice.org "+
-		"because the "+dirName+" specified in the Zotero OpenOffice Integration preferences ";
-	const errEnd = "\n\nSee the Zotero word processor plugin troubleshooting page for information "+
+function verifyDirs(showAlert) {
+	var isManual = prefBranch.getBoolPref(MANUAL_PREF);
+	var errEnd = "\n\n"+(!isManual ? 'If OpenOffice.org is properly installed, please check the "Manual Paths" '+
+		'option in the Zotero OpenOffice.org Integration preferences and see' : "See")+
+		" the Zotero word processor plugin troubleshooting page for information "+
 		"on how to locate the appropriate directory.";
 	
-	var dir = null;
-	try {
-		dir = ioService.getProtocolHandler("file").
-			QueryInterface(Components.interfaces.nsIFileProtocolHandler).getFileFromURLSpec(uri);
-	} catch(e) {}
-	
-	if(!dir || !dir.exists()) throwError(errStart+"does not exist."+errEnd);
-	if(!dir.isDirectory()) throwError(errStart+"is not a directory."+errEnd);
-	
-	var exists = false;
-	for each(var fileName in fileNames) {
-		var file = dir.clone();
-		file.append(fileName);
-		if(file.exists()) {
-			exists = true;
-			break;
+	for(var key in DIR_INFO) {
+		var errStart = "Zotero OpenOffice Integration could not communicate with OpenOffice.org "+
+				"because the "+DIR_INFO[key].dirName+(isManual ? " specified in the Zotero OpenOffice Integration preferences ":
+				" detected by Zotero ");
+		
+		// check that the URI is valid
+		var dir = null;
+		try {
+			dir = ioService.getProtocolHandler("file").
+				QueryInterface(Components.interfaces.nsIFileProtocolHandler).getFileFromURLSpec(paths[key]);
+		} catch(e) {}
+		
+		// handle various errors
+		if(!dir) throwError(errStart+"is an improperly specified file:/// URI."+errEnd, showAlert);
+		if(!dir.exists()) throwError(errStart+"does not exist."+errEnd, showAlert);
+		if(!dir.isDirectory()) throwError(errStart+"is not a directory."+errEnd, showAlert);
+		
+		// make sure the files we want exist
+		var exists = false;
+		for each(var fileName in DIR_INFO[key].files) {
+			var file = dir.clone();
+			file.append(fileName);
+			if(file.exists()) {
+				exists = true;
+				break;
+			}
 		}
+		if(!exists) throwError(errStart+'does not contain a "'+fileName+'" file.'+errEnd, showAlert);
 	}
-	if(!exists) throwError(errStart+'does not contain a "'+fileName+'" file.'+errEnd);
-	
-	return ioService.newFileURI(dir).spec;
 }
-
-var extensionFile = null;
-var applet = null;
-var win = null;
-var java = null;
 
 /**
  * Called when we have info about the addon coming in from AddonManager (Fx 4.0+)
@@ -104,6 +168,8 @@ function initClassLoader(me) {
 	var Zotero = Components.classes["@zotero.org/Zotero;1"]
 		.getService(Components.interfaces.nsISupports)
 		.wrappedJSObject;
+	
+	forceJavaReload = false;
 	
 	if(!AddonManager) {
 		// load appropriate classes
@@ -171,25 +237,25 @@ function initClassLoader(me) {
 		}
 	}
 	
-	var prefService = Components.classes["@mozilla.org/preferences-service;1"].
-		getService(Components.interfaces.nsIPrefBranch);
-	var urelinkPath = verifyDir("Java UNO runtime directory", prefService.getCharPref(URE_PREF), ["ridl.jar"]);
-	var sofficePath = verifyDir("soffice executable directory", prefService.getCharPref(SOFFICE_PREF), ["soffice.exe", "soffice"]);
+	for(var key in paths) {
+		dump("ZoteroOpenOfficeIntegration: "+DIR_INFO[key].dirName+" URI => "+paths[key]+"\n\n");
+	}
+	verifyDirs(paths);
 	
 	var jarFiles = [
 		//extensionLibPath+"javaFirefoxExtensionUtils.jar",
 		// UNO libraries
-		urelinkPath+"ridl.jar",
-		urelinkPath+"unoloader.jar",
-		urelinkPath+"jurt.jar",
-		urelinkPath+"juh.jar",
+		paths.URE+"ridl.jar",
+		paths.URE+"unoloader.jar",
+		paths.URE+"jurt.jar",
+		paths.URE+"juh.jar",
 		// unoil.jar is part of OOo, but included in the extension since it seems to be missing on
 		// Ubuntu
 		extensionLibPath+"unoil.jar",
 		// our code
 		extensionLibPath+"zoteroOpenOfficeIntegration.jar",
 		// necessary to bootstrap OOo
-		sofficePath
+		paths.Soffice
 	];
 	
 	if(java) {
@@ -252,9 +318,13 @@ function initClassLoader(me) {
 		for(let i=0; i<methods.length; i++) {
 			let method = methods[i];
 			let methodName = method.getName();
+			let xpcomMethodName = methodName;
 			
-			// skip method if it already exists
-			if(javaXPCOMClass.prototype[methodName]) continue;
+			// if method already exists, add with a "_" in front
+			if(javaXPCOMClass.prototype[xpcomMethodName]) {
+				xpcomMethodName = "_"+xpcomMethodName;
+				if(javaXPCOMClass.prototype[xpcomMethodName]) continue;
+			}
 			
 			// check parameter types for an XPCOMized class
 			let parameterTypes = method.getParameterTypes();
@@ -293,23 +363,26 @@ function initClassLoader(me) {
 			if(returnType) returnTypeName = returnType.getName();
 			
 			if(javaXPCOMClasses[returnTypeName]) {
-				javaXPCOMClass.prototype[methodName] = function() {
-					if(!java && (!applet || !win || win.closed)) initClassLoader(this);
+				javaXPCOMClass.prototype[xpcomMethodName] = function() {
+					if(!java && (!applet || !win || win.closed) || forceJavaReload) initClassLoader(this);
 					var args = cleanArgs(Array.prototype.slice.call(arguments));
-					dump("zoteroOpenOfficeIntegration: Instantiating "+returnTypeName+" in response to "+methodName+" call\n\n");
+					dump("zoteroOpenOfficeIntegration: Instantiating "+returnTypeName+" in response to "+xpcomMethodName+" call\n\n");
 					var result = this.javaObj[methodName].apply(this.javaObj, args);
 					return (result == null ? null : new javaXPCOMClasses[returnTypeName](result));
 				};
 			} else {								// otherwise, return unwrapped result
-				javaXPCOMClass.prototype[methodName] = function() {
-					if(!java && (!applet || !win || win.closed)) initClassLoader(this);
+				javaXPCOMClass.prototype[xpcomMethodName] = function() {
+					if(!java && (!applet || !win || win.closed) || forceJavaReload) initClassLoader(this);
 					var args = cleanArgs(Array.prototype.slice.call(arguments));
-					dump("zoteroOpenOfficeIntegration: Passing through "+methodName+" call\n\n");
+					dump("zoteroOpenOfficeIntegration: Passing through "+xpcomMethodName+" call\n\n");
 					return this.javaObj[methodName].apply(this.javaObj, args);
 				};
 			}
 			
-			if(isThisClass) me[methodName] = javaXPCOMClass.prototype[methodName];
+			// add to the current instance as well
+			if(isThisClass) {
+				me[xpcomMethodName] = javaXPCOMClass.prototype[xpcomMethodName];
+			}
 		}
 	}
 	
@@ -319,6 +392,9 @@ function initClassLoader(me) {
 	dump("zoteroOpenOfficeIntegration: Initialized.\n\n");
 }
 
+/**
+ * Code to generate XPCOM wrappers for classes below
+ */
 function generateJavaXPCOMWrapper(componentInfo) {
 	var wrappedClass = function(obj) {
 		// initialize all classes if this is the first Java object to be created
@@ -337,6 +413,126 @@ function generateJavaXPCOMWrapper(componentInfo) {
 	return wrappedClass;
 }
 
+/**
+ * A service to handle various aspects of configuring OpenOffice
+ */
+var ZoteroOpenOfficeSetupService = function() {
+		this.wrappedJSObject = this;
+}
+ZoteroOpenOfficeSetupService.prototype = {
+	classDescription:	"Zotero OpenOffice Integration Setup Service",
+	classID:			Components.ID("{c126eb01-fd95-4a6f-af87-7bdbb9ebdf8c}"),
+	contractID:			"@zotero.org/Zotero/integration/setupService?agent=OpenOffice;1",
+	service:			true,
+	QueryInterface:		XPCOMUtils.generateQI([Components.interfaces.nsISupports]),
+	
+	/**
+	 * Get string for the current platform
+	 */
+	_getPlatform:function() {
+		var Zotero = Components.classes["@zotero.org/Zotero;1"]
+			.getService(Components.interfaces.nsISupports)
+			.wrappedJSObject;
+		if(Zotero.isMac) {
+			var platform = "Mac";
+		} else if(Zotero.isWin) {
+			var platform = "Win";
+		} else {
+			var platform = "Other";
+		}
+	},
+		
+	/**
+	 * Get ure and soffice paths from OOo root directory
+	 * @param {nsIFile} oooRoot The OOo root directory
+	 */
+	getPathsFromOOoRoot:function(oooRoot) {
+		var platform = this._getPlatform();
+		for(var key in DIR_INFO) {
+			for each(var testRelpath in DIR_INFO[key][platform]) {
+				// construct directory
+				var testPath = oooRoot.clone().QueryInterface(Components.interfaces.nsILocalFile);
+				testPath.appendRelativePath(testRelpath);
+				
+				// if directory exists, use it
+				if(testRelpath.exists() && testRelpath.isDirectory()) {
+					paths[key] = ioService.newFileURI(oooRoot).spec;
+					break;
+				}
+			}
+		}
+		
+		verifyDirs(false);
+	}
+}
+
+/**
+ * The Application class is special, because we need the getDocument() call not to go straight
+ * to Java
+ */
+var ZoteroOpenOfficeApplication = function() {
+	this.wrappedJSObject = this;
+}
+ZoteroOpenOfficeApplication.prototype = {
+	classDescription:	"Zotero OpenOffice Integration Application",
+	classID:			Components.ID("{8478cd98-5ba0-4848-925a-75adffff2dbf}"),
+	contractID:			"@zotero.org/Zotero/integration/application?agent=OpenOffice;1",
+	service:			true,
+	QueryInterface:		XPCOMUtils.generateQI([Components.interfaces.zoteroIntegrationApplication]),
+	javaClass:			"org.zotero.integration.ooo.Application",
+	
+	primaryFieldType: "ReferenceMark",
+	secondaryFieldType: "Bookmark",
+	getActiveDocument: function() {
+		if(this.javaClassObj) return this._getActiveDocument();
+		
+		dump("ZoteroOpenOfficeIntegration: Initializing with basisDirs from preferences\n\n");
+		for(var key in DIR_INFO) paths[key] = prefBranch.getCharPref(DIR_INFO[key].pref);
+		initClassLoader(this);
+		return this.getActiveDocument();
+	},
+	getDocument: function(basisDir) {
+		if(this.javaClassObj) return this._getActiveDocument();
+		
+		// respect manual setting
+		if(prefBranch.getBoolPref(MANUAL_PREF)) {
+			return this.getActiveDocument();
+		}
+		
+		// try to convert basisDir file:/// URI to an nsIFile
+		dump("ZoteroOpenOfficeIntegration: Initializing with basisDir "+basisDir+"\n\n");
+		var dir = null;
+		try {
+			dir = ioService.getProtocolHandler("file").
+				QueryInterface(Components.interfaces.nsIFileProtocolHandler).getFileFromURLSpec(basisDir);
+		} catch(e) {}
+		
+		// check that dir exists
+		if(!dir) {
+			dump("ZoteroOpenOfficeIntegration: Invalid basisDir; using prefs\n\n");
+			return this.getActiveDocument();
+		}
+		
+		// try to get child dirs
+		dir = dir.parent;
+		try {
+			ZoteroOpenOfficeSetupService.prototype.getPathsFromOOoRoot(dir);
+		} catch(e) {
+			Components.utils.reportError(e);
+			dump("ZoteroOpenOfficeIntegration: Could not find child directories for basisDir; using prefs\n\n");
+			return this.getActiveDocument();
+		}
+		
+		// initialize the Java class loader
+		initClassLoader(this);
+		return this._getActiveDocument();
+	}
+}
+javaXPCOMClasses[ZoteroOpenOfficeApplication.javaClass] = ZoteroOpenOfficeApplication;
+
+/**
+ * The below classes are passed through to Java
+ */
 var ZoteroOpenOfficeDocument = generateJavaXPCOMWrapper({
   classDescription: "Zotero OpenOffice Integration Document",
   classID:          Components.ID("{e2e05bf9-40d4-4426-b0c9-62abca5be58f}"),
@@ -365,17 +561,6 @@ var ZoteroOpenOfficeField = generateJavaXPCOMWrapper({
   javaClass:		"org.zotero.integration.ooo.ReferenceMark"
 });
 
-var ZoteroOpenOfficeApplication = generateJavaXPCOMWrapper({
-  classDescription: "Zotero OpenOffice Integration Application",
-  classID:          Components.ID("{8478cd98-5ba0-4848-925a-75adffff2dbf}"),
-  contractID:       "@zotero.org/Zotero/integration/application?agent=OpenOffice;1",
-  service: 			true,
-  interfaceIDs: 	[Components.interfaces.zoteroIntegrationApplication],
-  javaClass:		"org.zotero.integration.ooo.Application"
-});
-ZoteroOpenOfficeApplication.prototype.primaryFieldType = "ReferenceMark";
-ZoteroOpenOfficeApplication.prototype.secondaryFieldType = "Bookmark";
-
 var ZoteroOpenOfficeEnumerator = generateJavaXPCOMWrapper({
   classDescription: "Zotero OpenOffice Integration Enumerator",
   classID:          Components.ID("{254b5e3a-0b48-442a-9cf3-dcdb61335282}"),
@@ -390,6 +575,7 @@ var ZoteroOpenOfficeEnumerator = generateJavaXPCOMWrapper({
 * XPCOMUtils.generateNSGetModule is for Mozilla 1.9.2 (Firefox 3.6).
 */
 var classes = [
+	ZoteroOpenOfficeSetupService,
 	ZoteroOpenOfficeApplication,
 	ZoteroOpenOfficeField,
 	ZoteroOpenOfficeDocument,

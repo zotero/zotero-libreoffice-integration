@@ -54,6 +54,9 @@ Sub ZoteroNotFound()
 End Sub
 
 Sub ZoteroCommand(cmd As String, bringToFront As Boolean)
+    dirService = createUnoService("com.sun.star.util.OfficeInstallationDirectories")
+    basisDir = dirService.getOfficeInstallationDirectoryURL()
+   
 	Dim EnvironTest As String
 	EnvironTest = Environ("OS")
 	If EnvironTest <> "" Then
@@ -82,8 +85,14 @@ Sub ZoteroCommand(cmd As String, bringToFront As Boolean)
 		If bringToFront Then Call SetForegroundWindow(ThWnd)
 		
 		' Pass command-line args
-		a$ = "firefox.exe -silent -ZoteroIntegrationAgent OpenOffice -ZoteroIntegrationCommand " & cmd & Chr(0) & "C:\" & Chr(0)
-		buf = VirtualAlloc(0, 255, MEM_COMMIT, PAGE_READWRITE)
+		a$ = "firefox.exe -silent -ZoteroIntegrationAgent OpenOffice -ZoteroIntegrationCommand " & cmd & " " & basisDir & Chr(0) & "C:\" & Chr(0)
+		If Len(a$) > 2048 Then
+			' If the command could otherwise cause a buffer overflow, don't send the basisDir to OOo
+			' This should never happen, since MAX_PATH = 255 on most systems
+			a$ = "firefox.exe -silent -ZoteroIntegrationAgent OpenOffice -ZoteroIntegrationCommand " & cmd & Chr(0) & "C:\" & Chr(0)
+		End If
+		
+		buf = VirtualAlloc(0, 4096, MEM_COMMIT, PAGE_READWRITE)
 		Call CopyMemoryToPtrStr(buf, a$, Len(a$))
 		totalLen = Len(a$)
 		cds = VirtualAlloc(0, 12, MEM_COMMIT, PAGE_READWRITE)
@@ -124,7 +133,7 @@ Sub ZoteroCommand(cmd As String, bringToFront As Boolean)
 			GoTo NotFound
 		End If
 		
-		Shell "bash -c ""echo 'OpenOffice " & cmd & "' > '" & path$ & "'"""
+		Shell "bash -c ""echo 'OpenOffice " & cmd & " " & basisDir & "' > '" & path$ & "'"""
 		Exit Sub
 		
 		ClearPath:
