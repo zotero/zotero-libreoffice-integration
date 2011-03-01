@@ -308,6 +308,7 @@ FieldEnumerator.prototype = {
  */
 var Field = function(num) {
 	this._num = num;
+	this.wrappedJSObject = this;
 };
 Field.prototype = {
 	classDescription: "Zotero OpenOffice.org Integration Field",
@@ -320,7 +321,10 @@ for each(var method in ["delete", "select", "removeCode", "setText", "getCode", 
 	let methodStable = method;
 	Field.prototype[method] = function() Comm.sendCommand("Field_"+methodStable, _cleanArguments(arguments, [this._num]));
 }
-Field.prototype.equals = function(arg) Comm.sendCommand("Field_equals", [this._num, arg._num]);
+Field.prototype.equals = function(arg) {
+	if(this._num === arg.wrappedJSObject._num) return true;
+	return Comm.sendCommand("Field_equals", [this._num, arg.wrappedJSObject._num]);
+}
 
 var classes = [
 	Initializer,
