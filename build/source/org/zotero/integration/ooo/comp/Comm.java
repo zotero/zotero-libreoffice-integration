@@ -38,7 +38,7 @@ class Comm implements Runnable {
 		commData = new CommData();
 		mObjectMapper = new ObjectMapper();
 		mThread.start();
-		//ZoteroOpenOfficeIntegrationImpl.debugPrint("Comm initialized");
+		ZoteroOpenOfficeIntegrationImpl.debugPrint("Comm initialized");
 	}
 	
 	/**
@@ -89,7 +89,7 @@ class Comm implements Runnable {
 		}
 		
 		try {
-			//ZoteroOpenOfficeIntegrationImpl.debugPrint("Sending message "+(new String(data)));
+			ZoteroOpenOfficeIntegrationImpl.debugPrint("Sending message "+(new String(data)));
 			// write length to stream
 			mOutputStream.writeInt(data.length);
 			// write data to stream
@@ -163,7 +163,7 @@ class Comm implements Runnable {
 		} else if(command.equals("Document_insertField")) {
 			ReferenceMark field = mActiveDocument.insertField((String) args.get(0), (Integer) args.get(1));
 			mFields.add(field);
-			//ZoteroOpenOfficeIntegrationImpl.debugPrint(field.toString());
+			ZoteroOpenOfficeIntegrationImpl.debugPrint(field.toString());
 			return mFields.size()-1;
 		} else if(command.equals("Document_getFields")) {
 			mFields = mActiveDocument.getFields((String) args.get(0));
@@ -208,7 +208,7 @@ class Comm implements Runnable {
 	 * @throws IOException
 	 */
 	void mainLoop() {
-		//ZoteroOpenOfficeIntegrationImpl.debugPrint("Iterating mainLoop");
+		ZoteroOpenOfficeIntegrationImpl.debugPrint("Iterating mainLoop");
 		// if there is a message to send, send it
 		if(nextMessage != null) {
 			sendMessage(nextMessage);
@@ -222,7 +222,7 @@ class Comm implements Runnable {
 		} catch (InterruptedException e) {}
 		
 		if(bytes != null) {
-			//ZoteroOpenOfficeIntegrationImpl.debugPrint("Received message "+(new String(bytes)));
+			ZoteroOpenOfficeIntegrationImpl.debugPrint("Received message "+(new String(bytes)));
 			readMessage(bytes);
 		}
 		

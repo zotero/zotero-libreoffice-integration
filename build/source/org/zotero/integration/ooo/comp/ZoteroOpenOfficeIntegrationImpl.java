@@ -24,7 +24,7 @@ public final class ZoteroOpenOfficeIntegrationImpl extends WeakBase
     public ZoteroOpenOfficeIntegrationImpl( XComponentContext context ) throws Exception
     {
         mApplication = new Application(context);
-        //debugPrint("Service initialized");
+        debugPrint("Service initialized");
     };
 
     public static XSingleComponentFactory __getComponentFactory( String sImplementationName ) {
@@ -61,15 +61,13 @@ public final class ZoteroOpenOfficeIntegrationImpl extends WeakBase
     }
     
 	public void trigger(String command) {
+		debugPrint("Executing "+command);
 		try {
-			//debugPrint("Executing "+command);
 			if(mComm == null) mComm = new Comm(mApplication);
-			//debugPrint("Comm created");
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
-
-		//debugPrint("Sending command");
+		
 		try {
 			mComm.sendCommand(command);
 		} catch(Exception e) {

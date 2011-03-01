@@ -153,8 +153,11 @@ Comm = new function() {
 		
 			// read data and forward to Zotero.Integration
 			var payload = _receiveCommand(this.iStream);
-			Zotero.Integration.execCommand("OpenOffice", payload, null);
-			Zotero.debug("Done.");
+			try {
+				Zotero.Integration.execCommand("OpenOffice", payload, null);
+			} catch(e) {
+				Zotero.logError(e);
+			}
 			
 			// do async waiting
 			this.rawiStream.QueryInterface(Components.interfaces.nsIAsyncInputStream)

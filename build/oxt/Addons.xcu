@@ -43,10 +43,10 @@
 				</node>
 				<node oor:name="m3" oor:op="replace">
 					<prop oor:name="Context" oor:type="xs:string">
-						<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addBibliography</value>
+						<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
 					</prop>
 					<prop oor:name="URL" oor:type="xs:string">
-						<value>macro:///Zotero.Zotero.ZoteroAddBibliography</value>
+						<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addBibliography</value>
 					</prop>
 					<prop oor:name="ImageIdentifier" oor:type="xs:string">
 						<value>%origin%/icons/image2</value>
