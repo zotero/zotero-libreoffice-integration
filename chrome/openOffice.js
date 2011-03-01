@@ -36,7 +36,7 @@ var ZoteroOpenOfficeIntegration = new function() {
 		name: "Zotero",
 		url: "zotero.org",
 		id: "zotero@chnm.gmu.edu",
-		minVersion: "2.1a1.SVN"
+		minVersion: "2.1b7.SVN"
 	}];
 	
 	var zoteroPluginInstaller, pathToAddon, installing, prefBranch;
