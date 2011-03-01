@@ -121,7 +121,8 @@ Comm = new function() {
 			createInstance(Components.interfaces.nsIBinaryOutputStream);
 		this.oStream.setOutputStream(this.rawoStream);
 		
-		this.onInputStreamReady();
+		this.rawiStream.QueryInterface(Components.interfaces.nsIAsyncInputStream)
+				.asyncWait(this, 0, 0, Zotero.mainThread);
 	}
 	
 	DataListener.prototype = {
@@ -148,6 +149,9 @@ Comm = new function() {
 		 */
 		//"onDataAvailable":function(request, context, inputStream, offset, count) {
 		"onInputStreamReady":function(inputStream) {
+			Zotero.debug("ZoteroOpenOfficeIntegration: Performing asynchronous read");
+			if(this.rawiStream.available() == 0) return;
+			
 			// keep track of the last connection we read on
 			_lastDataListener = this;
 		
