@@ -156,6 +156,8 @@ Comm = new function() {
 				} catch(e) {
 					Zotero.logError(e);
 				}
+			} else {
+				Zotero.wait();
 			}
 			
 			// do async waiting
