@@ -22,7 +22,7 @@
     ***** END LICENSE BLOCK *****
 */
 
-package org.zotero.integration.ooo;
+package org.zotero.integration.ooo.comp;
 
 import java.io.UnsupportedEncodingException;
 import java.util.regex.Matcher;
@@ -102,184 +102,154 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		rawCode = aCode;
 	}
 	
-	public void delete() {
-		try {
-			if(isWholeRange()) {
-				((XComponent) UnoRuntime.queryInterface(XComponent.class, text)).dispose();
-			} else {		
-				// delete mark
-				range.setString("");
-				// dispose of a Bookmark or TextSection
-				if(isDisposable) {
-					((XComponent) UnoRuntime.queryInterface(XComponent.class, textContent)).dispose();
-				}
-			}
-		} catch(Exception e) {
-			doc.displayAlert(Document.getErrorString(e), 0, 0);
-		}
-	}
-	
-	public void removeCode() {
-		try {
+	public void delete() throws Exception {
+		if(isWholeRange()) {
+			((XComponent) UnoRuntime.queryInterface(XComponent.class, text)).dispose();
+		} else {		
+			// delete mark
+			range.setString("");
+			// dispose of a Bookmark or TextSection
 			if(isDisposable) {
 				((XComponent) UnoRuntime.queryInterface(XComponent.class, textContent)).dispose();
-			} else {
-				// TODO: won't work with formatted text
-				range.setString(range.getString());
 			}
-		} catch(Exception e) {
-			doc.displayAlert(Document.getErrorString(e), 0, 0);
 		}
 	}
 	
-	public void select() {
-		try {
-			XTextCursor cursor = doc.getSelection();
-			cursor.gotoRange(range, false);
-			if(isTextSection) {
-				cursor.goLeft((short) 1, true);
-			}
-		} catch(Exception e) {
-			doc.displayAlert(Document.getErrorString(e), 0, 0);
+	public void removeCode() throws Exception {
+		if(isDisposable) {
+			((XComponent) UnoRuntime.queryInterface(XComponent.class, textContent)).dispose();
+		} else {
+			// TODO: won't work with formatted text
+			range.setString(range.getString());
 		}
 	}
 	
-	public void setText(String textString, boolean isRich) {
-		try {
-			boolean isBibliography = getCode().startsWith("BIBL");
-			
-			if(isBibliography) {
-				prepareMultiline();
-			}
-			
-			XTextCursor cursor = text.createTextCursorByRange(range);
-			range = cursor;
-			
-			if(!isBibliography) {
-				// move citation to its own paragraph so its formatting isn't altered automatically
-				// because of the text on either side of it
-				if(isRich) {
-					int previousLen = range.getString().length();
-					text.insertControlCharacter(range, ControlCharacter.PARAGRAPH_BREAK, false);
-					text.insertControlCharacter(range.getEnd(), ControlCharacter.PARAGRAPH_BREAK, false);
-					cursor.collapseToStart();
-					moveCursorRight(cursor, previousLen);
-				}
-			}
-
-			XMultiPropertyStates rangePropStates = (XMultiPropertyStates) UnoRuntime.queryInterface(XMultiPropertyStates.class, cursor);
-			rangePropStates.setPropertiesToDefault(PROPERTIES_CHANGE_TO_DEFAULT);
-
+	public void select() throws Exception {
+		XTextCursor cursor = doc.getSelection();
+		cursor.gotoRange(range, false);
+		if(isTextSection) {
+			cursor.goLeft((short) 1, true);
+		}
+	}
+	
+	public void setText(String textString, boolean isRich) throws Exception {
+		boolean isBibliography = getCode().startsWith("BIBL");
+		
+		if(isBibliography) {
+			prepareMultiline();
+		}
+		
+		XTextCursor cursor = text.createTextCursorByRange(range);
+		range = cursor;
+		
+		if(!isBibliography) {
+			// move citation to its own paragraph so its formatting isn't altered automatically
+			// because of the text on either side of it
 			if(isRich) {
-				/*if(isBibliography) {
-					// Add a new line to the start of the bibliography so that the paragraph format
-					// for the first entry will be correct. Without the new line, when converting
-					// citation styles, the first entry of the bibliography will keep the same paragraph
-					// formatting as the previous citation style
-					textString = "{\\rtf\\\n" + textString.substring(6);
-				}*/
-
-				insertRTF(textString, cursor);
-
-				if(isBibliography) {
-					// Remove the new line from the bibliography (added above). Have to remove the
-					// new line before the textSection and then adjust the range so the new line
-					// starting the textSection is outside of the range so that the 
-					// paragraph formatting of the first entry remains unchanged. Also remove the
-					//  extra new line at the end of the textSection.
-					String rangeString = cursor.getString();
-					int previousLen = rangeString.length();
-					int removeLastNewLine = 0;
-					if(rangeString.codePointAt(previousLen-1) == 10) {
-						removeLastNewLine = 1;
-						XTextCursor dupRange = text.createTextCursorByRange(range);
-						dupRange.collapseToEnd();
-						dupRange.goLeft((short) 1, true);
-						dupRange.setString("");
-					}
-					cursor.collapseToStart();
-					moveCursorRight(cursor, previousLen-removeLastNewLine);
-					XPropertySet rangeProps = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, range);
-					rangeProps.setPropertyValue("ParaStyleName", "Bibliography 1");
-				}
-			} else {
-				range.setString(textString);
+				int previousLen = range.getString().length();
+				text.insertControlCharacter(range, ControlCharacter.PARAGRAPH_BREAK, false);
+				text.insertControlCharacter(range.getEnd(), ControlCharacter.PARAGRAPH_BREAK, false);
+				cursor.collapseToStart();
+				moveCursorRight(cursor, previousLen);
 			}
+		}
 
-			reattachMark();
-			
-			if(!isBibliography) {
-				if(isRich) {
-					// remove previously added paragraphs
-					XTextCursor dupRange;
-					dupRange = text.createTextCursorByRange(range);
+		XMultiPropertyStates rangePropStates = (XMultiPropertyStates) UnoRuntime.queryInterface(XMultiPropertyStates.class, cursor);
+		rangePropStates.setPropertiesToDefault(PROPERTIES_CHANGE_TO_DEFAULT);
+
+		if(isRich) {
+			/*if(isBibliography) {
+				// Add a new line to the start of the bibliography so that the paragraph format
+				// for the first entry will be correct. Without the new line, when converting
+				// citation styles, the first entry of the bibliography will keep the same paragraph
+				// formatting as the previous citation style
+				textString = "{\\rtf\\\n" + textString.substring(6);
+			}*/
+
+			insertRTF(textString, cursor);
+
+			if(isBibliography) {
+				// Remove the new line from the bibliography (added above). Have to remove the
+				// new line before the textSection and then adjust the range so the new line
+				// starting the textSection is outside of the range so that the 
+				// paragraph formatting of the first entry remains unchanged. Also remove the
+				//  extra new line at the end of the textSection.
+				String rangeString = cursor.getString();
+				int previousLen = rangeString.length();
+				int removeLastNewLine = 0;
+				if(rangeString.codePointAt(previousLen-1) == 10) {
+					removeLastNewLine = 1;
+					XTextCursor dupRange = text.createTextCursorByRange(range);
 					dupRange.collapseToEnd();
-					dupRange.goRight((short) 1, true);
-					dupRange.setString("");
-	
-					dupRange = text.createTextCursorByRange(range);
-					dupRange.collapseToStart();
 					dupRange.goLeft((short) 1, true);
 					dupRange.setString("");
 				}
-				
-				getOutOfField();
+				cursor.collapseToStart();
+				moveCursorRight(cursor, previousLen-removeLastNewLine);
+				XPropertySet rangeProps = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, range);
+				rangeProps.setPropertyValue("ParaStyleName", "Bibliography 1");
 			}
-		} catch(Exception e) {
-			doc.displayAlert(Document.getErrorString(e), 0, 0);
+		} else {
+			range.setString(textString);
+		}
+
+		reattachMark();
+		
+		if(!isBibliography) {
+			if(isRich) {
+				// remove previously added paragraphs
+				XTextCursor dupRange;
+				dupRange = text.createTextCursorByRange(range);
+				dupRange.collapseToEnd();
+				dupRange.goRight((short) 1, true);
+				dupRange.setString("");
+
+				dupRange = text.createTextCursorByRange(range);
+				dupRange.collapseToStart();
+				dupRange.goLeft((short) 1, true);
+				dupRange.setString("");
+			}
+			
+			getOutOfField();
 		}
 	}
 
-	public void setCode(String code) {
-		try {
-			rawCode = Document.PREFIXES[0] + code + " RND" + Document.getRandomString(Document.REFMARK_ADD_CHARS);
-			if(isTextSection) {
-				named.setName(rawCode);
-			} else {
-				// The only way to rename a ReferenceMark is to delete it and add it again
-				// TODO: won't work with formatted text
-				range.setString(range.getString());
-				reattachMark();
-			}
-		} catch(Exception e) {
-			doc.displayAlert(Document.getErrorString(e), 0, 0);
+	public void setCode(String code) throws Exception {
+		rawCode = Document.PREFIXES[0] + code + " RND" + Document.getRandomString(Document.REFMARK_ADD_CHARS);
+		if(isTextSection) {
+			named.setName(rawCode);
+		} else {
+			// The only way to rename a ReferenceMark is to delete it and add it again
+			// TODO: won't work with formatted text
+			range.setString(range.getString());
+			reattachMark();
 		}
 	}
 	
-	public String getCode() {
-		try {
-			int rnd = rawCode.lastIndexOf(" RND");
-			if(rnd == -1) rnd = rawCode.length()-6;	// for compatibility with old, pre-release Python plug-in
-			for(String prefix : Document.PREFIXES) {
-				if(rawCode.startsWith(prefix)) {
-					if(rnd > 0) {
-						return rawCode.substring(prefix.length(), rnd);
-					} else {
-						return rawCode;
-					}
+	public String getCode() throws Exception {
+		int rnd = rawCode.lastIndexOf(" RND");
+		if(rnd == -1) rnd = rawCode.length()-6;	// for compatibility with old, pre-release Python plug-in
+		for(String prefix : Document.PREFIXES) {
+			if(rawCode.startsWith(prefix)) {
+				if(rnd > 0) {
+					return rawCode.substring(prefix.length(), rnd);
+				} else {
+					return rawCode;
 				}
 			}
-				
-			throw new Exception("Invalid code prefix");
-		} catch(Exception e) {
-	    	doc.displayAlert(Document.getErrorString(e), 0, 0);
-	    	return null;
-	    }
+		}
+			
+		throw new Exception("Invalid code prefix");
 	}
 	
-	public Integer getNoteIndex() {
-		try {
-			if(isNote) {
-				// Only works for numbered notes; won't work if a note is referenced by a letter
-				try {
-					return Integer.parseInt(((XFootnote) UnoRuntime.queryInterface(XFootnote.class, text)).getAnchor().getString());
-				} catch(NumberFormatException e) {}
-			}
-			return null;
-		} catch(Exception e) {
-	    	doc.displayAlert(Document.getErrorString(e), 0, 0);
-	    	return null;
-	    }
+	public Integer getNoteIndex() throws Exception {
+		if(isNote) {
+			// Only works for numbered notes; won't work if a note is referenced by a letter
+			try {
+				return Integer.parseInt(((XFootnote) UnoRuntime.queryInterface(XFootnote.class, text)).getAnchor().getString());
+			} catch(NumberFormatException e) {}
+		}
+		return null;
 	}
 	
 	public boolean equals(ReferenceMark o) {

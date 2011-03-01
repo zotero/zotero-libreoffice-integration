@@ -1,4 +1,4 @@
-package org.zotero.integration.ooo;
+package org.zotero.integration.ooo.comp;
 
 import java.util.HashMap;
 

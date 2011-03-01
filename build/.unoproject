@@ -1,0 +1,12 @@
+#UNO project configuration file
+#Mon Feb 28 16:47:21 PST 2011
+project.srcdir=/source
+regclassname=org.zotero.integration.ooo.comp.RegistrationHandler
+javaversion=java4
+project.sdk=330m19
+project.ooo=LibreOffice 3.3
+project.implementation=comp
+project.build=build
+project.language=Java
+project.prefix=org.zotero.integration.ooo
+project.idl=/idl

@@ -5,6 +5,11 @@
     <script type="application/x-javascript" src="chrome://zotero-openoffice-integration/content/openOffice.js"/>
     <script type="application/x-javascript">
     	window.addEventListener("load", function() {
+    		// initialize server
+    		Components.classes["@zotero.org/Zotero/integration/initializer?agent=OpenOffice;1"].
+				getService(Components.interfaces.nsISupports);
+				
+			// start plug-in installer
 	    	new ZoteroPluginInstaller(ZoteroOpenOfficeIntegration, Zotero.isStandalone);
 	    }, false);
     </script>

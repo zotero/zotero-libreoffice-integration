@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<jardesc>
+    <jar path="Zotero OpenOffice Integration/oxt/Zotero.jar"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/Zotero OpenOffice Integration/Zotero.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
+    <selectedProjects/>
+    <manifest generateManifest="false" manifestLocation="/Zotero OpenOffice Integration/META-INF/MANIFEST.MF" manifestVersion="1.0" reuseManifest="true" saveManifest="true" usesManifest="true">
+        <sealing sealJar="true">
+            <packagesToSeal>
+                <package handleIdentifier="=Zotero OpenOffice.org Integration/source&lt;org.zotero.integration.ooo.comp"/>
+            </packagesToSeal>
+            <packagesToUnSeal/>
+        </sealing>
+    </manifest>
+    <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
+        <javaElement handleIdentifier="=Zotero OpenOffice Integration/source"/>
+        <javaElement handleIdentifier="=Zotero OpenOffice Integration/build"/>
+    </selectedElements>
+</jardesc>

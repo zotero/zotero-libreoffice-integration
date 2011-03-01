@@ -12,7 +12,7 @@
 						<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
 					</prop>
 					<prop oor:name="URL" oor:type="xs:string">
-						<value>macro:///Zotero.Zotero.ZoteroAddCitation</value>
+						<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addCitation</value>
 					</prop>
 					<prop oor:name="ImageIdentifier" oor:type="xs:string">
 						<value>%origin%/icons/image1</value>
@@ -29,7 +29,7 @@
 						<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
 					</prop>
 					<prop oor:name="URL" oor:type="xs:string">
-						<value>macro:///Zotero.Zotero.ZoteroEditCitation</value>
+						<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?editCitation</value>
 					</prop>
 					<prop oor:name="ImageIdentifier" oor:type="xs:string">
 						<value>%origin%/icons/image5</value>
@@ -43,7 +43,7 @@
 				</node>
 				<node oor:name="m3" oor:op="replace">
 					<prop oor:name="Context" oor:type="xs:string">
-						<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
+						<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addBibliography</value>
 					</prop>
 					<prop oor:name="URL" oor:type="xs:string">
 						<value>macro:///Zotero.Zotero.ZoteroAddBibliography</value>
@@ -63,7 +63,7 @@
 						<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
 					</prop>
 					<prop oor:name="URL" oor:type="xs:string">
-						<value>macro:///Zotero.Zotero.ZoteroEditBibliography</value>
+						<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?editBibliography</value>
 					</prop>
 					<prop oor:name="ImageIdentifier" oor:type="xs:string">
 						<value>%origin%/icons/image6</value>
@@ -88,7 +88,7 @@
 						<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
 					</prop>
 					<prop oor:name="URL" oor:type="xs:string">
-						<value>macro:///Zotero.Zotero.ZoteroRefresh</value>
+						<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?refresh</value>
 					</prop>
 					<prop oor:name="ImageIdentifier" oor:type="xs:string">
 						<value>%origin%/icons/image3</value>
@@ -105,7 +105,7 @@
 						<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
 					</prop>
 					<prop oor:name="URL" oor:type="xs:string">
-						<value>macro:///Zotero.Zotero.ZoteroSetDocPrefs</value>
+						<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?setDocPrefs</value>
 					</prop>
 					<prop oor:name="ImageIdentifier" oor:type="xs:string">
 						<value>%origin%/icons/image4</value>
@@ -122,7 +122,7 @@
 						<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
 					</prop>
 					<prop oor:name="URL" oor:type="xs:string">
-						<value>macro:///Zotero.Zotero.ZoteroRemoveCodes</value>
+						<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?removeCodes</value>
 					</prop>
 					<prop oor:name="ImageIdentifier" oor:type="xs:string">
 						<value>%origin%/icons/image7</value>

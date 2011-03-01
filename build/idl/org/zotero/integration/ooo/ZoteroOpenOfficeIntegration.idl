@@ -1,0 +1,11 @@
+#ifndef __org_zotero_integration_ooo_zoteroopenofficeintegration_idl__
+#define __org_zotero_integration_ooo_zoteroopenofficeintegration_idl__
+
+#include <com/sun/star/task/XJobExecutor.idl>
+module org { module zotero { module integration { module ooo { 
+
+        published service ZoteroOpenOfficeIntegration : com::sun::star::task::XJobExecutor {
+        };
+
+ }; }; }; };
+#endif

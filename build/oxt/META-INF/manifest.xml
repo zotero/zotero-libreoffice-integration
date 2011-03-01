@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<manifest:manifest>
- <manifest:file-entry manifest:full-path="Zotero/" manifest:media-type="application/vnd.sun.star.basic-library"/>
+<manifest:manifest xmlns:manifest="http://openoffice.org/2001/manifest">
  <manifest:file-entry manifest:full-path="pkg-desc/pkg-description.txt" manifest:media-type="application/vnd.sun.star.package-bundle-description"/>
  <manifest:file-entry manifest:full-path="Addons.xcu" manifest:media-type="application/vnd.sun.star.configuration-data"/>
  <manifest:file-entry manifest:full-path="Office/UI/CalcWindowState.xcu" manifest:media-type="application/vnd.sun.star.configuration-data"/>
@@ -11,4 +10,6 @@
  <manifest:file-entry manifest:full-path="Office/UI/BasicIDEWindowState.xcu" manifest:media-type="application/vnd.sun.star.configuration-data"/>
  <manifest:file-entry manifest:full-path="Office/UI/MathWindowState.xcu" manifest:media-type="application/vnd.sun.star.configuration-data"/>
  <manifest:file-entry manifest:full-path="Office/UI/DrawWindowState.xcu" manifest:media-type="application/vnd.sun.star.configuration-data"/>
+ <manifest:file-entry manifest:full-path="Zotero.jar" manifest:media-type="application/vnd.sun.star.uno-component;type=Java"/>
+ <manifest:file-entry manifest:media-type="application/vnd.sun.star.uno-typelibrary;type=RDB" manifest:full-path="types.rdb"/>
 </manifest:manifest>

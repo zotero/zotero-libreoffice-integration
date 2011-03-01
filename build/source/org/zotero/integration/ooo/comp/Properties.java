@@ -22,7 +22,7 @@
     ***** END LICENSE BLOCK *****
 */
 
-package org.zotero.integration.ooo;
+package org.zotero.integration.ooo.comp;
 
 import com.sun.star.beans.NotRemoveableException;
 import com.sun.star.beans.PropertyExistException;

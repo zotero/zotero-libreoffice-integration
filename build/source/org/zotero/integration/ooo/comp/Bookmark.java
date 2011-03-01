@@ -22,7 +22,7 @@
     ***** END LICENSE BLOCK *****
 */
 
-package org.zotero.integration.ooo;
+package org.zotero.integration.ooo.comp;
 
 import com.sun.star.container.XNamed;
 import com.sun.star.text.XTextContent;
@@ -34,59 +34,42 @@ public class Bookmark extends ReferenceMark {
 		isDisposable = true;
 	}
 	
-	public void delete() {
-		try {
-			doc.properties.setProperty(rawCode, "");
-			super.delete();
-		} catch(Exception e) {
-			doc.displayAlert(Document.getErrorString(e), 0, 0);
-		}
+	public void delete() throws Exception {
+		doc.properties.setProperty(rawCode, "");
+		super.delete();
 	}
 	
-	public void removeCode() {
-		try {
-			doc.properties.setProperty(rawCode, "");
-			super.removeCode();
-		} catch(Exception e) {
-			doc.displayAlert(Document.getErrorString(e), 0, 0);
-		}
+	public void removeCode() throws Exception {
+		doc.properties.setProperty(rawCode, "");
+		super.removeCode();
 	}
 	
-	public void setCode(String code) {
-		try {
-			doc.properties.setProperty(rawCode, Document.PREFIXES[0]+code);
-		} catch(Exception e) {
-			doc.displayAlert(Document.getErrorString(e), 0, 0);
-		}
+	public void setCode(String code) throws Exception {
+		doc.properties.setProperty(rawCode, Document.PREFIXES[0]+code);
 	}
 	
-	public String getCode() {
-		try {
-			String property = doc.properties.getProperty(rawCode);
-			
-			// necessary since OOo adds a number to copy and pasted citations
-			if(property == "") {
-				for(int i=1; i<=3 && property == ""; i++) {
-					property = doc.properties.getProperty(rawCode.substring(0, rawCode.length()-i));
-				}
+	public String getCode() throws Exception {
+		String property = doc.properties.getProperty(rawCode);
+		
+		// necessary since OOo adds a number to copy and pasted citations
+		if(property == "") {
+			for(int i=1; i<=3 && property == ""; i++) {
+				property = doc.properties.getProperty(rawCode.substring(0, rawCode.length()-i));
+			}
 
-				if(property == "") {
-					return "";
-				} else {
-					doc.properties.setProperty(rawCode, property);
-				}
+			if(property == "") {
+				return "";
+			} else {
+				doc.properties.setProperty(rawCode, property);
 			}
-			
-			for(String prefix : Document.PREFIXES) {
-				if(property.startsWith(prefix)) {
-					return property.substring(prefix.length());
-				}
-			}
-			throw new Exception("Invalid code prefix");
-		} catch(Exception e) {
-			doc.displayAlert(Document.getErrorString(e), 0, 0);
-			return null;
 		}
+		
+		for(String prefix : Document.PREFIXES) {
+			if(property.startsWith(prefix)) {
+				return property.substring(prefix.length());
+			}
+		}
+		throw new Exception("Invalid code prefix");
 	}
 
 	protected void prepareMultiline() throws Exception {}

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="source"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/Applications/OpenOffice.org.app/Contents/MacOS"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/URE"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/OpenOffice"/>
+	<classpathentry kind="lib" path="build"/>
+	<classpathentry kind="lib" path="lib/jackson-core-lgpl-1.7.3.jar"/>
+	<classpathentry kind="lib" path="lib/jackson-mapper-lgpl-1.7.3.jar"/>
+	<classpathentry kind="con" path="org.openoffice.ide.eclipse.java.OOO_CONTAINER/LibreOffice 3.3"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

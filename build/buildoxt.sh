@@ -1,13 +1,19 @@
 #!/bin/bash
-# Compile VBA
-cat > oxt/Zotero/Zotero.xba <<DONE
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
-<script:module xmlns:script="http://openoffice.org/2000/script" script:name="Zotero" script:language="StarBasic">
-DONE
-perl -pe 's/&/&amp;/g; s/</&lt;/g; s/>/&gt;/g; s/"/&quot;/g; '"s/'/&apos;/g;" vba/Zotero.vba >> oxt/Zotero/Zotero.xba
-echo >> oxt/Zotero/Zotero.xba
-echo '</script:module>' >> oxt/Zotero/Zotero.xba
+# Compile definitions
+#cd idl
+#/opt/libreoffice/basis3.3/sdk/bin/idlc -O../build/urd/org/zotero/integration/ooo -I/opt/libreoffice/basis3.3/sdk/idl org/zotero/integration/ooo/*idl
+#cd ..
+#/opt/libreoffice/ure/bin/regmerge build/urd/org/zotero/integration/ooo/*urd /UCR types.rdb
+#cd build
+#/opt/libreoffice/basis3.3/sdk/bin/javamaker -BUCR ../types.rdb /opt/libreoffice/ure/share/misc/types.rdb
+#cd ..
+
+# Copy external jars
+cp -r lib/*jar oxt/external_jars
+cp -r types.rdb oxt/types.rdb
+
+# Fix MANIFEST.MF
+zip oxt/Zotero.jar META-INF/MANIFEST.MF
 
 # Zip up oxt
 cd oxt

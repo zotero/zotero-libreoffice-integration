@@ -22,10 +22,9 @@
     ***** END LICENSE BLOCK *****
 */
 
-package org.zotero.integration.ooo;
+package org.zotero.integration.ooo.comp;
 
 import com.sun.star.beans.PropertyValue;
-import com.sun.star.comp.helper.Bootstrap;
 import com.sun.star.container.XNameAccess;
 import com.sun.star.frame.XDesktop;
 import com.sun.star.lang.XMultiServiceFactory;
@@ -36,8 +35,10 @@ public class Application {
 	XMultiServiceFactory factory;
 	XDesktop desktop;
 	String ooName;
+	XComponentContext ctx;
 
-	public Application() throws Exception {
+	public Application(XComponentContext aCtx) throws Exception {
+		ctx = aCtx;
 		init();
 	}
 
@@ -51,7 +52,6 @@ public class Application {
 	}
 	
 	private void init() throws Exception {
-		XComponentContext ctx = Bootstrap.bootstrap();
 		factory = (XMultiServiceFactory) UnoRuntime.queryInterface(XMultiServiceFactory.class, ctx.getServiceManager());
 		desktop = (XDesktop) UnoRuntime.queryInterface(XDesktop.class, 
 				factory.createInstance("com.sun.star.frame.Desktop"));
@@ -65,15 +65,4 @@ public class Application {
 						"com.sun.star.configuration.ConfigurationAccess", new Object[] {nodepath}));
 		ooName = (String) settings.getByName("ooName");
 	}
-	
-	/*public static void main(String[] args) throws Exception {
-		Application app = new Application();
-		Document doc = app.getActiveDocument();
-		int tabStops[] = { 1440 };
-		doc.setBibliographyStyle(0, 720, 0, 0, tabStops, 1);
-		MarkEnumerator me = doc.getFields("ReferenceMark");
-		while(me.hasMoreElements()) {
-			System.out.println(me.getNext().getCode());
-		}
-	}*/
 }
