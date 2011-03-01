@@ -288,16 +288,16 @@ Document.prototype.convert = function(enumerator, fieldType, noteTypes) {
 /**
  * An enumerator implementation to handle passing off fields
  */
-var FieldEnumerator = function(num) {
-	this._numFields = num;
-	this._curField = 0;
+var FieldEnumerator = function(range) {
+	this._curField = range[0];
+	this._maxField = range[1];
 };
 FieldEnumerator.prototype = {
 	"hasMoreElements":function() {
-		return !(this._numFields === this._curField);
+		return !(this._curField > this._maxField);
 	}, 
 	"getNext":function() {
-		if(this._curField >= this._numFields) throw "No more fields!";
+		if(this._curField > this._maxField) throw "No more fields!";
 		return new Field(this._curField++);
 	},
 	QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsISupports, Components.interfaces.nsISimpleEnumerator])

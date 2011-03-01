@@ -23,7 +23,7 @@ class Comm implements Runnable {
 	private CommReader mCommReader;
 	private Thread mThread;
 	private Document mActiveDocument;
-	private LinkedList<ReferenceMark> mFields;
+	private volatile LinkedList<ReferenceMark> mFields;
 	CommData commData;
 	private volatile Object nextMessage;
 	
@@ -33,7 +33,6 @@ class Comm implements Runnable {
 	 */
 	public Comm(Application application) {
 		mApplication = application;
-		mFields = new LinkedList<ReferenceMark>();
 		mThread = new Thread(this);
 		commData = new CommData();
 		mObjectMapper = new ObjectMapper();
@@ -47,6 +46,10 @@ class Comm implements Runnable {
 	 * @param command
 	 */
 	void sendCommand(String command) {
+		// We are about to execute a new command, so clear our field list
+		mFields = new LinkedList<ReferenceMark>();
+		
+		// Execute command
 		nextMessage = command;
 		if(mThread.isAlive()) {
 			mThread.interrupt();
@@ -166,8 +169,12 @@ class Comm implements Runnable {
 			ZoteroOpenOfficeIntegrationImpl.debugPrint(field.toString());
 			return mFields.size()-1;
 		} else if(command.equals("Document_getFields")) {
-			mFields = mActiveDocument.getFields((String) args.get(0));
-			return mFields.size();
+			LinkedList<ReferenceMark> fields = mActiveDocument.getFields((String) args.get(0));
+			int startPos = mFields.size();
+			mFields.addAll(fields);
+			int endPos = mFields.size()-1;
+			int[] pos = {startPos, endPos};
+			return pos;
 		} else if(command.equals("Document_setBibliographyStyle")) {
 			ArrayList<Number> arrayList = (ArrayList<Number>) args.get(4);
 			mActiveDocument.setBibliographyStyle((Integer) args.get(0), (Integer) args.get(1),
