@@ -108,11 +108,6 @@ Comm = new function() {
 		this.rawiStream = transport.openInputStream(Components.interfaces.nsITransport.OPEN_BLOCKING, 0, 0);
 		this.rawoStream = transport.openOutputStream(Components.interfaces.nsITransport.OPEN_BLOCKING, 0, 0);
 		
-		this._timerStarted = false;
-		this._timer = Components.classes["@mozilla.org/timer;1"].
-			createInstance(Components.interfaces.nsITimer);
-		this._requestLength = null;
-		
 		this.iStream = Components.classes["@mozilla.org/binaryinputstream;1"].
 			createInstance(Components.interfaces.nsIBinaryInputStream);
 		this.iStream.setInputStream(this.rawiStream);
@@ -284,7 +279,7 @@ Document.prototype.getFields = function() {
 Document.prototype.convert = function(enumerator, fieldType, noteTypes) {
 	var i = 0;
 	while(enumerator.hasMoreElements()) {
-		Comm.sendCommand("Field_convert", [enumerator.getNext()._num, fieldType, noteTypes[i]]);
+		Comm.sendCommand("Field_convert", [enumerator.getNext().wrappedJSObject._num, fieldType, noteTypes[i]]);
 		i++;
 	}
 };
