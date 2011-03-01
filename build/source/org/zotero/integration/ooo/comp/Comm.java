@@ -130,8 +130,13 @@ class Comm implements Runnable {
 			showError(INVALID_INPUT_STRING, e);
 			return;
 		} catch (Exception e) {
-	    	showError(Document.getErrorString(e), e);
-			return;
+			showError(Document.getErrorString(e), e);
+			try {
+				mSocket.close();
+			} catch(IOException e1) {
+				e1.printStackTrace();
+			}
+	    	return;
 		}
 		
 		// send response to message
