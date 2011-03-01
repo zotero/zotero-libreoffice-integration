@@ -150,17 +150,17 @@ Comm = new function() {
 		//"onDataAvailable":function(request, context, inputStream, offset, count) {
 		"onInputStreamReady":function(inputStream) {
 			Zotero.debug("ZoteroOpenOfficeIntegration: Performing asynchronous read");
-			if(this.rawiStream.available() == 0) return;
+			if(this.rawiStream.available() > 0) {
+				// keep track of the last connection we read on
+				_lastDataListener = this;
 			
-			// keep track of the last connection we read on
-			_lastDataListener = this;
-		
-			// read data and forward to Zotero.Integration
-			var payload = _receiveCommand(this.iStream);
-			try {
-				Zotero.Integration.execCommand("OpenOffice", payload, null);
-			} catch(e) {
-				Zotero.logError(e);
+				// read data and forward to Zotero.Integration
+				var payload = _receiveCommand(this.iStream);
+				try {
+					Zotero.Integration.execCommand("OpenOffice", payload, null);
+				} catch(e) {
+					Zotero.logError(e);
+				}
 			}
 			
 			// do async waiting
