@@ -6,5 +6,6 @@
 	<classpathentry kind="lib" path="lib/jackson-core-lgpl-1.7.3.jar"/>
 	<classpathentry kind="lib" path="lib/jackson-mapper-lgpl-1.7.3.jar"/>
 	<classpathentry kind="con" path="org.openoffice.ide.eclipse.java.OOO_CONTAINER/LibreOffice 3.3"/>
+	<classpathentry kind="lib" path="oxt/external_jars/jna.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

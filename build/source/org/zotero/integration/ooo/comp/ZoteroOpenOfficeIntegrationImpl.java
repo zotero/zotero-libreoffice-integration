@@ -1,5 +1,8 @@
 package org.zotero.integration.ooo.comp;
 
+import com.sun.jna.Library;
+import com.sun.jna.Native;
+import com.sun.jna.Platform;
 import com.sun.star.lang.XSingleComponentFactory;
 import com.sun.star.lib.uno.helper.Factory;
 import com.sun.star.lib.uno.helper.WeakBase;
@@ -16,6 +19,17 @@ public final class ZoteroOpenOfficeIntegrationImpl extends WeakBase
     private static final String m_implementationName = ZoteroOpenOfficeIntegrationImpl.class.getName();
     private static final String[] m_serviceNames = {
         "org.zotero.integration.ooo.ZoteroOpenOfficeIntegration" };
+    private static final String[] WINDOW_NAMES = { "ZoteroMessageWindow", "FirefoxMessageWindow",
+    	"MinefieldMessageWindow", "BrowserMessageWindow" };
+    
+    public interface CLibrary extends Library {
+    	CLibrary INSTANCE = (Platform.isWindows() ?
+    			(CLibrary) Native.loadLibrary("user32", CLibrary.class)
+    			: null);
+    	
+    	int FindWindowA(String lpClassName, String lpWindowName);
+    	boolean SetForegroundWindow(int hWnd);
+    }
     
     public static void debugPrint(String msg) {
     	System.out.println("ZoteroOpenOfficeIntegration: "+msg);
@@ -61,6 +75,21 @@ public final class ZoteroOpenOfficeIntegrationImpl extends WeakBase
     }
     
 	public void trigger(String command) {
+		if(Platform.isWindows()) {
+			debugPrint("Activating window");
+			// Look for Firefox/Zotero window
+			int hWnd = 0;
+			for(String window : WINDOW_NAMES) {
+				hWnd = CLibrary.INSTANCE.FindWindowA(window, null);
+				if(hWnd != 0) break;
+			}
+			
+			// Activate window
+			if(hWnd != 0) {
+				CLibrary.INSTANCE.SetForegroundWindow(hWnd);
+			}
+		}
+		
 		debugPrint("Executing "+command);
 		try {
 			if(mComm == null) mComm = new Comm(mApplication);
