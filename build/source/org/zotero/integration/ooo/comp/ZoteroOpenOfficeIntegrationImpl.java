@@ -21,6 +21,8 @@ public final class ZoteroOpenOfficeIntegrationImpl extends WeakBase
         "org.zotero.integration.ooo.ZoteroOpenOfficeIntegration" };
     private static final String[] WINDOW_NAMES = { "ZoteroMessageWindow", "FirefoxMessageWindow",
     	"MinefieldMessageWindow", "BrowserMessageWindow" };
+    private static final String[] ACTIVATE_FOR_COMMANDS = { "addCitation", "editCitation",
+    	"editBibliography", "setDocPrefs" };
     
     public interface CLibrary extends Library {
     	CLibrary INSTANCE = (Platform.isWindows() ?
@@ -76,17 +78,27 @@ public final class ZoteroOpenOfficeIntegrationImpl extends WeakBase
     
 	public void trigger(String command) {
 		if(Platform.isWindows()) {
-			debugPrint("Activating window");
-			// Look for Firefox/Zotero window
-			int hWnd = 0;
-			for(String window : WINDOW_NAMES) {
-				hWnd = CLibrary.INSTANCE.FindWindowA(window, null);
-				if(hWnd != 0) break;
+			boolean activateWindow = false;
+			for(String cmd : ACTIVATE_FOR_COMMANDS) {
+				if(command.equals(cmd)) {
+					activateWindow = true;
+					break;
+				}
 			}
 			
-			// Activate window
-			if(hWnd != 0) {
-				CLibrary.INSTANCE.SetForegroundWindow(hWnd);
+			if(activateWindow) {
+				debugPrint("Activating window");
+				// Look for Firefox/Zotero window
+				int hWnd = 0;
+				for(String window : WINDOW_NAMES) {
+					hWnd = CLibrary.INSTANCE.FindWindowA(window, null);
+					if(hWnd != 0) break;
+				}
+				
+				// Activate window
+				if(hWnd != 0) {
+					CLibrary.INSTANCE.SetForegroundWindow(hWnd);
+				}
 			}
 		}
 		
