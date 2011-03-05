@@ -25,7 +25,7 @@ public class CommReader implements Runnable {
 			// Called when Zotero is closed to disconnect from the channel
 			return;
 		} catch (IOException e) {
-			mComm.showError(Document.getErrorString(e), e);
+			// We have to ignore this too, since it can sometimes wrap a SocketException
 			return;
 		}
 	}
