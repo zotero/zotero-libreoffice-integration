@@ -16,7 +16,6 @@ class Comm implements Runnable {
 	static final String COMMUNICATION_ERROR_STRING = "OpenOffice.org could not communicate with Zotero. Please ensure Firefox or Zotero Standalone is open and set to an online state and try again.";
 	private static final String INVALID_INPUT_STRING = "OpenOffice.org received invalid data from Zotero. Please ensure that your copy of Zotero OpenOffice.org Integration is up to date. If the problem persists, report this on the Zotero Forums.";
 	
-	private Socket mSocket;
 	private DataOutputStream mOutputStream;
 	private ObjectMapper mObjectMapper;
 	private Application mApplication;
@@ -26,6 +25,7 @@ class Comm implements Runnable {
 	private volatile LinkedList<ReferenceMark> mFields;
 	CommData commData;
 	private volatile Object nextMessage;
+	volatile Socket mSocket;
 	
 	/**
 	 * Constructor for communication socket
