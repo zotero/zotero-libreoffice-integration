@@ -81,7 +81,9 @@
 	<wizardpage pageid="installation-complete"
 	label="Installation Complete">
 		<description id="installation-successful">
-			Zotero OpenOffice.org/NeoOffice/LibreOffice Integration was installed successfully.
+			Zotero OpenOffice.org/NeoOffice/LibreOffice Integration was installed successfully. 
+			Depending on the way OpenOffice.org/NeoOffice/LibreOffice is configured, it may be
+			necessary to restart your computer for changes to take effect.
 		</description>
 		<vbox id="installation-manual" hidden="true" flex="1">
 			<description>
