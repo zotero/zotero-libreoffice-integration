@@ -239,9 +239,9 @@ function javaCommonInstallPageShown() {
 	} else {
 		// if no apturl, try to install via xterm
 		var xterm = ZoteroOpenOfficeIntegration.getFile("/usr/bin/xterm");
-		if(xterm.exists() && ZoteroOpenOfficeIntegration.getFile("/usr/bin/apt-get").exists()) {
+		if(xterm.exists()) {
 			proc.init(xterm);
-			proc.runAsync(["-e", "/usr/bin/apt-get install openoffice.org-java-common"], 2,
+			proc.runAsync(["-e", "sudo apt-get install openoffice.org-java-common; sleep 2;"], 2,
 					{"observe":function(subject, topic) {
 				checkJavaCommon(function() {
 					// if install appears to have succeeded
@@ -432,7 +432,9 @@ function reportErrors() {
 /*** WIZARD BUTTON HANDLERS ***/
 
 function wizardCancelled() {
-	ZoteroPluginInstaller.cancelled();
+	if(wizard.currentPage.pageid != "installation-complete") {
+		ZoteroPluginInstaller.cancelled();
+	}
 }
 
 function wizardBack() {
