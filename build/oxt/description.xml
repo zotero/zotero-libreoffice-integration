@@ -3,7 +3,7 @@
 xmlns:d="http://openoffice.org/extensions/description/2006"
 xmlns:xlink="http://www.w3.org/1999/xlink">
  
-  <version value="3.0" />   
+  <version value="3.5a1" />   
  
   <identifier value="org.Zotero.integration.openoffice" />
  
