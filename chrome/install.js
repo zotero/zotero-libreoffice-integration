@@ -433,7 +433,16 @@ function reportErrors() {
 
 function wizardCancelled() {
 	if(wizard.currentPage.pageid != "installation-complete") {
-		ZoteroPluginInstaller.cancelled();
+		var promptService = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
+				.getService(Components.interfaces.nsIPromptService);
+		var cancel = promptService.confirm(window, "Zotero OpenOffice.org Integration", "Are you sure you want "+
+			"to cancel Zotero OpenOffice.org/NeoOffice/LibreOffice Integration installation? To "+
+			"install later, visit the Cite pane of the Zotero preferences.");
+		if(cancel) {
+			ZoteroPluginInstaller.cancelled();
+			return true;
+		}
+		return false;
 	}
 }
 

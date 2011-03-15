@@ -5,7 +5,8 @@
 
 <wizard xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
 	title="Zotero OpenOffice.org/NeoOffice/LibreOffice Integration Installation" width="600"
-	height="450" id="installer" onwizardcancel="wizardCancelled()" onwizardback="wizardBack(); return false;">
+	height="450" id="installer" onwizardcancel="return wizardCancelled();"
+	onwizardback="wizardBack(); return false;">
 	
 	<script src="chrome://zotero/content/include.js"/>
 	<script src="install.js"/>
