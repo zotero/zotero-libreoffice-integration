@@ -23,8 +23,7 @@
 */
 
 var ZoteroOpenOfficeIntegration = new function() {
-	const URE_PREF = "urePath";
-	const SOFFICE_PREF = "sofficePath";
+	this.UNOPKG_PATHS_PREF = "unopkgPaths";
 	
 	this.EXTENSION_STRING = "Zotero OpenOffice Integration";
 	this.EXTENSION_ID = "zoteroOpenOfficeIntegration@zotero.org";
@@ -39,281 +38,143 @@ var ZoteroOpenOfficeIntegration = new function() {
 		minVersion: "2.1b7.SVN"
 	}];
 	
-	var zoteroPluginInstaller, pathToAddon, installing, prefBranch;
+	this.DISABLE_PROGRESS_WINDOW = true;
+	
+	var zoteroPluginInstaller, pathToAddon, installing, prefBranch, wizardWindow;
 	
 	this.verifyNotCorrupt = function() {}
 	
 	this.install = function(zpi) {
+		if(wizardWindow && !wizardWindow.closed) {
+			wizardWindow.focus();
+			return;
+		}
 		if(installing) return;
-		installing = true;
 		
 		zoteroPluginInstaller = zpi;
-		prefBranch = zoteroPluginInstaller.prefBranch;
+		this.pathToAddon = zoteroPluginInstaller.getAddonPath(this.EXTENSION_ID);
 		
-		if(prefBranch.getCharPref(SOFFICE_PREF) == "" ||
-		   prefBranch.getCharPref(URE_PREF) == "") {
-			zoteroPluginInstaller.setProgressWindowLabel("Detecting OpenOffice.org Paths...");
-			this.detectPaths(zpi.failSilently);
-		}
-		
-		pathToAddon = zoteroPluginInstaller.getAddonPath(this.EXTENSION_ID);
-		
-		installComponents(function(success) {
-			if(!success) {
-				zoteroPluginInstaller.error();
-				installing = false;
-				throw "An error occurred running unopkg";
-			}
-			zoteroPluginInstaller.closeProgressWindow();
-			zoteroPluginInstaller.success();
-			//testInstall();
-			installing = false;
-		});
-	}
-	
-	this.selectSoffice = function selectSoffice(parentDirectory) {
-		var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(Components.interfaces.nsIFilePicker);
-		fp.init(window, "Select the directory containing the soffice executable", Components.interfaces.nsIFilePicker.modeGetFolder);
-		if(Zotero.isWin) {
-			fp.appendFilter("Executable File", "*.exe");
-		} else {
-			fp.appendFilter("Executable File", "*");
-		}
-		if(parentDirectory) fp.displayDirectory = parentDirectory;
-		if(fp.show() != Components.interfaces.nsIFilePicker.returnOK) throw "User cancelled Zotero OpenOffice Integration install";
-		var ioService = Components.classes["@mozilla.org/network/io-service;1"].
-			getService(Components.interfaces.nsIIOService);
-		prefBranch.setCharPref(SOFFICE_PREF, ioService.newFileURI(fp.file).spec);
-	}
-	
-	this.selectURE = function selectURE(parentDirectory) {
-		var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(Components.interfaces.nsIFilePicker);
-		fp.init(window, "Select the directory containing the URE JAR files", Components.interfaces.nsIFilePicker.modeGetFolder);
-		fp.appendFilter("JAR File", "*.jar");
-		if(parentDirectory) fp.displayDirectory = parentDirectory;
-		if(fp.show() != Components.interfaces.nsIFilePicker.returnOK) throw "User cancelled Zotero OpenOffice Integration install";
-		var ioService = Components.classes["@mozilla.org/network/io-service;1"].
-			getService(Components.interfaces.nsIIOService);
-		prefBranch.setCharPref(URE_PREF, ioService.newFileURI(fp.file).spec);
-	}
-	
-	this.detectPaths = function detectPaths(failSilently) {
-		try {
-			var OPENOFFICE_LOCATIONS = {
-				Mac:[
-					"/Applications/LibreOffice.app",
-					"/Applications/OpenOffice.org.app",
-					"/Applications/NeoOffice.app",
-					"/Applications/OpenOffice.org 2.4.app"
-				],
-				Win:[
-					"C:\\Program Files\\LibreOffice 3",
-					"C:\\Program Files (x86)\\LibreOffice 3",
-					"C:\\Program Files\\OpenOffice.org 3",
-					"C:\\Program Files (x86)\\OpenOffice.org 3",
-					"C:\\Program Files\\OpenOffice.org 2.4",
-					"C:\\Program Files (x86)\\OpenOffice.org 2.4",
-					"C:\\Program Files\\OpenOffice.org 2",
-					"C:\\Program Files (x86)\\OpenOffice.org 2"
-				],
-				Other:[
-					"/opt/libreoffice",
-					"/opt/libreoffice3",
-					"/opt/openoffice.org3.3",
-					"/usr/local/opt/openoffice.org3.3",
-					"/opt/openoffice.org3.2",
-					"/usr/local/opt/openoffice.org3.2",
-					"/opt/openoffice.org3.1",
-					"/usr/local/opt/openoffice.org3.1",
-					"/opt/openoffice.org3",
-					"/usr/local/opt/openoffice.org3",
-					"/usr/lib64/ooo3",
-					"/usr/lib/ooo3",
-					"/usr/lib64/openoffice.org3",
-					"/usr/lib/openoffice.org3",
-					"/usr/lib/openoffice",
-					"/usr/local/opt/openoffice.org2",
-					"/opt/openoffice.org2",
-					"/usr/local/opt/openoffice.org2.4",
-					"/opt/openoffice.org2.4"
-				]
-			};
-			
-			var SOFFICE_LOCATIONS = {
-				Mac:[
-					"Contents/MacOS/soffice"
-				],
-				Win:[
-					"program\\soffice.exe"
-				],
-				Other:[
-					"program/soffice"
-				]
-			};
-			
-			var URE_LOCATIONS = {
-				Mac:[
-					"Contents/basis-link/ure-link/share/java",
-					"Contents/MacOS/classes"
-				],
-				Win:[
-					"URE\\java",
-					"program\\classes"
-				],
-				Other:[
-					"basis-link/ure-link/share/java",
-					"program/classes"
-				]
-			};
-			
-			if(Zotero.isMac) {
-				var platform = "Mac";
-			} else if(Zotero.isWin) {
-				var platform = "Win";
-			} else {
-				var platform = "Other";
-			}
-			
-			// look in obvious places for OpenOffice application
-			var appLocations = OPENOFFICE_LOCATIONS[platform];
-			var bestFile = null;
-			var i = 0;
-			do {		
-				var file = Components.classes["@mozilla.org/file/local;1"].
-					createInstance(Components.interfaces.nsILocalFile);
-				file.followLinks = true;
-				file.initWithPath(appLocations.shift());
-				if(file.exists() && (!bestFile || !bestFile.equals(file))) {
-					i++;
-					if(!bestFile) bestFile = file;
-				}
-			} while(appLocations.length);
-			
-			// if 0 installations and we should silently fail, then silently fail
-			if(i == 0 && failSilently) {
-				if(zoteroPluginInstaller) zoteroPluginInstaller.error();
-				return;
-			}
-			
-			// if we have 0 or >1 found OpenOffice installations, ask user to pick
-			if(i != 1) {
-				var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(Components.interfaces.nsIFilePicker);
-				
-				if(Zotero.isMac) {
-					fp.init(window, "Select the OpenOffice or NeoOffice application", Components.interfaces.nsIFilePicker.modeOpen);
-					fp.appendFilter("Mac OS X Application Bundle", "*.app");
+		// look for installations
+		var installations = this.getInstallations();
+		if(installations.length && !zpi.force) {
+			// if there are installations and we are not being forced to show wizard, continue
+			this.installComponents(installations, function(success) {
+				if(success) {
+					zpi.success();
 				} else {
-					fp.init(window, "Select the OpenOffice installation directory", Components.interfaces.nsIFilePicker.modeGetFolder);
+					openInstallationWizard();
 				}
-				
-				if(bestFile) fp.displayDirectory = bestFile.parent;
-				if(fp.show() != Components.interfaces.nsIFilePicker.returnOK) throw "User cancelled Zotero OpenOffice Integration install";
-				bestFile = fp.file;
-			}
-			
-			// look for soffice executable and URE libs
-			var sofficePath = null;
-			var urePath = null;
-			for each(var relPath in SOFFICE_LOCATIONS[platform]) {
-				var testPath = bestFile.clone().QueryInterface(Components.interfaces.nsILocalFile);
-				testPath.appendRelativePath(relPath);
-					Zotero.debug(testPath.path);
-				if(testPath.exists()) {
-					sofficePath = testPath;
-					break;
-				}
-			}
-			for each(var relPath in URE_LOCATIONS[platform]) {
-				var testPath = bestFile.clone().QueryInterface(Components.interfaces.nsILocalFile);
-				testPath.appendRelativePath(relPath);
-				if(testPath.exists()) {
-					urePath = testPath;
-					break;
-				}
-			}
-			
-			// if executable or URE location are still missing, ask the user to locate them
-			if(!sofficePath || !urePath) {
-				var parentDirectory = bestFile.clone();
-				if(!parentDirectory.isDirectory()) parentDirectory = parentDirectory.parent;
-			}
-			
-			if(!prefBranch) {
-				var prefService = Components.classes["@mozilla.org/preferences-service;1"].
-					getService(Components.interfaces.nsIPrefService);
-				prefBranch = prefService.getBranch(this.EXTENSION_PREF_BRANCH);
-			}
-			
-			var ioService = Components.classes["@mozilla.org/network/io-service;1"].
-				getService(Components.interfaces.nsIIOService);
-			if(!sofficePath) {
-				sofficePath = selectSoffice(parentDirectory);
-			} else {
-				prefBranch.setCharPref(SOFFICE_PREF, ioService.newFileURI(sofficePath.parent).spec);
-			}
-			
-			if(!urePath) {
-				urePath = selectURE(parentDirectory);
-			} else {
-				prefBranch.setCharPref(URE_PREF, ioService.newFileURI(urePath).spec);
-			}
-		} catch(e) {
-			installing = false;
-			if(e != "User cancelled Zotero OpenOffice Integration install") {
-				error();
-			}
-			throw e;
+			});
+		} else if(!zpi.failSilently) {
+			// otherwise, open the wizard
+			openInstallationWizard();
 		}
 	}
 	
-	function installComponents(callback) {
-		var ioService = Components.classes["@mozilla.org/network/io-service;1"].
-			getService(Components.interfaces.nsIIOService);
-		var executableDir = ioService.getProtocolHandler("file").
-			QueryInterface(Components.interfaces.nsIFileProtocolHandler).
-			getFileFromURLSpec(prefBranch.getCharPref(SOFFICE_PREF));
+	/**
+	 * Creates a new nsIFile corresponding to a given path
+	 */
+	this.getFile = function(path) {
+		var file = Components.classes["@mozilla.org/file/local;1"].
+			createInstance(Components.interfaces.nsILocalFile);
+		file.followLinks = true;
+		file.initWithPath(path);
+		return file;
+	}
+	
+	/**
+	 * Gets a list of OpenOffice.org installations from the preferences
+	 * @return {String[]}
+	 */
+	this.getInstallations = function detectPaths(failSilently) {
+		// first try getting unopkg paths pref
+		var unopkgPaths = JSON.parse(zoteroPluginInstaller.prefBranch.getCharPref(this.UNOPKG_PATHS_PREF));
 		
-		// now install the oxt using unopkg
-		var oxt = pathToAddon.clone();
+		// make sure paths exist
+		var extantPaths = [];
+		for each(var path in unopkgPaths) {
+			if(ZoteroOpenOfficeIntegration.getFile(path).exists()) {
+				extantPaths.push(path);
+			}
+		}
+		
+		if(!extantPaths.length) return [];
+		return extantPaths;
+	}
+	
+	/**
+	 * Gets the path to the OpenOffice.org oxt file
+	 * @return {nsIFile}
+	 */
+	this.getOxtPath = function() {
+		var oxt = this.pathToAddon.clone();
 		oxt.append("install");
 		oxt.append("Zotero_OpenOffice_Integration.oxt");
-		
-		if(Zotero.isWin) {
-			executableDir.append("unopkg.exe");
-		} else {
-			executableDir.append("unopkg");
-		}
-		
-		var proc = Components.classes["@mozilla.org/process/util;1"].
-				createInstance(Components.interfaces.nsIProcess);
-		proc.init(executableDir);
-		
-		zoteroPluginInstaller.setProgressWindowLabel("Removing Old Zotero OpenOffice.org Extension...");
-		
-		proc.runAsync(["remove", "org.Zotero.integration.openoffice"], 2, {"observe":function() {
-			zoteroPluginInstaller.setProgressWindowLabel("Adding Zotero OpenOffice.org Extension...");
-			proc.runAsync(["add", oxt.path], 2, {"observe":function(process, topic) {
-				callback(topic == "process-finished" && !process.exitValue);
-			}});
-		}});
+		return oxt;
 	}
 	
-	function testInstall() {
-		// test install
-		try {
-			java.lang;
-		} catch(e) {
-			var err = 'Zotero OpenOffice Integration was successfully installed, but it will not operate properly because Java is not installed or is not operational. You can test Firefox\'s Java support by going to www.javatester.org.';
-			if(window.navigator.platform.substr(0, 5) == "Linux") {
-				err += "\n\nPlease ensure that an up-to-date version of the Sun Java Plug-in (e.g., sun-java6-plugin) is installed and try again.";
-			} else if(window.navigator.platform.substr(0, 3) == "Win") {
-				err += "\n\nIf you are running Firefox on a 64-bit version of Windows, try disabling the \"next-generation Java plug-in\" in the Java control panel. In Windows Vista, open the control panel, switch to Classic View, and open \"View 32-bit Control Panel Items.\" In Windows 7, select view by \"Small icons.\" The setting is located in the \"Advanced\" tab, under \"Java plug-in\".";
-			}
-			
-			zoteroPluginInstaller.error(err, true);
-			
+	/**
+	 * Installs OpenOffice.org components
+	 * @param {String[]} unopkgPaths Paths to unopkg
+	 * @param {Function} callback Function to call when installation is complete. Argument 
+	 *		reflects whether installation was successful.
+	 */
+	this.installComponents = function(unopkgPaths, callback) {
+		// set prefs in preferences
+		zoteroPluginInstaller.prefBranch.setCharPref(this.UNOPKG_PATHS_PREF, JSON.stringify(unopkgPaths));
+		
+		// get path to oxt
+		var oxt = this.getOxtPath();
+		
+		// start installing
+		installComponent(oxt, unopkgPaths, callback);
+	}
+	
+	/**
+	 * Opens the installation wizard dialog
+	 */
+	function openInstallationWizard() {
+		var ww = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+				   .getService(Components.interfaces.nsIWindowWatcher);
+		wizardWindow = ww.openWindow(null, "chrome://zotero-openoffice-integration/content/install.xul",
+					"openoffice-install-wizard", "chrome,centerscreen", {"wrappedJSObject":{
+						"ZoteroOpenOfficeIntegration":ZoteroOpenOfficeIntegration,
+						"ZoteroPluginInstaller":zoteroPluginInstaller
+					}});
+	}
+	
+	/**
+	 * Called recursively to install to different unopkgPaths
+	 */
+	function installComponent(oxt, unopkgPaths, callback) {
+		installing = true;
+		
+		// if all unopkgPaths have been exhausted, we were successful
+		if(!unopkgPaths.length) {
 			installing = false;
-			throw e;
+			callback(true);
+			return;
 		}
+		
+		// otherwise, install to next unopkg path
+		var proc = Components.classes["@mozilla.org/process/util;1"].
+				createInstance(Components.interfaces.nsIProcess);
+		var path = unopkgPaths.shift();
+		Zotero.debug("ZoteroOpenOfficeIntegration: Installing with unopkg at "+path);
+		proc.init(ZoteroOpenOfficeIntegration.getFile(path));
+		
+		proc.runAsync(["remove", "org.Zotero.integration.openoffice"], 2, {"observe":function() {
+			proc.runAsync(["add", oxt.path], 2, {"observe":function(process, topic) {
+				if(topic === "process-finished" && !process.exitValue) {
+					// recursively continue installing until all unopkgPaths are exhausted
+					installComponent(oxt, unopkgPaths, callback);
+				} else {
+					// abort on error
+					installing = false;
+					callback(false);
+					throw "unopkg at "+path+" failed to install";
+				}
+			}});
+		}});
 	}
 }

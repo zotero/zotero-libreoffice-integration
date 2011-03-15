@@ -11,28 +11,8 @@
 			<caption label="OpenOffice.org/LibreOffice/NeoOffice"/>
 			<description id="wordProcessors-openOffice-description" width="45em" />
 			<hbox pack="center">
-				<button label="Detect Paths" oncommand="ZoteroOpenOfficeIntegration.detectPaths()"/>
 				<button id="wordProcessors-openOffice-install" oncommand="updateOpenOfficeIntegration(new ZoteroPluginInstaller(ZoteroOpenOfficeIntegration, false, true))"/>
 			</hbox>
-			<grid>
-				<columns>
-					<column/>
-					<column flex="1"/>
-					<column/>
-				</columns>
-				<rows>
-					<row align="center">
-						<label value="UNO Directory:"/>
-						<textbox id="text-urePath" preference="pref-urePath"/>
-						<button label="Choose..." oncommand="ZoteroOpenOfficeIntegration.selectURE(); "/>
-					</row>
-					<row align="center">
-						<label value="soffice Directory:"/>
-						<textbox id="text-urePath" preference="pref-sofficePath"/>
-						<button label="Choose..." oncommand="ZoteroOpenOfficeIntegration.selectSoffice()"/>
-					</row>
-				</rows>
-			</grid>
 			<script src="chrome://zotero-openoffice-integration/content/common.js"/>
 			<script src="chrome://zotero-openoffice-integration/content/openOffice.js"/>
 			<script>

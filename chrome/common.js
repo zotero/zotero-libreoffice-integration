@@ -71,14 +71,21 @@ ZoteroPluginInstaller.prototype = {
 				(
 					this.prefBranch.getCharPref("version") != this._version
 					|| (!Zotero.isStandalone && !this.prefBranch.getBoolPref("installed"))
-				) && document.getElementById("appcontent"))) {
+				)
+				&& document.getElementById("appcontent")
+				&& !this.prefBranch.getBoolPref("skipInstallation")
+			)) {
 				
 			var me = this;
-			this._progressWindow = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
-				.getService(Components.interfaces.nsIWindowWatcher)
-				.openWindow(null, "chrome://"+this._addon.EXTENSION_DIR+"/content/progress.xul", '',
-					"chrome,resizable=no,close=no,centerscreen", null);	
-			this._progressWindow.addEventListener("load", function() { me._firstRunListener() }, false);
+			if(!this._addon.DISABLE_PROGRESS_WINDOW) {
+				this._progressWindow = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+					.getService(Components.interfaces.nsIWindowWatcher)
+					.openWindow(null, "chrome://"+this._addon.EXTENSION_DIR+"/content/progress.xul", '',
+						"chrome,resizable=no,close=no,centerscreen", null);	
+				this._progressWindow.addEventListener("load", function() { me._firstRunListener() }, false);
+			} else {
+				this._addon.install(this);
+			}
 		}
 	},
 	
@@ -105,7 +112,7 @@ ZoteroPluginInstaller.prototype = {
 	},
 	
 	"setProgressWindowLabel":function(value) {
-		this._progressWindowLabel.value = value;
+		if(this._progressWindow) this._progressWindowLabel.value = value;
 	},
 	
 	"closeProgressWindow":function(value) {
@@ -116,7 +123,8 @@ ZoteroPluginInstaller.prototype = {
 		this.closeProgressWindow();
 		this.prefBranch.setCharPref("version", this._version);
 		this.prefBranch.setBoolPref("installed", true);
-		if(this.force) {
+		 this.prefBranch.setBoolPref("skipInstallation", false);
+		if(this.force && !this._addon.DISABLE_PROGRESS_WINDOW) {
 			Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
 				.getService(Components.interfaces.nsIPromptService)
 				.alert(window, this._addon.EXTENSION_STRING,
@@ -137,6 +145,11 @@ ZoteroPluginInstaller.prototype = {
 			.getService(Components.interfaces.nsIPromptService)
 			.alert(null, this._addon.EXTENSION_STRING,
 			(error ? error : 'Installation could not be completed because an error occurred. Please ensure that '+this._addon.APP+' is closed, and then restart Firefox.'));
+	},
+	
+	"cancelled":function(error) {
+		this.closeProgressWindow();
+		this.prefBranch.setBoolPref("skipInstallation", true);
 	},
 	
 	"_firstRunListener":function() {
