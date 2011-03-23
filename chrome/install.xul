@@ -109,9 +109,11 @@
 				how to proceed.
 			</description>
 			<description>
-				If this error persists, click the button below to submit an error report, and post
-				the report ID as well as any errors you experienced during manual installation
-				to forums.zotero.org.
+				If this error persists, please review 
+				<label class="text-link" href="http://zotero.org/support/word_processor_plugin_installation_for_zotero_2.1">troubleshooting instructions</label>.
+				If these do not resolve the issue you are experiencing, click the button below to
+				submit an error report, and post the report ID as well as the text of any errors you
+				experienced during manual installation to <label class="text-link" href="http://forums.zotero.org/3/">the Zotero forums</label>.
 			</description>
 			<hbox pack="center">
 				<button label="Manual Installation" onclick="openofficeInstallationsManualInstallation()"/>
