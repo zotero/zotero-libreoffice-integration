@@ -93,18 +93,28 @@
 			</description>
 			<description id="installation-manual-path"/>
 			<description>
-				If your OpenOffice.org/NeoOffice/LibreOffice installation was not detected
-				automatically, or was detected incorrectly, please post on the Zotero forums so
-				that we can improve the installation process in a future release.
+				You can install the extension by double-clicking it, or by opening OpenOffice.org,
+				NeoOffice, or LibreOffice, selecting Tools-&gt;Extension Manager, clicking the
+				Add button, and locating the file.
 			</description>
 		</vbox>
 		<vbox id="installation-error" hidden="true" flex="1">
 			<description>
 				An error occurred installing Zotero OpenOffice.org/NeoOffice/LibreOffice Integration.
-				Click the "Previous" button and verify that the application path is correct. If this
-				error persists, click the button below to submit an error report.
+			</description>
+			<description>
+				Click the "Previous" button and verify that the application path is correct. If you
+				continue to experience errors, click the "Manual Installation" button below to
+				manually install the component. The following screen will provide instructions on
+				how to proceed.
+			</description>
+			<description>
+				If this error persists, click the button below to submit an error report, and post
+				this error report as well as any errors you experienced during manual installation
+				to forums.zotero.org.
 			</description>
 			<hbox pack="center">
+				<button label="Manual Installation" onclick="openofficeInstallationsManualInstallation()"/>
 				<button label="Submit Error Report..." onclick="reportErrors()"/>
 			</hbox>
 		</vbox>
