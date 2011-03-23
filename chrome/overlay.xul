@@ -10,7 +10,9 @@
 				getService(Components.interfaces.nsISupports);
 				
 			// start plug-in installer
-	    	new ZoteroPluginInstaller(ZoteroOpenOfficeIntegration, Zotero.isStandalone);
+    		window.setTimeout(function() {
+				new ZoteroPluginInstaller(ZoteroOpenOfficeIntegration, Zotero.isStandalone);
+			}, 1000);
 	    }, false);
     </script>
 </overlay>
