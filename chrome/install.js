@@ -65,13 +65,13 @@ const UNOPKG_LOCATIONS = {
 
 const UNOPKG_RELPATHS = {
 	Mac:[
-		"Contents/MacOS/soffice"
+		"Contents/MacOS/unopkg"
 	],
 	Win:[
-		"program\\soffice.exe"
+		"program\\unopkg.exe"
 	],
 	Other:[
-		"program/soffice"
+		"program/unopkg"
 	]
 };
 
@@ -320,8 +320,16 @@ function openofficeInstallationsAddDirectory() {
 	
 	if(fp.show() === Components.interfaces.nsIFilePicker.returnOK) {
 		// find unopkg executable
-		var unopkg = fp.file.QueryInterface(Components.interfaces.nsILocalFile);
+		var unopkg = fp.file.clone();
+		unopkg = unopkg.QueryInterface(Components.interfaces.nsILocalFile);
 		unopkg.appendRelativePath(UNOPKG_RELPATHS[platform]);
+		
+		if(!unopkg.exists()) {
+			unopkg = fp.file.clone().parent;
+			unopkg = unopkg.QueryInterface(Components.interfaces.nsILocalFile);
+			unopkg.appendRelativePath(UNOPKG_RELPATHS[platform]);
+		}
+		
 		if(!unopkg.exists()) {
 			var promptService = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
 					.getService(Components.interfaces.nsIPromptService);
@@ -332,11 +340,17 @@ function openofficeInstallationsAddDirectory() {
 		
 		// ensure unopkg is not already in list
 		var listbox = document.getElementById("installations-listbox");
-		for each(var node in listbox.childNodes) {
-			if(node.label === unopkg.path) return;
+		var nodes = listbox.childNodes;
+		for(var i=0; i<nodes.length; i++) {
+			if(nodes[i].label === unopkg.path) return;
 		}
 		
 		// add unopkg to list
+		var itemNode = document.createElement("listitem");
+		itemNode.setAttribute("type", "checkbox");
+		itemNode.setAttribute("label", unopkg.path);
+		itemNode.setAttribute("checked", "true");
+		listbox.appendChild(itemNode);
 		
 		wizard.canAdvance = true;
 	}
