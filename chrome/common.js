@@ -123,7 +123,7 @@ ZoteroPluginInstaller.prototype = {
 		this.closeProgressWindow();
 		this.prefBranch.setCharPref("version", this._version);
 		this.prefBranch.setBoolPref("installed", true);
-		 this.prefBranch.setBoolPref("skipInstallation", false);
+		this.prefBranch.setBoolPref("skipInstallation", false);
 		if(this.force && !this._addon.DISABLE_PROGRESS_WINDOW) {
 			Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
 				.getService(Components.interfaces.nsIPromptService)
