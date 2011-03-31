@@ -254,7 +254,6 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	
 	public boolean equals(Object o) {
 		// impossible to have two ReferenceMarks/Bookmarks with the same name
-		System.out.println("Comparing "+((ReferenceMark) o).rawCode+" to "+rawCode);
 		return ((ReferenceMark) o).rawCode.equals(rawCode);
 	}
 	

@@ -305,20 +305,20 @@ for each(var method in ["displayAlert", "activate", "canInsertField", "getDocume
 Document.prototype.cursorInField = function() {
 	var retVal = Comm.sendCommand("Document_cursorInField", _cleanArguments(arguments));
 	if(retVal === null) return null;
-	return new Field(retVal);
+	return new Field(retVal[0], retVal[1]);
 };
 Document.prototype.insertField = function() {
 	var retVal = Comm.sendCommand("Document_insertField", _cleanArguments(arguments));
-	return new Field(retVal);
+	return new Field(retVal[0], retVal[1]);
 };
 Document.prototype.getFields = function() {
 	var retVal = Comm.sendCommand("Document_getFields", _cleanArguments(arguments));
-	return new FieldEnumerator(retVal);
+	return new FieldEnumerator(retVal[0], retVal[1]);
 };
 Document.prototype.convert = function(enumerator, fieldType, noteTypes) {
 	var i = 0;
 	while(enumerator.hasMoreElements()) {
-		Comm.sendCommand("Field_convert", [enumerator.getNext().wrappedJSObject._num, fieldType, noteTypes[i]]);
+		Comm.sendCommand("Field_convert", [enumerator.getNext().wrappedJSObject._rawCode, fieldType, noteTypes[i]]);
 		i++;
 	}
 };
@@ -326,17 +326,20 @@ Document.prototype.convert = function(enumerator, fieldType, noteTypes) {
 /**
  * An enumerator implementation to handle passing off fields
  */
-var FieldEnumerator = function(range) {
-	this._curField = range[0];
-	this._maxField = range[1];
+var FieldEnumerator = function(fieldIndices, fieldCodes) {
+	this._fieldIndices = fieldIndices;
+	this._fieldCodes = fieldCodes;
+	this._i = 0;
 };
 FieldEnumerator.prototype = {
 	"hasMoreElements":function() {
-		return !(this._curField > this._maxField);
+		return this._i < this._fieldIndices.length;
 	}, 
 	"getNext":function() {
-		if(this._curField > this._maxField) throw "No more fields!";
-		return new Field(this._curField++);
+		if(this._i >= this._fieldIndices.length) throw "No more fields!";
+		var field = new Field(this._fieldIndices[this._i], this._fieldCodes[this._i]);
+		this._i++;
+		return field;
 	},
 	QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsISupports, Components.interfaces.nsISimpleEnumerator])
 };
@@ -344,8 +347,9 @@ FieldEnumerator.prototype = {
 /**
  * See zoteroIntegration.idl
  */
-var Field = function(num) {
-	this._num = num;
+var Field = function(rawCode, code) {
+	this._rawCode = rawCode;
+	this._code = code;
 	this.wrappedJSObject = this;
 };
 Field.prototype = {
@@ -354,14 +358,21 @@ Field.prototype = {
 	contractID:		"@zotero.org/Zotero/integration/field?agent=OpenOffice;1",
 	QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsISupports, Components.interfaces.zoteroIntegrationField])
 };
-for each(var method in ["delete", "select", "removeCode", "setText", "getCode", "setCode",
+
+for each(var method in ["delete", "select", "removeCode", "setText",
 	"getNoteIndex"]) {
 	let methodStable = method;
-	Field.prototype[method] = function() Comm.sendCommand("Field_"+methodStable, _cleanArguments(arguments, [this._num]));
+	Field.prototype[method] = function() Comm.sendCommand("Field_"+methodStable, _cleanArguments(arguments, [this._rawCode]));
+}
+Field.prototype.getCode = function() {
+	return this._code;
+}
+Field.prototype.setCode = function(code) {
+	this._code = code;
+	return Comm.sendCommand("Field_setCode", [this._rawCode, code]);
 }
 Field.prototype.equals = function(arg) {
-	if(this._num === arg.wrappedJSObject._num) return true;
-	return Comm.sendCommand("Field_equals", [this._num, arg.wrappedJSObject._num]);
+	return this._rawCode === arg.wrappedJSObject._rawCode;
 }
 
 var classes = [
