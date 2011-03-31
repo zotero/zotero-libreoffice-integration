@@ -64,7 +64,7 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	XTextContent table;
 	protected boolean isTextSection;
 	protected boolean isDisposable;
-	public String rawCode;
+	String rawCode;
 	
 	public ReferenceMark(Document aDoc, XNamed aMark, String aCode) throws IllegalArgumentException {
 		doc = aDoc;
@@ -252,8 +252,14 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		return null;
 	}
 	
-	public boolean equals(ReferenceMark o) {
-		return compareTo(o) == 0;
+	public boolean equals(Object o) {
+		// impossible to have two ReferenceMarks/Bookmarks with the same name
+		System.out.println("Comparing "+((ReferenceMark) o).rawCode+" to "+rawCode);
+		return ((ReferenceMark) o).rawCode.equals(rawCode);
+	}
+	
+	public int hashCode() {
+		return rawCode.hashCode();
 	}
 	
 	XTextRange getDocumentRange() {

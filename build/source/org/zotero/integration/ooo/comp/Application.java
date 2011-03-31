@@ -32,14 +32,15 @@ import com.sun.star.uno.UnoRuntime;
 import com.sun.star.uno.XComponentContext;
 
 public class Application {
-	XMultiServiceFactory factory;
-	XDesktop desktop;
-	String ooName;
-	XComponentContext ctx;
+	static XMultiServiceFactory factory;
+	static XDesktop desktop;
+	static String ooName;
+	static XComponentContext ctx;
+	static SaveEventListener saveEventListener;
 
 	public Application(XComponentContext aCtx) throws Exception {
 		ctx = aCtx;
-		init();
+		if(desktop == null) init();
 	}
 
 	public Document getActiveDocument() throws Exception {
@@ -52,9 +53,12 @@ public class Application {
 	}
 	
 	private void init() throws Exception {
+		// get factory and desktop
 		factory = (XMultiServiceFactory) UnoRuntime.queryInterface(XMultiServiceFactory.class, ctx.getServiceManager());
 		desktop = (XDesktop) UnoRuntime.queryInterface(XDesktop.class, 
 				factory.createInstance("com.sun.star.frame.Desktop"));
+		
+		// get ooName
 		XMultiServiceFactory configProvider = (XMultiServiceFactory) UnoRuntime.queryInterface(XMultiServiceFactory.class,
 				factory.createInstance("com.sun.star.configuration.ConfigurationProvider"));
 		PropertyValue nodepath = new PropertyValue();
@@ -64,5 +68,8 @@ public class Application {
 				configProvider.createInstanceWithArguments(
 						"com.sun.star.configuration.ConfigurationAccess", new Object[] {nodepath}));
 		ooName = (String) settings.getByName("ooName");
+		
+		// create event listener if necessary
+		if(saveEventListener == null) saveEventListener = new SaveEventListener();
 	}
 }

@@ -28,7 +28,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.Random;
 
 import com.sun.star.awt.MessageBoxButtons;
@@ -71,39 +70,41 @@ import com.sun.star.text.XTextViewCursorSupplier;
 import com.sun.star.uno.UnoRuntime;
 
 public class Document {
-	public static final int NOTE_FOOTNOTE = 1;
-	public static final int NOTE_ENDNOTE = 2;
+	static final int NOTE_FOOTNOTE = 1;
+	static final int NOTE_ENDNOTE = 2;
 	
 	Application app;
-	public XTextRangeCompare textRangeCompare;
-	public XTextDocument textDocument;
-	public XText text;
-	public XDesktop desktop;
-	public XMultiServiceFactory docFactory;
-	public XMultiServiceFactory factory;
-	public XFrame frame;
-	public XController controller;
-	public XComponent component;
-	public Properties properties;
+	XTextRangeCompare textRangeCompare;
+	XTextDocument textDocument;
+	XText text;
+	XDesktop desktop;
+	XMultiServiceFactory docFactory;
+	XMultiServiceFactory factory;
+	XFrame frame;
+	XController controller;
+	XComponent component;
+	String runtimeUID;
+	Properties properties;
 	
-	public static final String[] PREFIXES = {"ZOTERO_", "CITE_", " ADDIN ZOTERO_"};
-	public static final String[] PREFS_PROPERTIES = {"ZOTERO_PREF", "CITE_PREF"};
-	public static final String FIELD_PLACEHOLDER = "{Citation}";
-	public static final String BOOKMARK_REFERENCE_PROPERTY = "ZOTERO_BREF_";
+	static final String[] PREFIXES = {"ZOTERO_", "CITE_", " ADDIN ZOTERO_"};
+	static final String[] PREFS_PROPERTIES = {"ZOTERO_PREF", "CITE_PREF"};
+	static final String FIELD_PLACEHOLDER = "{Citation}";
+	static final String BOOKMARK_REFERENCE_PROPERTY = "ZOTERO_BREF_";
 	
-	public static final int BOOKMARK_ADD_CHARS = 12;
-	public static final int REFMARK_ADD_CHARS = 10;
-	public static final String BIBLIOGRAPHY_CODE = "BIBL";
+	static final int BOOKMARK_ADD_CHARS = 12;
+	static final int REFMARK_ADD_CHARS = 10;
+	static final String BIBLIOGRAPHY_CODE = "BIBL";
 	
-	public static final double MM_PER_100_TWIP = 25.4/1440*100;
+	static final double MM_PER_100_TWIP = 25.4/1440*100;
 	
-	public static String ERROR_STRING = "An error occurred communicating with Zotero:";
+	static String ERROR_STRING = "An error occurred communicating with Zotero:";
+	static String SAVE_WARNING_STRING = "This document contains Zotero ReferenceMarks. Upon reopening the document, Zotero will be unable to edit existing citations or add new references to the bibliography.\n\nTo save Zotero citation information, please select the \"ODF Text Document\" format when saving, or switch to Bookmarks in the Zotero Document Preferences.";
 	TextTableManager textTableManager;
 	
     public Document(Application anApp) throws Exception {
     	app = anApp;
-    	factory = app.factory;
-		desktop = app.desktop;
+    	factory = Application.factory;
+		desktop = Application.desktop;
 		frame = desktop.getCurrentFrame();
 		component = desktop.getCurrentComponent();
 		controller = frame.getController();
@@ -111,7 +112,8 @@ public class Document {
 		textDocument = (XTextDocument) UnoRuntime.queryInterface(XTextDocument.class, component);
 		text = textDocument.getText();
 		textRangeCompare = (XTextRangeCompare) UnoRuntime.queryInterface(XTextRangeCompare.class, text);
-		properties = new Properties(desktop);
+		properties = new Properties(component);
+		runtimeUID = (String) ((XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, component)).getPropertyValue("RuntimeUID");
     }
     
     public void cleanup() {}
@@ -149,7 +151,7 @@ public class Document {
     public void activate() throws Exception {
     	if(System.getProperty("os.name").equals("Mac OS X")) {
     		Runtime runtime = Runtime.getRuntime();
-    		runtime.exec(new String[] {"/usr/bin/osascript", "-e", "tell application \""+app.ooName+"\" to activate"});
+    		runtime.exec(new String[] {"/usr/bin/osascript", "-e", "tell application \""+Application.ooName+"\" to activate"});
     	}
     }
     
@@ -199,7 +201,6 @@ public class Document {
     		// look for a ReferenceMark or Bookmark
     		XPropertySet textProperties = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, enumerator.nextElement());
     		String textPropertyType = (String) textProperties.getPropertyValue("TextPortionType");
-    		System.out.println(textPropertyType);
     		if(textPropertyType.equals(fieldType)) {
         		mark = textProperties.getPropertyValue(fieldType);
         		
@@ -253,11 +254,14 @@ public class Document {
 		properties.setProperty(PREFS_PROPERTIES[0], data);
     }
     
-    public LinkedList<ReferenceMark> getFields(String fieldType) throws Exception {
-    	LinkedList<ReferenceMark> marks = new LinkedList<ReferenceMark>();
+    public ArrayList<ReferenceMark> getFields(String fieldType) throws Exception {
+    	ArrayList<ReferenceMark> marks = new ArrayList<ReferenceMark>();
     	
     	// get all ReferenceMarks/Bookmarks
     	if(fieldType.equals("ReferenceMark")) {
+    		// add save event listener if necessary
+    		Application.saveEventListener.attachTo(component, runtimeUID);
+    		
     		XReferenceMarksSupplier referenceMarksSupplier = (XReferenceMarksSupplier) 
     			UnoRuntime.queryInterface(XReferenceMarksSupplier.class, component);
 			XIndexAccess markIndexAccess = (XIndexAccess) UnoRuntime.queryInterface(XIndexAccess.class,
@@ -298,18 +302,22 @@ public class Document {
 				}
 			}
     	} else if(fieldType.equals("Bookmark")) {
+    		// remove save event listener if necessary
+    		Application.saveEventListener.detachFrom(component, runtimeUID);
+    		
     		XBookmarksSupplier bookmarksSupplier = (XBookmarksSupplier) 
     			UnoRuntime.queryInterface(XBookmarksSupplier.class, component);
-    		XIndexAccess markIndexAccess = (XIndexAccess) UnoRuntime.queryInterface(XIndexAccess.class,
+    		XNameAccess markNameAccess = (XNameAccess) UnoRuntime.queryInterface(XNameAccess.class,
     				bookmarksSupplier.getBookmarks());
-			int count = markIndexAccess.getCount();
-			for(int i = 0; i<count; i++) {
-				Object aMark = markIndexAccess.getByIndex(i);
-				XNamed named = ((XNamed) UnoRuntime.queryInterface(XNamed.class, aMark));
-				String name = named.getName();
+			String[] markNames = markNameAccess.getElementNames();
+			
+			for(int i = 0; i<markNames.length; i++) {
+				String name = markNames[i];
 				
 				for(String prefix : Document.PREFIXES) {
 					if(name.startsWith(prefix)) {
+						Object aMark = markNameAccess.getByName(name);
+						XNamed named = ((XNamed) UnoRuntime.queryInterface(XNamed.class, aMark));
 						try {
 							marks.add(new Bookmark(this, named, name));
 						} catch (IllegalArgumentException e) {}

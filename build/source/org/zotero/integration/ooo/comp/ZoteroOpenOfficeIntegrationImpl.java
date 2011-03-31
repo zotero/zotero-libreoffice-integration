@@ -14,7 +14,7 @@ public final class ZoteroOpenOfficeIntegrationImpl extends WeakBase
    implements com.sun.star.task.XJobExecutor,
               com.sun.star.lang.XServiceInfo
 {
-    private final Application mApplication;
+    private static Application mApplication;
     private static Comm mComm;
     private static final String m_implementationName = ZoteroOpenOfficeIntegrationImpl.class.getName();
     private static final String[] m_serviceNames = {

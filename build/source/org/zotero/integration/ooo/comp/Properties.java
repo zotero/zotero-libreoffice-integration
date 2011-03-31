@@ -31,7 +31,6 @@ import com.sun.star.beans.XPropertyContainer;
 import com.sun.star.beans.XPropertySet;
 import com.sun.star.document.XDocumentInfo;
 import com.sun.star.document.XDocumentInfoSupplier;
-import com.sun.star.frame.XDesktop;
 import com.sun.star.lang.XComponent;
 import com.sun.star.uno.Any;
 import com.sun.star.uno.UnoRuntime;
@@ -41,8 +40,7 @@ public class Properties {
 	private XPropertySet propertySet;
 	private XPropertyContainer propertyContainer;
 	
-	public Properties(XDesktop desktop) {
-		XComponent component = desktop.getCurrentComponent();
+	public Properties(XComponent component) {
 		XDocumentInfoSupplier docInfoSupplier = (XDocumentInfoSupplier) UnoRuntime.queryInterface(XDocumentInfoSupplier.class, component);
 		XDocumentInfo docInfo = docInfoSupplier.getDocumentInfo();
 		propertySet = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, docInfo);
