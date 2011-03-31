@@ -188,43 +188,6 @@ Comm = new function() {
 	this.sendCommand = function(cmd, args) {
 		var payload = JSON.stringify([cmd, args]);
 		
-		// almost certainly indicates an outdated OpenOffice.org extension
-		if(!_lastDataListener) {
-			var ps = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
-				.getService(Components.interfaces.nsIPromptService);
-			var shouldReinstall = ps.confirm(null, "Zotero OpenOffice.org Integration Error",
-				'The version of the Zotero OpenOffice.org Integration component installed within '+
-				'OpenOffice.org, LibreOffice, or NeoOffice does not appear to match the version '+
-				'currently installed within Firefox. Would you like to attempt to reinstall it?\n\n'+
-				'Please ensure your OpenOffice.org installation is properly detected. If you '+
-				'continue to experience this error, click the "Manual Installation" button '+
-				'within the wizard to show the directory containing the OpenOffice.org component. '+
-				'Double-click this component or add it from within OpenOffice.org, LibreOffice, or '+
-				'NeoOffice to complete the installation procedure.');
-			
-			if(shouldReinstall) {
-				var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-					.getService(Components.interfaces.nsIWindowMediator);
-				var win = wm.getMostRecentWindow("navigator:browser");
-				if(win) {
-					new win.ZoteroPluginInstaller(win.ZoteroOpenOfficeIntegration, false, true);
-				} else {
-					var ww = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
-							   .getService(Components.interfaces.nsIWindowWatcher);
-					win = ww.openWindow(null, 'chrome://zotero/content/preferences/preferences.xul',
-						'zotero-prefs', 'chrome,titlebar,toolbar,centerscreen', {"pane":"zotero-prefpane-cite"});
-					win.addEventListener("load", function() {
-						win.updateOpenOfficeIntegration(new win.ZoteroPluginInstaller(win.ZoteroOpenOfficeIntegration, false, true));
-					}, false);
-				}
-			}
-			
-			// We throw this error to avoid displaying another error dialog
-			Zotero.logError("Firefox and OpenOffice.org extension versions are incompatible");
-			throw Components.Exception("ExceptionAlreadyDisplayed");
-			return;
-		}
-		
 		// write to stream
 		Zotero.debug("ZoteroOpenOfficeIntegration: Sending "+payload);
 		payload = _converter.ConvertFromUnicode(payload);
@@ -369,7 +332,7 @@ Field.prototype.getCode = function() {
 }
 Field.prototype.setCode = function(code) {
 	this._code = code;
-	return Comm.sendCommand("Field_setCode", [this._rawCode, code]);
+	this._rawCode = Comm.sendCommand("Field_setCode", [this._rawCode, code]);
 }
 Field.prototype.equals = function(arg) {
 	return this._rawCode === arg.wrappedJSObject._rawCode;
