@@ -41,8 +41,24 @@ const UNOPKG_LOCATIONS = {
 	],
 	Other:[
 		"/usr/bin/unopkg",
-		"/opt/libreoffice/program/unopkg",
-		"/opt/libreoffice3/program/unopkg",
+		
+		"/usr/lib/libreoffice/program/unopkg",
+		"/usr/lib64/libreoffice/program/unopkg",
+		
+		"/usr/lib/openoffice/program/unopkg",
+		"/usr/lib64/openoffice/program/unopkg",
+		
+		"/usr/lib/libreoffice3/program/unopkg",
+		"/usr/lib64/libreoffice3/program/unopkg",
+		
+		"/usr/lib/openoffice.org3/program/unopkg",
+		"/usr/lib64/openoffice.org3/program/unopkg",
+		
+		"/usr/lib/ooo3/program/unopkg",
+		"/usr/lib64/ooo3/program/unopkg",
+		
+		"/opt/openoffice.org3.4/program/unopkg",
+		"/usr/local/opt/openoffice.org3.4/program/unopkg",
 		"/opt/openoffice.org3.3/program/unopkg",
 		"/usr/local/opt/openoffice.org3.3/program/unopkg",
 		"/opt/openoffice.org3.2/program/unopkg",
@@ -51,15 +67,13 @@ const UNOPKG_LOCATIONS = {
 		"/usr/local/opt/openoffice.org3.1/program/unopkg",
 		"/opt/openoffice.org3/program/unopkg",
 		"/usr/local/opt/openoffice.org3/program/unopkg",
-		"/usr/lib64/ooo3/program/unopkg",
-		"/usr/lib/ooo3/program/unopkg",
-		"/usr/lib64/openoffice.org3/program/unopkg",
-		"/usr/lib/openoffice.org3/program/unopkg",
-		"/usr/lib/openoffice/program/unopkg",
-		"/usr/local/opt/openoffice.org2/program/unopkg",
-		"/opt/openoffice.org2/program/unopkg",
+		"/opt/openoffice.org2.4/program/unopkg",
 		"/usr/local/opt/openoffice.org2.4/program/unopkg",
-		"/opt/openoffice.org2.4/program/unopkg"
+		"/opt/openoffice.org2/program/unopkg",
+		"/usr/local/opt/openoffice.org2/program/unopkg",
+		
+		"/opt/libreoffice/program/unopkg",
+		"/opt/libreoffice3/program/unopkg"
 	]
 };			
 
