@@ -116,7 +116,7 @@ function onLoad() {
 		// if openoffice.org-java-common check succeeds, we don't need to show the page for it
 		javaCommonCheckComplete = true;
 		
-		if(wizard.currentPage.pageid === "java-common-page") {
+		if(wizard.currentPage.pageid === "java-common") {
 			wizard.canAdvance = true;
 			if(success) wizard.advance();
 		}
