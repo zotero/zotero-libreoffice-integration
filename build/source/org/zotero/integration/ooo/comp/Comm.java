@@ -47,9 +47,6 @@ class Comm implements Runnable {
 	 * @param command
 	 */
 	void sendCommand(String command) {
-		// We are about to execute a new command, so clear our field list
-		mFields = new Hashtable<String, ReferenceMark>();
-		
 		// Execute command
 		nextMessage = command;
 		if(mThread.isAlive()) {
@@ -150,6 +147,9 @@ class Comm implements Runnable {
 		ArrayList<Object> args = (ArrayList<Object>) message.get(1);
 		
 		if(command.equals("Application_getActiveDocument")) {
+			// We are about to execute a new command, so clear our field list
+			mFields = new Hashtable<String, ReferenceMark>();
+			
 			try {
 				mActiveDocument = mApplication.getActiveDocument();
 			} catch (Exception e) {}
