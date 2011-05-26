@@ -239,25 +239,25 @@ class Comm implements Runnable {
 	 * @throws IOException
 	 */
 	void mainLoop() {
-		ZoteroOpenOfficeIntegrationImpl.debugPrint("Iterating mainLoop");
-		// if there is a message to send, send it
-		if(nextMessage != null) {
-			sendMessage(nextMessage);
-			nextMessage = null;
+		while(true) {
+			ZoteroOpenOfficeIntegrationImpl.debugPrint("Iterating mainLoop");
+			// if there is a message to send, send it
+			if(nextMessage != null) {
+				sendMessage(nextMessage);
+				nextMessage = null;
+			}
+			
+			// allow an interrupt to get us out of waiting for new data to be read
+			byte[] bytes = null;
+			try {
+				bytes = commData.getBytes();
+			} catch (InterruptedException e) {}
+			
+			if(bytes != null) {
+				ZoteroOpenOfficeIntegrationImpl.debugPrint("Received message "+(new String(bytes)));
+				readMessage(bytes);
+			}
 		}
-		
-		// allow an interrupt to get us out of waiting for new data to be read
-		byte[] bytes = null;
-		try {
-			bytes = commData.getBytes();
-		} catch (InterruptedException e) {}
-		
-		if(bytes != null) {
-			ZoteroOpenOfficeIntegrationImpl.debugPrint("Received message "+(new String(bytes)));
-			readMessage(bytes);
-		}
-		
-		mainLoop();
 	}
 	
 	/**
