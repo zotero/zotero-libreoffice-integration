@@ -90,7 +90,7 @@ const UNOPKG_RELPATHS = {
 };
 
 
-var wizard, javaCommonCheckComplete, platform;
+var wizard, javaCommonCheckComplete, platform, bashProc, neededPackages;
 var breadcrumbs = [];
 
 /*** ROUTINES RUN ON LOAD ***/
@@ -112,29 +112,25 @@ function onLoad() {
 	
 	for(var param in window.arguments[0].wrappedJSObject) window[param] = window.arguments[0].wrappedJSObject[param];
 		
-	checkJavaCommon(function() {
+	checkJavaCommon(function(success) {
 		// if openoffice.org-java-common check succeeds, we don't need to show the page for it
 		javaCommonCheckComplete = true;
 		
 		if(wizard.currentPage.id === "java-common-page") {
 			wizard.canAdvance = true;
-			wizard.advance();
+			if(success) wizard.advance();
 		}
 		
-		wizard.getPageById("intro").next = "openoffice-installations";
-		wizard.getPageById("java-common").next = "openoffice-installations";
-	}, function() {
-		// if openoffice.org-java-common check fails, we make sure it gets installed
-		javaCommonCheckComplete = true;
-		
-		if(wizard.currentPage.id === "java-common-page") {
-			wizard.canAdvance = true;
+		if(success) {
+			wizard.getPageById("intro").next = "openoffice-installations";
+			wizard.getPageById("java-common").next = "openoffice-installations";
+		} else {
+			wizard.getPageById("intro").next = "java-common";
+			wizard.getPageById("java-common").next = "java-common-install";
+			document.getElementById("java-common-required").hidden = false;
+			document.getElementById("java-common-progress").hidden = true;
+			document.getElementById("java-common-packages").textContent = neededPackages.join("\n");
 		}
-		
-		wizard.getPageById("intro").next = "java-common";
-		wizard.getPageById("java-common").next = "java-common-install";
-		document.getElementById("java-common-required").hidden = false;
-		document.getElementById("java-common-progress").hidden = true;
 	});
 }
 
@@ -142,64 +138,75 @@ function onLoad() {
  * Check for openoffice.org-java-common and prompt user to install if necessary, or else hide
  * java-common-page
  */
-function checkJavaCommon(checkSucceeded, checkFailed) {
+function checkJavaCommon(callback) {
+	neededPackages = [];
+	
 	// no need to check on Mac or Win
 	if(Zotero.isMac || Zotero.isWin) {
-		checkSucceeded();
+		callback(true);
 		return;
 	}
 	
 	// check for dpkg
 	var dpkg = ZoteroOpenOfficeIntegration.getFile("/usr/bin/dpkg");
 	if(!dpkg.exists()) {
-		checkSucceeded();
+		callback(true);
 		return;
 	}
 	
 	// check for bash
 	var bash = ZoteroOpenOfficeIntegration.getFile("/bin/bash");
 	if(!bash.exists()) {
-		checkSucceeded();
+		callback(true);
 		return;
 	}
 	
 	// init processes
-	var bashProc = Components.classes["@mozilla.org/process/util;1"].
+	bashProc = Components.classes["@mozilla.org/process/util;1"].
 			createInstance(Components.interfaces.nsIProcess);
 	bashProc.init(bash);
 	
+	checkJavaCommonPkg("openoffice.org-writer", "openoffice.org-java-common", function(success1) {
+		checkJavaCommonPkg("libreoffice-writer", "libreoffice-java-common", function(success2) {
+			callback(success1 && success2);
+		});
+	});
+}
+
+function checkJavaCommonPkg(pkgMain, pkgRequired, callback) {
 	// check for openoffice.org-writer with openoffice.org-java-common available but not installed
-	bashProc.runAsync(["-c", "dpkg -l | grep 'openoffice\.org-writer'"], 2, {"observe":function(subject1, topic1) {
+	bashProc.runAsync(["-c", "dpkg -l | grep '"+pkgMain.replace(".", "\\.")+"'"], 2, {"observe":function(subject1, topic1) {
 		if(topic1 === "process-finished" && !bashProc.exitValue) {
-			Zotero.debug("ZoteroOpenOfficeIntegration: openoffice.org-writer is installed");
+			Zotero.debug("ZoteroOpenOfficeIntegration: "+pkgMain+" is installed");
 			// only care if openoffice.org-writer is installed; otherwise, we are probably not using
 			// default packages and probably have Java
 			bashProc.runAsync(
-					["-c", "[ `apt-cache search 'openoffice\.org-java-common' | wc -l` != 0 ]"], 2,
+					["-c", "[ `apt-cache search '"+pkgRequired.replace(".", "\\.")+"' | wc -l` != 0 ]"], 2,
 					{"observe":function(subject2, topic2) {
 				// only care if openoffice.org-java-common is available for install; otherwise, we
 				// are probably using packages that include Java
 				if(topic2 === "process-finished" && !bashProc.exitValue) {
-					Zotero.debug("ZoteroOpenOfficeIntegration: openoffice.org-java-common is available");
-					bashProc.runAsync(["-c", "dpkg -l | grep 'openoffice\.org-java-common'"], 2,
+					Zotero.debug("ZoteroOpenOfficeIntegration: "+pkgRequired+" is available");
+					bashProc.runAsync(["-c", "dpkg -l | grep '"+pkgRequired.replace(".", "\\.")+"'"], 2,
 							{"observe":function(subject3, topic3) {
 						wizard.canAdvance = true;
 						if(topic3 === "process-failed" || bashProc.exitValue) {
-							Zotero.debug("ZoteroOpenOfficeIntegration: openoffice.org-java-common is not installed");
-							checkFailed();
+							Zotero.debug("ZoteroOpenOfficeIntegration: "+pkgRequired+" is not installed");
+							neededPackages.push(pkgRequired);
+							callback(false);
 						} else {
-							Zotero.debug("ZoteroOpenOfficeIntegration: openoffice.org-java-common is installed");
-							checkSucceeded();
+							Zotero.debug("ZoteroOpenOfficeIntegration: "+pkgRequired+" is installed");
+							callback(true);
 						}
 					}});
 				} else {
-					Zotero.debug("ZoteroOpenOfficeIntegration: openoffice.org-java-common is unavailable");
-					checkSucceeded();
+					Zotero.debug("ZoteroOpenOfficeIntegration: "+pkgRequired+" is unavailable");
+					callback(true);
 				}
 			}});
 		} else {
-			Zotero.debug("ZoteroOpenOfficeIntegration: openoffice.org-writer is not installed");
-			checkSucceeded();
+			Zotero.debug("ZoteroOpenOfficeIntegration: "+pkgMain+" is not installed");
+			callback(true);
 		}
 	}});
 }
@@ -230,6 +237,8 @@ function javaCommonPageShown() {
 function javaCommonInstallPageShown() {
 	wizard.canAdvance = false;
 	wizard.canRewind = false;
+	document.getElementById("java-common-install-progress").hidden = false;
+	document.getElementById("java-common-install-error").hidden = true;
 	
 	var proc = Components.classes["@mozilla.org/process/util;1"].
 			createInstance(Components.interfaces.nsIProcess);
@@ -238,15 +247,8 @@ function javaCommonInstallPageShown() {
 	var apturl = ZoteroOpenOfficeIntegration.getFile("/usr/bin/apturl");
 	if(apturl.exists()) {
 		proc.init(apturl);
-		proc.runAsync(["apt:openoffice.org-java-common"], 1, {"observe":function(subject, topic) {
-			wizard.canAdvance = true;
-			if(topic === "process-finished") {
-				wizard.getPageById("intro").next = "openoffice-installations";
-				wizard.advance();
-			} else {
-				document.getElementById("java-common-install-progress").hidden = true;
-				document.getElementById("java-common-install-error").hidden = false;
-			}
+		proc.runAsync(["apt:"+neededPackages.join(",")], 1, {"observe":function(subject, topic) {
+			checkJavaCommon(javaCommonVerifyInstallationCallback);
 			wizard.canAdvance = true;
 			wizard.canRewind = true;
 		}});
@@ -255,17 +257,9 @@ function javaCommonInstallPageShown() {
 		var xterm = ZoteroOpenOfficeIntegration.getFile("/usr/bin/xterm");
 		if(xterm.exists()) {
 			proc.init(xterm);
-			proc.runAsync(["-e", "sudo apt-get install openoffice.org-java-common; sleep 2;"], 2,
+			proc.runAsync(["-e", "sudo apt-get install "+neededPackages.join(" ")+"; sleep 2;"], 2,
 					{"observe":function(subject, topic) {
-				checkJavaCommon(function() {
-					// if install appears to have succeeded
-					wizard.getPageById("intro").next = "openoffice-installations";
-					wizard.advance();
-				}, function() {
-					// if install appears to have failed
-					document.getElementById("java-common-install-progress").hidden = true;
-					document.getElementById("java-common-install-error").hidden = false;
-				});
+				checkJavaCommon(javaCommonVerifyInstallationCallback);
 				wizard.canAdvance = true;
 				wizard.canRewind = true;
 			}});
@@ -275,6 +269,18 @@ function javaCommonInstallPageShown() {
 			wizard.canAdvance = true;
 			wizard.canRewind = true;
 		}
+	}
+}
+
+function javaCommonVerifyInstallationCallback(success) {
+	if(success) {
+		// if install appears to have succeeded
+		wizard.getPageById("intro").next = "openoffice-installations";
+		wizard.advance();
+	} else {
+		// if install appears to have failed
+		document.getElementById("java-common-install-progress").hidden = true;
+		document.getElementById("java-common-install-error").hidden = false;
 	}
 }
 
@@ -411,10 +417,21 @@ function openofficeInstallationsListboxSelectionChanged() {
  * @param {String} vboxToShow Which vbox should be visible
  */
 function showInstallationComplete(vboxToShow) {
+	// show correct description
 	for each(var vbox in ["manual", "error", "successful"]) {
 		var vboxElem = document.getElementById("installation-"+vbox);
 		vboxElem.hidden = vbox != vboxToShow;
 	}
+	
+	// show correct label
+	const msgs = {
+		"error":"Installation Failed",
+		"manual":"Manual Installation",
+		"successful":"Installation Successful"
+	};
+	wizard.getPageById("installation-complete").setAttribute("label", msgs[vboxToShow]);
+	
+	// go to installation complete page
 	wizard.goTo("installation-complete");
 	wizard.canAdvance = true;
 	wizard.canRewind = true;
