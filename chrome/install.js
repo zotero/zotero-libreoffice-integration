@@ -161,14 +161,19 @@ function checkJavaCommon(callback) {
 		return;
 	}
 	
+	// check for java
+	var java = ZoteroOpenOfficeIntegration.getFile("/usr/bin/java");
+	var success1 = java.exists();
+	if(!success1) neededPackages.push("default-jre");
+	
 	// init processes
 	bashProc = Components.classes["@mozilla.org/process/util;1"].
 			createInstance(Components.interfaces.nsIProcess);
 	bashProc.init(bash);
 	
-	checkJavaCommonPkg("openoffice.org-writer", "openoffice.org-java-common", function(success1) {
-		checkJavaCommonPkg("libreoffice-writer", "libreoffice-java-common", function(success2) {
-			callback(success1 && success2);
+	checkJavaCommonPkg("openoffice.org-writer", "openoffice.org-java-common", function(success2) {
+		checkJavaCommonPkg("libreoffice-writer", "libreoffice-java-common", function(success3) {
+			callback(success1 && success2 && success3);
 		});
 	});
 }
