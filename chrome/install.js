@@ -116,11 +116,6 @@ function onLoad() {
 		// if openoffice.org-java-common check succeeds, we don't need to show the page for it
 		javaCommonCheckComplete = true;
 		
-		if(wizard.currentPage.pageid === "java-common") {
-			wizard.canAdvance = true;
-			if(success) wizard.advance();
-		}
-		
 		if(success) {
 			wizard.getPageById("intro").next = "openoffice-installations";
 			wizard.getPageById("java-common").next = "openoffice-installations";
@@ -130,6 +125,11 @@ function onLoad() {
 			document.getElementById("java-common-required").hidden = false;
 			document.getElementById("java-common-progress").hidden = true;
 			document.getElementById("java-common-packages").textContent = neededPackages.join("\n");
+		}
+		
+		if(wizard.currentPage.pageid === "java-common") {
+			wizard.canAdvance = true;
+			if(success) wizard.advance();
 		}
 	});
 }
