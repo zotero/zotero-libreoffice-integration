@@ -89,8 +89,8 @@ const UNOPKG_RELPATHS = {
 	]
 };
 
-
-var wizard, javaCommonCheckComplete, platform, bashProc, neededPackages;
+var javaCommonCheckComplete = false;
+var wizard, platform, bashProc, neededPackages;
 var breadcrumbs = [];
 
 /*** ROUTINES RUN ON LOAD ***/
@@ -116,7 +116,7 @@ function onLoad() {
 		// if openoffice.org-java-common check succeeds, we don't need to show the page for it
 		javaCommonCheckComplete = true;
 		
-		if(wizard.currentPage.id === "java-common-page") {
+		if(wizard.currentPage.pageid === "java-common-page") {
 			wizard.canAdvance = true;
 			if(success) wizard.advance();
 		}
