@@ -12,5 +12,5 @@ component	{8478cd98-5ba0-4848-925a-75adffff2dbf}							components/zoteroOpenOffi
 contract	@zotero.org/Zotero/integration/application?agent=OpenOffice;1 	{8478cd98-5ba0-4848-925a-75adffff2dbf}
 component	{e2e05bf9-40d4-4426-b0c9-62abca5be58f}							components/zoteroOpenOfficeIntegration.js
 contract	@zotero.org/Zotero/integration/document?agent=OpenOffice;1 		{e2e05bf9-40d4-4426-b0c9-62abca5be58f}
-component	{254b5e3a-0b48-442a-9cf3-dcdb61335282}							components/zoteroOpenOfficeIntegration.js
+component	{82483c48-304c-460e-ab31-fac872f20379}							components/zoteroOpenOfficeIntegration.js
 contract	@zotero.org/Zotero/integration/field?agent=OpenOffice;1 		{82483c48-304c-460e-ab31-fac872f20379}
