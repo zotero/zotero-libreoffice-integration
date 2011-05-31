@@ -22,6 +22,73 @@
     ***** END LICENSE BLOCK *****
 */
 
+const UNOPKG_LOCATIONS = {
+	Mac:[
+		"/Applications/LibreOffice.app/Contents/MacOS/unopkg",
+		"/Applications/OpenOffice.org.app/Contents/MacOS/unopkg",
+		"/Applications/NeoOffice.app/Contents/MacOS/unopkg",
+		"/Applications/OpenOffice.org 2.4.app/Contents/MacOS/unopkg"
+	],
+	Win:[
+		"C:\\Program Files\\LibreOffice 3\\program\\unopkg.exe",
+		"C:\\Program Files (x86)\\LibreOffice 3\\program\\unopkg.exe",
+		"C:\\Program Files\\OpenOffice.org 3\\program\\unopkg.exe",
+		"C:\\Program Files (x86)\\OpenOffice.org 3\\program\\unopkg.exe",
+		"C:\\Program Files\\OpenOffice.org 2.4\\program\\unopkg.exe",
+		"C:\\Program Files (x86)\\OpenOffice.org 2.4\\program\\unopkg.exe",
+		"C:\\Program Files\\OpenOffice.org 2\\program\\unopkg.exe",
+		"C:\\Program Files (x86)\\OpenOffice.org 2\\program\\unopkg.exe"
+	],
+	Other:[
+		"/usr/bin/unopkg",
+		
+		"/usr/lib/libreoffice/program/unopkg",
+		"/usr/lib64/libreoffice/program/unopkg",
+		
+		"/usr/lib/openoffice/program/unopkg",
+		"/usr/lib64/openoffice/program/unopkg",
+		
+		"/usr/lib/libreoffice3/program/unopkg",
+		"/usr/lib64/libreoffice3/program/unopkg",
+		
+		"/usr/lib/openoffice.org3/program/unopkg",
+		"/usr/lib64/openoffice.org3/program/unopkg",
+		
+		"/usr/lib/ooo3/program/unopkg",
+		"/usr/lib64/ooo3/program/unopkg",
+		
+		"/opt/openoffice.org3.4/program/unopkg",
+		"/usr/local/opt/openoffice.org3.4/program/unopkg",
+		"/opt/openoffice.org3.3/program/unopkg",
+		"/usr/local/opt/openoffice.org3.3/program/unopkg",
+		"/opt/openoffice.org3.2/program/unopkg",
+		"/usr/local/opt/openoffice.org3.2/program/unopkg",
+		"/opt/openoffice.org3.1/program/unopkg",
+		"/usr/local/opt/openoffice.org3.1/program/unopkg",
+		"/opt/openoffice.org3/program/unopkg",
+		"/usr/local/opt/openoffice.org3/program/unopkg",
+		"/opt/openoffice.org2.4/program/unopkg",
+		"/usr/local/opt/openoffice.org2.4/program/unopkg",
+		"/opt/openoffice.org2/program/unopkg",
+		"/usr/local/opt/openoffice.org2/program/unopkg",
+		
+		"/opt/libreoffice/program/unopkg",
+		"/opt/libreoffice3/program/unopkg"
+	]
+};			
+
+const UNOPKG_RELPATHS = {
+	Mac:[
+		"Contents/MacOS/unopkg"
+	],
+	Win:[
+		"program\\unopkg.exe"
+	],
+	Other:[
+		"program/unopkg"
+	]
+};
+
 var ZoteroOpenOfficeIntegration = new function() {
 	this.UNOPKG_PATHS_PREF = "unopkgPaths";
 	
@@ -44,6 +111,15 @@ var ZoteroOpenOfficeIntegration = new function() {
 	
 	this.verifyNotCorrupt = function() {}
 	
+	this.__defineGetter__("platform", function() {
+		if(Zotero.isMac) {
+			return "Mac";
+		} if(Zotero.isWin) {
+			return "Win";
+		}
+		return "Other";
+	});
+	
 	this.install = function(zpi) {
 		if(wizardWindow && !wizardWindow.closed) {
 			wizardWindow.focus();
@@ -55,9 +131,10 @@ var ZoteroOpenOfficeIntegration = new function() {
 		this.pathToAddon = zoteroPluginInstaller.getAddonPath(this.EXTENSION_ID);
 		
 		// look for installations
-		var installations = this.getInstallations();
+		var installations = this.getSelectedInstallations();
 		if(installations.length && !zpi.force) {
-			// if there are installations and we are not being forced to show wizard, continue
+			// if there are installations already selected from a previous install and we are not
+			// being forced to show wizard, do silent install
 			this.installComponents(installations, function(success) {
 				if(success) {
 					zpi.success();
@@ -65,8 +142,9 @@ var ZoteroOpenOfficeIntegration = new function() {
 					openInstallationWizard();
 				}
 			});
-		} else if(!zpi.failSilently) {
-			// otherwise, open the wizard
+		} else if(!zpi.failSilently || this.getPotentialInstallations().length) {
+			// otherwise, if there are installations and we are not failing silently, open the
+			// wizard
 			openInstallationWizard();
 		}
 	}
@@ -83,10 +161,10 @@ var ZoteroOpenOfficeIntegration = new function() {
 	}
 	
 	/**
-	 * Gets a list of OpenOffice.org installations from the preferences
+	 * Gets a list of selected OpenOffice.org installations from the preferences
 	 * @return {String[]}
 	 */
-	this.getInstallations = function detectPaths(failSilently) {
+	this.getSelectedInstallations = function() {
 		// first try getting unopkg paths pref
 		var unopkgPaths = JSON.parse(zoteroPluginInstaller.prefBranch.getCharPref(this.UNOPKG_PATHS_PREF));
 		
@@ -100,6 +178,26 @@ var ZoteroOpenOfficeIntegration = new function() {
 		
 		if(!extantPaths.length) return [];
 		return extantPaths;
+	}
+	
+	/**
+	 * Gets a list of potential OpenOffice.org installations by checking paths
+	 */
+	this.getPotentialInstallations = function() {
+		var installations = [];
+		var potentialLocations = UNOPKG_LOCATIONS[ZoteroOpenOfficeIntegration.platform];
+		for each(var potentialLocation in potentialLocations) {
+			var file = ZoteroOpenOfficeIntegration.getFile(potentialLocation);
+			
+			if(file.exists()) {
+				// skip files that are symlinked to existing locations, or that we already know of
+				if(installations.indexOf(file.path) === -1) {
+					installations.push(file.path);
+				}
+			}
+		}
+		
+		return installations;
 	}
 	
 	/**
