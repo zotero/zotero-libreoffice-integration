@@ -105,7 +105,7 @@ function checkJavaCommon(callback) {
 
 function checkJavaCommonPkg(pkgMain, pkgRequired, callback) {
 	// check for openoffice.org-writer with openoffice.org-java-common available but not installed
-	bashProc.runAsync(["-c", "dpkg -l | grep '"+pkgMain.replace(".", "\\.")+"'"], 2, {"observe":function(subject1, topic1) {
+	bashProc.runAsync(["-c", "dpkg -l '"+pkgMain.replace(".", "\\.")+"' | grep '^ii '"], 2, {"observe":function(subject1, topic1) {
 		if(topic1 === "process-finished" && !bashProc.exitValue) {
 			Zotero.debug("ZoteroOpenOfficeIntegration: "+pkgMain+" is installed");
 			// only care if openoffice.org-writer is installed; otherwise, we are probably not using
