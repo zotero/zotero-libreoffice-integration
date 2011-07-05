@@ -22,6 +22,18 @@
     ***** END LICENSE BLOCK *****
 */
 
+const UNOPKG_RELPATHS = {
+	Mac:[
+		"Contents/MacOS/unopkg"
+	],
+	Win:[
+		"program\\unopkg.exe"
+	],
+	Other:[
+		"program/unopkg"
+	]
+};
+
 var javaCommonCheckComplete = false;
 var wizard, platform, bashProc, neededPackages;
 var breadcrumbs = [];
