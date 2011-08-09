@@ -80,7 +80,6 @@ ZoteroPluginInstaller.prototype = {
 						this.prefBranch.getCharPref("version") != this._version
 						|| (!Zotero.isStandalone && !this.prefBranch.getBoolPref("installed"))
 					)
-					&& document.getElementById("appcontent")
 					&& !this.prefBranch.getBoolPref("skipInstallation")
 				)) {
 					
