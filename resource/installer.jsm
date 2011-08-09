@@ -22,6 +22,15 @@
     ***** END LICENSE BLOCK *****
 */
 
+var EXPORTED_SYMBOLS = ["Installer"];
+var Zotero = Components.classes["@zotero.org/Zotero;1"].getService(Components.interfaces.nsISupports).wrappedJSObject;
+var ZoteroPluginInstaller = Components.utils.import("resource://zotero-openoffice-integration/installer_common.jsm").ZoteroPluginInstaller;
+var Installer = function(failSilently, force) {
+	return new ZoteroPluginInstaller(Plugin,
+		failSilently !== undefined ? failSilently : Zotero.isStandalone,
+		force);
+}
+
 const UNOPKG_LOCATIONS = {
 	Mac:[
 		"/Applications/LibreOffice.app/Contents/MacOS/unopkg",
@@ -101,7 +110,7 @@ const UNOPKG_RELPATHS = {
 	]
 };
 
-var ZoteroOpenOfficeIntegration = new function() {
+var Plugin = new function() {
 	this.UNOPKG_PATHS_PREF = "unopkgPaths";
 	
 	this.EXTENSION_STRING = "Zotero OpenOffice Integration";
@@ -115,6 +124,18 @@ var ZoteroOpenOfficeIntegration = new function() {
 		url: "zotero.org",
 		id: "zotero@chnm.gmu.edu",
 		minVersion: "2.1b7.SVN"
+	}, {
+		name: "Zotero Word for Mac Integration",
+		url: "zotero.org/support/word_processor_plugin_installation",
+		id: "zoteroMacWordIntegration@zotero.org",
+		minVersion: "3.1.6.SVN",
+		required: false
+	}, {
+		name: "Zotero Word for Windows Integration",
+		url: "zotero.org/support/word_processor_plugin_installation",
+		id: "zoteroWinWordIntegration@zotero.org",
+		minVersion: "3.1.2.SVN",
+		required: false
 	}];
 	
 	this.DISABLE_PROGRESS_WINDOW = true;
@@ -183,7 +204,7 @@ var ZoteroOpenOfficeIntegration = new function() {
 		// make sure paths exist
 		var extantPaths = [];
 		for each(var path in unopkgPaths) {
-			if(ZoteroOpenOfficeIntegration.getFile(path).exists()) {
+			if(Plugin.getFile(path).exists()) {
 				extantPaths.push(path);
 			}
 		}
@@ -197,9 +218,9 @@ var ZoteroOpenOfficeIntegration = new function() {
 	 */
 	this.getPotentialInstallations = function() {
 		var installations = [];
-		var potentialLocations = UNOPKG_LOCATIONS[ZoteroOpenOfficeIntegration.platform];
+		var potentialLocations = UNOPKG_LOCATIONS[Plugin.platform];
 		for each(var potentialLocation in potentialLocations) {
-			var file = ZoteroOpenOfficeIntegration.getFile(potentialLocation);
+			var file = Plugin.getFile(potentialLocation);
 			
 			if(file.exists()) {
 				// skip files that are symlinked to existing locations, or that we already know of
@@ -248,7 +269,7 @@ var ZoteroOpenOfficeIntegration = new function() {
 				   .getService(Components.interfaces.nsIWindowWatcher);
 		wizardWindow = ww.openWindow(null, "chrome://zotero-openoffice-integration/content/install.xul",
 					"openoffice-install-wizard", "chrome,centerscreen", {"wrappedJSObject":{
-						"ZoteroOpenOfficeIntegration":ZoteroOpenOfficeIntegration,
+						"ZoteroOpenOfficeIntegration":Plugin,
 						"ZoteroPluginInstaller":zoteroPluginInstaller
 					}});
 	}
@@ -271,7 +292,7 @@ var ZoteroOpenOfficeIntegration = new function() {
 				createInstance(Components.interfaces.nsIProcess);
 		var path = unopkgPaths.shift();
 		Zotero.debug("ZoteroOpenOfficeIntegration: Installing with unopkg at "+path);
-		proc.init(ZoteroOpenOfficeIntegration.getFile(path));
+		proc.init(Plugin.getFile(path));
 		
 		proc.runAsync(["remove", "org.Zotero.integration.openoffice"], 2, {"observe":function() {
 			proc.runAsync(["add", oxt.path], 2, {"observe":function(process, topic) {

@@ -2,23 +2,18 @@
 <overlay id="openOfficeIntegration"
          xmlns:html="http://www.w3.org/1999/xhtml"
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-	<preferences id="zotero-preferences-cite">
-		<preference id="pref-urePath" name="extensions.zoteroOpenOfficeIntegration.urePath" type="string" instantApply="true"/>
-		<preference id="pref-sofficePath" name="extensions.zoteroOpenOfficeIntegration.sofficePath" type="string" instantApply="true"/>
-	</preferences>
 	<tabpanel id="wordProcessors">
 		<groupbox id="wordProcessors-openOfficeIntegration" position="1">
 			<caption label="OpenOffice.org/LibreOffice/NeoOffice"/>
 			<description id="wordProcessors-openOffice-description" width="45em" />
 			<hbox pack="center">
-				<button id="wordProcessors-openOffice-install" oncommand="updateOpenOfficeIntegration(new ZoteroPluginInstaller(ZoteroOpenOfficeIntegration, false, true))"/>
+				<button id="wordProcessors-openOffice-install" oncommand="updateOpenOfficeIntegration(new ZoteroOpenOfficeInstaller(false, true))"/>
 			</hbox>
-			<script src="chrome://zotero-openoffice-integration/content/common.js"/>
-			<script src="chrome://zotero-openoffice-integration/content/openOffice.js"/>
 			<script>
 			<![CDATA[
+			var ZoteroOpenOfficeInstaller = Components.utils.import("resource://zotero-openoffice-integration/installer.jsm").Installer;
 			window.addEventListener("load", function() {
-				var zpi = new ZoteroPluginInstaller(ZoteroOpenOfficeIntegration, true);
+				var zpi = new ZoteroOpenOfficeInstaller(true);
 				updateOpenOfficeIntegration(zpi);
 			}, false);
 			

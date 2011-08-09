@@ -21,6 +21,13 @@
     
     ***** END LICENSE BLOCK *****
 */
+
+var EXPORTED_SYMBOLS = ["ZoteroPluginInstaller"];
+var Zotero = Components.classes["@zotero.org/Zotero;1"]
+				// Currently uses only nsISupports
+				//.getService(Components.interfaces.chnmIZoteroService).
+				.getService(Components.interfaces.nsISupports)
+				.wrappedJSObject;
 	
 var appInfo = Components.classes["@mozilla.org/xre/app-info;1"].
 						 getService(Components.interfaces.nsIXULAppInfo);
@@ -127,7 +134,7 @@ ZoteroPluginInstaller.prototype = {
 		if(this.force && !this._addon.DISABLE_PROGRESS_WINDOW) {
 			Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
 				.getService(Components.interfaces.nsIPromptService)
-				.alert(window, this._addon.EXTENSION_STRING,
+				.alert(null, this._addon.EXTENSION_STRING,
 				'Installation was successful.');
 		}
 	},
@@ -156,9 +163,9 @@ ZoteroPluginInstaller.prototype = {
 		this._progressWindowLabel = this._progressWindow.document.getElementById("progress-label");
 		this._progressWindowLabel.value = "Installing "+this._addon.EXTENSION_STRING+"...";
 		var me = this;
-		window.setTimeout(function() {
+		Zotero.setTimeout(function() {
 			me._progressWindow.focus();
-			window.setTimeout(function() {
+			Zotero.setTimeout(function() {
 				me._progressWindow.focus();
 				try {
 					me._addon.install(me);
@@ -166,8 +173,8 @@ ZoteroPluginInstaller.prototype = {
 					me.error();
 					throw e;
 				}
-			}, 500);
-		}, 100);
+			}, 500, false);
+		}, 100, false);
 	},
 	
 	"_checkVersions":function() {
@@ -180,12 +187,17 @@ ZoteroPluginInstaller.prototype = {
 					.getService(Components.interfaces.nsIVersionComparator)
 					.compare((checkAddon.id == "zotero@chnm.gmu.edu" ? Zotero.version : this._addons[i+1].version), checkAddon.minVersion);
 			} catch(e) {
-				var comp = -1;
+				var comp = null;
 			}
 			
-			if(comp < 0) {
-				var err = 'This version of '+this._addon.EXTENSION_STRING+' requires '+checkAddon.name+' '+checkAddon.minVersion+
-					' or later to run. Please download the latest version of '+checkAddon.name+' from '+checkAddon.url+'.';
+			if((comp === null && checkAddon.required) || comp < 0) {
+				if(checkAddon.required === false) {
+					var err = this._addon.EXTENSION_STRING+' '+this._addons[0].version+' is incompatible with versions of '+checkAddon.name+
+						' before '+checkAddon.minVersion+'. Please remove '+checkAddon.name+', or download the latest version from '+checkAddon.url+'.';
+				} else {
+					var err = this._addon.EXTENSION_STRING+' '+this._addons[0].version+' requires '+checkAddon.name+' '+checkAddon.minVersion+
+						' or later to run. Please download the latest version of '+checkAddon.name+' from '+checkAddon.url+'.';
+				}
 				this.error(err, true);
 				if(this.failSilently) {
 					throw err;
