@@ -65,34 +65,38 @@ ZoteroPluginInstaller.prototype = {
 	"_errorDisplayed":false,
 	
 	"_addonInfoAvailable":function() {
-		this._version = this._addons[0].version;
-		if(!this._checkVersions()) return;
-		
 		try {
-			this._addon.verifyNotCorrupt(this);
-		} catch(e) {
-			return;
-		}
-		
-		if(this.force || (
-				(
-					this.prefBranch.getCharPref("version") != this._version
-					|| (!Zotero.isStandalone && !this.prefBranch.getBoolPref("installed"))
-				)
-				&& document.getElementById("appcontent")
-				&& !this.prefBranch.getBoolPref("skipInstallation")
-			)) {
-				
-			var me = this;
-			if(!this._addon.DISABLE_PROGRESS_WINDOW) {
-				this._progressWindow = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
-					.getService(Components.interfaces.nsIWindowWatcher)
-					.openWindow(null, "chrome://"+this._addon.EXTENSION_DIR+"/content/progress.xul", '',
-						"chrome,resizable=no,close=no,centerscreen", null);	
-				this._progressWindow.addEventListener("load", function() { me._firstRunListener() }, false);
-			} else {
-				this._addon.install(this);
+			this._version = this._addons[0].version;
+			if(!this._checkVersions()) return;
+			
+			try {
+				this._addon.verifyNotCorrupt(this);
+			} catch(e) {
+				return;
 			}
+			
+			if(this.force || (
+					(
+						this.prefBranch.getCharPref("version") != this._version
+						|| (!Zotero.isStandalone && !this.prefBranch.getBoolPref("installed"))
+					)
+					&& document.getElementById("appcontent")
+					&& !this.prefBranch.getBoolPref("skipInstallation")
+				)) {
+					
+				var me = this;
+				if(!this._addon.DISABLE_PROGRESS_WINDOW) {
+					this._progressWindow = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+						.getService(Components.interfaces.nsIWindowWatcher)
+						.openWindow(null, "chrome://"+this._addon.EXTENSION_DIR+"/content/progress.xul", '',
+							"chrome,resizable=no,close=no,centerscreen", null);	
+					this._progressWindow.addEventListener("load", function() { me._firstRunListener() }, false);
+				} else {
+					this._addon.install(this);
+				}
+			}
+		} catch(e) {
+			Zotero.logError(e);
 		}
 	},
 	
