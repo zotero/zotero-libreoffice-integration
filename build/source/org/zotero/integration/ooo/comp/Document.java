@@ -86,8 +86,8 @@ public class Document {
 	String runtimeUID;
 	Properties properties;
 	
-	static final String[] PREFIXES = {"ZOTERO_", "CITE_", " ADDIN ZOTERO_"};
-	static final String[] PREFS_PROPERTIES = {"ZOTERO_PREF", "CITE_PREF"};
+	static final String[] PREFIXES = {"ZOTERO_", " CSL_", " ADDIN ZOTERO_"};
+	static final String[] PREFS_PROPERTIES = {"ZOTERO_PREF", "CSL_PREF"};
 	static final String FIELD_PLACEHOLDER = "{Citation}";
 	static final String BOOKMARK_REFERENCE_PROPERTY = "ZOTERO_BREF_";
 	
@@ -163,7 +163,7 @@ public class Document {
     		XNamed sectionNamed = (XNamed) UnoRuntime.queryInterface(XNamed.class, section);
     		String name = sectionNamed.getName();
     		for(String prefix : PREFIXES) {
-    			if(name.startsWith(prefix)) {
+    			if(name.contains(prefix)) {
     				return false;
     			}
     		}
@@ -208,7 +208,7 @@ public class Document {
     			XNamed named = (XNamed) UnoRuntime.queryInterface(XNamed.class, mark);
     			String name = named.getName();
     			for(String prefix : PREFIXES) {
-    				if(name.startsWith(prefix)) {
+    				if(name.contains(prefix)) {
 						// check second enumerator for the same field
     			    	enumeratorAccess = (XEnumerationAccess) UnoRuntime.queryInterface(XEnumerationAccess.class, paragraphCursor2);
     			    	nextElement = enumeratorAccess.createEnumeration().nextElement();
@@ -273,7 +273,7 @@ public class Document {
 				String name = named.getName();
 				
 				for(String prefix : Document.PREFIXES) {
-					if(name.startsWith(prefix)) {
+					if(name.contains(prefix)) {
 						try {
 							marks.add(new ReferenceMark(this, named, name));
 						} catch (IllegalArgumentException e) {}
@@ -293,7 +293,7 @@ public class Document {
 				String name = named.getName();
 				
 				for(String prefix : Document.PREFIXES) {
-					if(name.startsWith(prefix)) {
+					if(name.contains(prefix)) {
 						try {
 							marks.add(new ReferenceMark(this, named, name));
 						} catch (IllegalArgumentException e) {}
@@ -315,7 +315,7 @@ public class Document {
 				String name = markNames[i];
 				
 				for(String prefix : Document.PREFIXES) {
-					if(name.startsWith(prefix)) {
+					if(name.contains(prefix)) {
 						Object aMark = markNameAccess.getByName(name);
 						XNamed named = ((XNamed) UnoRuntime.queryInterface(XNamed.class, aMark));
 						try {

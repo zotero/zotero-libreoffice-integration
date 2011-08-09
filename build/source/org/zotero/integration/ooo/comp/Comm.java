@@ -203,6 +203,8 @@ class Comm implements Runnable {
 				field.select();
 			} else if(command.equals("Field_removeCode")) {
 				field.removeCode();
+			} else if(command.equals("Field_getText")) {
+				return field.getText();
 			} else if(command.equals("Field_setText")) {
 				field.setText((String) args.get(1), (Boolean) args.get(2));
 			} else if(command.equals("Field_getCode")) {

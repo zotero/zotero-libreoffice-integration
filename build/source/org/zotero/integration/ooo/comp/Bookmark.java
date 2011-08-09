@@ -65,8 +65,9 @@ public class Bookmark extends ReferenceMark {
 		}
 		
 		for(String prefix : Document.PREFIXES) {
-			if(property.startsWith(prefix)) {
-				return property.substring(prefix.length());
+			int index = property.indexOf(prefix);
+			if(index != -1) {
+				return property.substring(index+prefix.length());
 			}
 		}
 		throw new Exception("Invalid code prefix");

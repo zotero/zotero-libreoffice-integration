@@ -360,7 +360,7 @@ Field.prototype = {
 };
 
 for each(var method in ["delete", "select", "removeCode", "setText",
-	"getNoteIndex"]) {
+	"getText", "getNoteIndex"]) {
 	let methodStable = method;
 	Field.prototype[method] = function() Comm.sendCommand("Field_"+methodStable, _cleanArguments(arguments, [this._rawCode]));
 }

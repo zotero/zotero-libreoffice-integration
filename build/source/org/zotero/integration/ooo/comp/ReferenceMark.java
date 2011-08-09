@@ -131,6 +131,10 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 			cursor.goLeft((short) 1, true);
 		}
 	}
+
+	public String getText() throws Exception {
+		return range.getString();
+	}
 	
 	public void setText(String textString, boolean isRich) throws Exception {
 		boolean isBibliography = getCode().startsWith("BIBL");
@@ -230,9 +234,10 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		int rnd = rawCode.lastIndexOf(" RND");
 		if(rnd == -1) rnd = rawCode.length()-6;	// for compatibility with old, pre-release Python plug-in
 		for(String prefix : Document.PREFIXES) {
-			if(rawCode.startsWith(prefix)) {
+			int index = rawCode.indexOf(prefix);
+			if(index != -1) {
 				if(rnd > 0) {
-					return rawCode.substring(prefix.length(), rnd);
+					return rawCode.substring(index+prefix.length(), rnd);
 				} else {
 					return rawCode;
 				}
