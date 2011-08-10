@@ -26,7 +26,7 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 var Zotero;
 
-Comm = new function() {
+var Comm = new function() {
 	var _onlineObserverRegistered = false;
 	var _converter, _lastDataListener;
 	
@@ -59,6 +59,7 @@ Comm = new function() {
 			
 			Zotero.debug("ZoteroOpenOfficeIntegration: Communication server listening on 127.0.0.1:"+serv.port);
 		} catch(e) {
+			Zotero.logError(e);
 			Zotero.debug("ZoteroOpenOfficeIntegration: Not initializing communication server");
 		}
 

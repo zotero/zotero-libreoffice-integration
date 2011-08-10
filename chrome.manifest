@@ -1,5 +1,5 @@
 overlay    chrome://browser/content/browser.xul chrome://zotero-openoffice-integration/content/overlay.xul
-overlay    chrome://zotero/content/standalone.xul chrome://zotero-openoffice-integration/content/overlay.xul
+overlay    chrome://zotero/content/standalone/standalone.xul chrome://zotero-openoffice-integration/content/overlay.xul
 overlay    chrome://zotero/content/preferences/preferences.xul chrome://zotero-openoffice-integration/content/preferences.xul
 overlay    chrome://zotero/content/preferences/preferences.xul#cite chrome://zotero-openoffice-integration/content/preferences.xul
 
