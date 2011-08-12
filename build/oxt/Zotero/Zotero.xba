@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="Zotero" script:language="StarBasic">
+Sub ZoteroAddBibliography()
+	createUnoService(&quot;org.zotero.integration.ooo.ZoteroOpenOfficeIntegration&quot;).trigger(&quot;addBibliography&quot;)
+End Sub
+
+Sub ZoteroAddCitation()
+	createUnoService(&quot;org.zotero.integration.ooo.ZoteroOpenOfficeIntegration&quot;).trigger(&quot;addCitation&quot;)
+End Sub
+
+Sub ZoteroEditCitation()
+	createUnoService(&quot;org.zotero.integration.ooo.ZoteroOpenOfficeIntegration&quot;).trigger(&quot;editCitation&quot;)
+End Sub
+
+Sub ZoteroEditBibliography()
+	createUnoService(&quot;org.zotero.integration.ooo.ZoteroOpenOfficeIntegration&quot;).trigger(&quot;editBibliography&quot;)
+End Sub
+
+Sub ZoteroRefresh()
+	createUnoService(&quot;org.zotero.integration.ooo.ZoteroOpenOfficeIntegration&quot;).trigger(&quot;refresh&quot;)
+End Sub
+
+Sub ZoteroRemoveCodes()
+	createUnoService(&quot;org.zotero.integration.ooo.ZoteroOpenOfficeIntegration&quot;).trigger(&quot;removeCodes&quot;)
+End Sub
+
+Sub ZoteroSetDocPrefs()
+	createUnoService(&quot;org.zotero.integration.ooo.ZoteroOpenOfficeIntegration&quot;).trigger(&quot;setDocPrefs&quot;)
+End Sub
+</script:module>
