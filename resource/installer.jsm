@@ -218,7 +218,27 @@ var Plugin = new function() {
 	 */
 	this.getPotentialInstallations = function() {
 		var installations = [];
-		var potentialLocations = UNOPKG_LOCATIONS[Plugin.platform];
+		var potentialLocations = UNOPKG_LOCATIONS[Plugin.platform].slice();
+		
+		if(Zotero.isWin) {
+			var wrk = Components.classes["@mozilla.org/windows-registry-key;1"]
+				.createInstance(Components.interfaces.nsIWindowsRegKey);
+			var path;
+			try {
+				wrk.open(Components.interfaces.nsIWindowsRegKey.ROOT_KEY_LOCAL_MACHINE,
+					"Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\unopkg.exe",
+					Components.interfaces.nsIWindowsRegKey.ACCESS_READ);
+				try {
+					path = wrk.readStringValue("");
+				} finally {
+					wrk.close();
+				}
+			} catch(e) {}
+			if(path) {
+				potentialLocations.push(path);
+			}
+		}
+		
 		for each(var potentialLocation in potentialLocations) {
 			var file = Plugin.getFile(potentialLocation);
 			
