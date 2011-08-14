@@ -220,7 +220,14 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 
 	public void setCode(String code) throws Exception {
 		rawCode = Document.PREFIXES[0] + code + " RND" + Document.getRandomString(Document.REFMARK_ADD_CHARS);
-		named.setName(rawCode);
+		if(isTextSection) {
+			named.setName(rawCode);
+		} else {
+			// The only way to rename a ReferenceMark is to delete it and add it again
+			// TODO: won't work with formatted text
+			range.setString(range.getString());
+			reattachMark();
+		}
 	}
 	
 	public String getCode() throws Exception {
