@@ -94,7 +94,8 @@ const UNOPKG_LOCATIONS = {
 		"/usr/local/opt/openoffice.org2/program/unopkg",
 		
 		"/opt/libreoffice/program/unopkg",
-		"/opt/libreoffice3/program/unopkg"
+		"/opt/libreoffice3/program/unopkg",
+		"/opt/libreoffice3.4/program/unopkg"
 	]
 };			
 
