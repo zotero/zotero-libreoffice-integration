@@ -72,7 +72,7 @@ ZoteroPluginInstaller.prototype = {
 			try {
 				this._addon.verifyNotCorrupt(this);
 			} catch(e) {
-				Zotero.debug("Not installing "+this._addon[0]+": "+e.toString());
+				Zotero.debug("Not installing "+this._addon.EXTENSION_STRING+": "+e.toString());
 				return;
 			}
 			

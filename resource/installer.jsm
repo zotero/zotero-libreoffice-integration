@@ -124,7 +124,8 @@ var Plugin = new function() {
 		name: "Zotero",
 		url: "zotero.org",
 		id: "zotero@chnm.gmu.edu",
-		minVersion: "2.1b7.SVN"
+		minVersion: "2.1b7.SVN",
+		required: true
 	}, {
 		name: "Zotero Word for Mac Integration",
 		url: "zotero.org/support/word_processor_plugin_installation",
