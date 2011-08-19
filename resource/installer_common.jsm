@@ -167,9 +167,9 @@ ZoteroPluginInstaller.prototype = {
 		this._progressWindowLabel = this._progressWindow.document.getElementById("progress-label");
 		this._progressWindowLabel.value = "Installing "+this._addon.EXTENSION_STRING+"...";
 		var me = this;
-		Zotero.setTimeout(function() {
+		setTimeout(function() {
 			me._progressWindow.focus();
-			Zotero.setTimeout(function() {
+			setTimeout(function() {
 				me._progressWindow.focus();
 				try {
 					me._addon.install(me);
@@ -177,8 +177,8 @@ ZoteroPluginInstaller.prototype = {
 					me.error();
 					throw e;
 				}
-			}, 500, false);
-		}, 100, false);
+			}, 500);
+		}, 100);
 	},
 	
 	"_checkVersions":function() {
