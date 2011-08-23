@@ -27,7 +27,7 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 var Zotero;
 
 var Comm = new function() {
-	var _onlineObserverRegistered = false;
+	var _observersRegistered = false;
 	var _converter, _lastDataListener;
 	
 	/**
@@ -38,9 +38,9 @@ var Comm = new function() {
 			.getService(Components.interfaces.nsISupports)
 			.wrappedJSObject;
 		
-		if (Zotero.HTTP.browserIsOffline()) {
-			Zotero.debug('ZoteroOpenOfficeIntegration: Browser is offline -- not initializing communication server');
-			_registerOnlineObserver();
+		if (Zotero.isConnector || Zotero.HTTP.browserIsOffline()) {
+			Zotero.debug('ZoteroOpenOfficeIntegration: Browser is offline or in connector mode -- not initializing communication server');
+			_registerObservers();
 			return;
 		}
 		
@@ -62,27 +62,49 @@ var Comm = new function() {
 			Zotero.logError(e);
 			Zotero.debug("ZoteroOpenOfficeIntegration: Not initializing communication server");
 		}
-
-		_registerOnlineObserver()
+		
+		if(Zotero.addShutdownListener) {
+			Zotero.debug("ZoteroOpenOfficeIntegration: Registering shutdown listener");
+			Zotero.addShutdownListener(function() {
+				Zotero.debug("ZoteroOpenOfficeIntegration: Shutting down communication server");
+				
+				// close socket
+				serv.close();
+				// close data listener
+				if(_lastDataListener) {
+					try {
+						_lastDataListener.onStopRequest();
+					} catch(e) {}
+				}
+			});
+		}
+		
+		_registerObservers();
 	}
 	
 	/**
 	 * Registers an observer to bring the server back online when Firefox comes online
 	 */
-	function _registerOnlineObserver() {
-		if (_onlineObserverRegistered) return;
+	function _registerObservers() {
+		if (_observersRegistered) return;
 		
-		// Observer to enable the integration when we go online
-		var observer = function(subject, topic, data) {
-			if (data == 'online') Comm.init();
+		// Observer to enable integration when we go online
+		var onlineObserver = function(subject, topic, data) {
+			if (data == 'online' && !Zotero.isConnector) Comm.init();
 		};
+		
+		// Observer to enable integration when we leave connector mode
+		var reloadObserver = function(subject, topic, data) {
+			if(!Zotero.isConnector) Comm.init();
+		}
 		
 		var observerService =
 			Components.classes["@mozilla.org/observer-service;1"]
 				.getService(Components.interfaces.nsIObserverService);
-		observerService.addObserver(observer, "network:offline-status-changed", false);
+		observerService.addObserver(onlineObserver, "network:offline-status-changed", false);
+		observerService.addObserver(reloadObserver, "zotero-reloaded", false);
 		
-		_onlineObserverRegistered = true;
+		_observersRegistered = true;
 	}
 	
 	/**
@@ -94,6 +116,14 @@ var Comm = new function() {
 		 */
 		this.onSocketAccepted = function(socket, transport) {
 			Zotero.debug("ZoteroOpenOfficeIntegration: Connection received");
+			
+			// close old data listener
+			if(_lastDataListener) {
+				try {
+					_lastDataListener.onStopRequest();
+				} catch(e) {}
+			}
+			
 			new DataListener(transport);
 		}
 		
