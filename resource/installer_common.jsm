@@ -37,6 +37,19 @@ if(appInfo.platformVersion[0] >= 2) {
 	var AddonManager = false;
 }
 
+var _runningTimers = [];
+function setTimeout(func, ms) {
+	var timer = Components.classes["@mozilla.org/timer;1"].
+		createInstance(Components.interfaces.nsITimer);
+	var timerCallback = {"notify":function() {
+		_runningTimers.splice(_runningTimers.indexOf(timer), 1);
+		func();
+	}};
+	timer.initWithCallback(timerCallback, ms, Components.interfaces.nsITimer.TYPE_ONE_SHOT);
+	// add timer to global scope so that it doesn't get garbage collected before it completes
+	_runningTimers.push(timer);
+}
+
 var ZoteroPluginInstaller = function(addon, failSilently, force) {
 	this._addon = addon;
 	this.failSilently = failSilently;
