@@ -28,7 +28,7 @@ var Zotero;
 
 var Comm = new function() {
 	var _observersRegistered = false;
-	var _converter, _lastDataListener;
+	var _converter, _lastDataListener, mainThread;
 	
 	/**
 	 * Observes browser startup to initialize ZoteroOpenOfficeIntegration HTTP server
@@ -37,6 +37,7 @@ var Comm = new function() {
 		Zotero = Components.classes["@zotero.org/Zotero;1"]
 			.getService(Components.interfaces.nsISupports)
 			.wrappedJSObject;
+		mainThread = Zotero.mainThread;
 		
 		if (Zotero.isConnector || Zotero.HTTP.browserIsOffline()) {
 			Zotero.debug('ZoteroOpenOfficeIntegration: Browser is offline or in connector mode -- not initializing communication server');
@@ -176,24 +177,35 @@ var Comm = new function() {
 		//"onDataAvailable":function(request, context, inputStream, offset, count) {
 		"onInputStreamReady":function(inputStream) {
 			Zotero.debug("ZoteroOpenOfficeIntegration: Performing asynchronous read");
+			
 			if(this.rawiStream.available() > 0) {
+				// do async waiting
+				this.rawiStream.QueryInterface(Components.interfaces.nsIAsyncInputStream)
+						.asyncWait(this, 0, 0, mainThread);
+				
 				// keep track of the last connection we read on
 				_lastDataListener = this;
 			
 				// read data and forward to Zotero.Integration
 				var payload = _receiveCommand(this.iStream);
 				try {
-					Zotero.Integration.execCommand("OpenOffice", payload, null);
+					if(this.responseCallback) {
+						var responseCallback = this.responseCallback;
+						this.responseCallback = undefined;
+						responseCallback(payload);
+					} else {
+						Zotero.Integration.execCommand("OpenOffice", payload, null);
+					}
 				} catch(e) {
 					Zotero.logError(e);
 				}
 			} else {
 				Zotero.wait();
+				
+				// do async waiting
+				this.rawiStream.QueryInterface(Components.interfaces.nsIAsyncInputStream)
+						.asyncWait(this, 0, 0, mainThread);
 			}
-			
-			// do async waiting
-			this.rawiStream.QueryInterface(Components.interfaces.nsIAsyncInputStream)
-					.asyncWait(this, 0, 0, Zotero.mainThread);
 		}
 	}
 	
@@ -214,9 +226,14 @@ var Comm = new function() {
 	}
 	
 	/**
-	 * Writes to the communication channel.
+	 * Writes a command to the communication channel, but doesn't read the response
 	 */
-	this.sendCommand = function(cmd, args) {
+	function _sendCommand(cmd, args) {
+		// Don't send while there's an outstanding request
+		while(_lastDataListener.responseCallback) {
+			mainThread.processNextEvent(true);
+		}
+		
 		var payload = JSON.stringify([cmd, args]);
 		
 		// almost certainly indicates an outdated OpenOffice.org extension
@@ -261,10 +278,38 @@ var Comm = new function() {
 		payload = _converter.ConvertFromUnicode(payload);
 		_lastDataListener.oStream.write32(payload.length);
 		_lastDataListener.oStream.writeBytes(payload, payload.length);
-		
-		var receivedData = _receiveCommand(_lastDataListener.iStream);
-		
-		return receivedData;
+	}
+	
+	/**
+	 * Writes a command to the communication channel and reads the response.
+	 */
+	this.sendCommand = function(cmd, args) {
+		try {
+			_sendCommand(cmd, args);
+			
+			var receivedData;
+			_lastDataListener.responseCallback = function(data) {
+				receivedData = data;
+			}
+			
+			while(receivedData === undefined) {
+				mainThread.processNextEvent(true);
+			}
+			
+			return receivedData;
+		} catch(e) {
+			Zotero.debug(e);
+			Zotero.logError(e);
+		}
+	}
+	
+	/**
+	 * Writes a command to the communication channel and calls a callback when the response is
+	 * available;
+	 */
+	this.sendCommandAsync = function(cmd, args, responseCallback) {
+		_sendCommand(cmd, args);
+		_lastDataListener.responseCallback = responseCallback;
 	}
 }
 
@@ -345,6 +390,11 @@ Document.prototype.insertField = function() {
 Document.prototype.getFields = function() {
 	var retVal = Comm.sendCommand("Document_getFields", _cleanArguments(arguments));
 	return new FieldEnumerator(retVal[0], retVal[1]);
+};
+Document.prototype.getFieldsAsync = function(fieldType, observer) {
+	Comm.sendCommandAsync("Document_getFields", [fieldType], function(retVal) {
+		observer.observe(new FieldEnumerator(retVal[0], retVal[1]), "fields-available", null);
+	});
 };
 Document.prototype.convert = function(enumerator, fieldType, noteTypes) {
 	var i = 0;
