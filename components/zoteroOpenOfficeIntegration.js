@@ -192,7 +192,7 @@ var Comm = new function() {
 					if(this.responseCallback) {
 						var responseCallback = this.responseCallback;
 						this.responseCallback = undefined;
-						responseCallback(payload);
+						Zotero.setTimeout(function() responseCallback(payload), 0);
 					} else {
 						Zotero.Integration.execCommand("OpenOffice", payload, null);
 					}
