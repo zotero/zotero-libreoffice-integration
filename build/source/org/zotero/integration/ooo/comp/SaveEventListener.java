@@ -30,7 +30,7 @@ class SaveEventListener implements XEventListener {
 			// check if document is saved in OpenDocument format
 			XModel component = (XModel) UnoRuntime.queryInterface(XModel.class, event.Source);
 			String docURL = component.getURL();
-			if(docURL.endsWith(".odt") || docURL.endsWith(".oxt") || docURL.endsWith(".sxw")) return;
+			if(docURL.endsWith(".odt") || docURL.endsWith(".oxt") || docURL.endsWith(".sxw") || docURL.endsWith(".fodt")) return;
 			
 			// if not, complain
 			XFrame frame = Application.desktop.getCurrentFrame();
