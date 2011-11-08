@@ -13,9 +13,6 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-        <javaElement handleIdentifier="=Zotero OpenOffice Integration/source&lt;org.zotero"/>
-        <javaElement handleIdentifier="=Zotero OpenOffice Integration/source&lt;org.zotero.integration.ooo"/>
-        <javaElement handleIdentifier="=Zotero OpenOffice Integration/source&lt;org.zotero.integration.ooo.comp"/>
-        <javaElement handleIdentifier="=Zotero OpenOffice Integration/build"/>
+        <javaElement handleIdentifier="=Zotero OpenOffice Integration/source"/>
     </selectedElements>
 </jardesc>

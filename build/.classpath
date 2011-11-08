@@ -2,7 +2,6 @@
 <classpath>
 	<classpathentry kind="src" path="source"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="build"/>
 	<classpathentry kind="lib" path="lib/jackson-core-lgpl-1.7.3.jar"/>
 	<classpathentry kind="lib" path="lib/jackson-mapper-lgpl-1.7.3.jar"/>
 	<classpathentry kind="lib" path="oxt/external_jars/jna.jar"/>
