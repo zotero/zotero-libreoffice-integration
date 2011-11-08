@@ -3,7 +3,7 @@
 xmlns:d="http://openoffice.org/extensions/description/2006"
 xmlns:xlink="http://www.w3.org/1999/xlink">
  
-  <version value="3.5b1" />   
+  <version value="3.5b2" />   
  
   <identifier value="org.Zotero.integration.openoffice" />
  
@@ -25,7 +25,7 @@ xmlns:xlink="http://www.w3.org/1999/xlink">
   </release-notes>
  
   <display-name>
-    <name lang="en">Zotero OpenOffice Integration</name>
+    <name lang="en">Zotero LibreOffice Integration</name>
   </display-name>
  
   <extension-description>
