@@ -28,7 +28,7 @@ var Zotero;
 
 var Comm = new function() {
 	var _observersRegistered = false;
-	var _converter, _lastDataListener;
+	var _converter, _lastDataListener, _readInProgress;
 	
 	/**
 	 * Observes browser startup to initialize ZoteroOpenOfficeIntegration HTTP server
@@ -176,19 +176,21 @@ var Comm = new function() {
 		//"onDataAvailable":function(request, context, inputStream, offset, count) {
 		"onInputStreamReady":function(inputStream) {
 			Zotero.debug("ZoteroOpenOfficeIntegration: Performing asynchronous read");
-			if(this.rawiStream.available() > 0) {
-				// keep track of the last connection we read on
-				_lastDataListener = this;
-			
-				// read data and forward to Zotero.Integration
-				var payload = _receiveCommand(this.iStream);
-				try {
-					Zotero.Integration.execCommand("OpenOffice", payload, null);
-				} catch(e) {
-					Zotero.logError(e);
+			if(!_readInProgress) {
+				if(this.rawiStream.available() > 0) {
+					// keep track of the last connection we read on
+					_lastDataListener = this;
+				
+					// read data and forward to Zotero.Integration
+					var payload = _receiveCommand(this.iStream);
+					try {
+						Zotero.Integration.execCommand("OpenOffice", payload, null);
+					} catch(e) {
+						Zotero.logError(e);
+					}
+				} else {
+					Zotero.wait();
 				}
-			} else {
-				Zotero.wait();
 			}
 			
 			// do async waiting
@@ -203,6 +205,10 @@ var Comm = new function() {
 	 */
 	function _receiveCommand(iStream) {
 		// read length int
+		Zotero.debug("Reading from stream");
+		_readInProgress = true;
+		while(!iStream.available()) Zotero.wait();
+		_readInProgress = false;
 		var requestLength = iStream.read32();
 		Zotero.debug("ZoteroOpenOfficeIntegration: Reading "+requestLength+" bytes from stream");
 		var input = iStream.readBytes(requestLength);
