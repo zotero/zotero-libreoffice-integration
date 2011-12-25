@@ -29,9 +29,11 @@ var Zotero = Components.classes["@zotero.org/Zotero;1"]
 				.getService(Components.interfaces.nsISupports)
 				.wrappedJSObject;
 	
-var appInfo = Components.classes["@mozilla.org/xre/app-info;1"].
-						 getService(Components.interfaces.nsIXULAppInfo);
-if(appInfo.platformVersion[0] >= 2) {
+var appInfo = Components.classes["@mozilla.org/xre/app-info;1"]
+	.getService(Components.interfaces.nsIXULAppInfo);				 
+var versionComparator = Components.classes["@mozilla.org/xpcom/version-comparator;1"]
+	.getService(Components.interfaces.nsIVersionComparator);
+if(versionComparator.compare(appInfo.platformVersion, "2.0a1") >= 0) {
 	Components.utils.import("resource://gre/modules/AddonManager.jsm");
 } else {
 	var AddonManager = false;
