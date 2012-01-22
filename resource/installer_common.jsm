@@ -39,6 +39,7 @@ if(versionComparator.compare(appInfo.platformVersion, "2.0a1") >= 0) {
 	var AddonManager = false;
 }
 
+var installationInProgress = false;
 var _runningTimers = [];
 function setTimeout(func, ms) {
 	var timer = Components.classes["@mozilla.org/timer;1"].
@@ -100,6 +101,9 @@ ZoteroPluginInstaller.prototype = {
 				)) {
 					
 				var me = this;
+				if(installationInProgress) return;
+				
+				installationInProgress = true;
 				if(!this._addon.DISABLE_PROGRESS_WINDOW) {
 					this._progressWindow = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
 						.getService(Components.interfaces.nsIWindowWatcher)
@@ -146,6 +150,7 @@ ZoteroPluginInstaller.prototype = {
 	},
 	
 	"success":function() {
+		installationInProgress = false;
 		this.closeProgressWindow();
 		this.prefBranch.setCharPref("version", this._version);
 		this.prefBranch.setBoolPref("installed", true);
@@ -159,6 +164,7 @@ ZoteroPluginInstaller.prototype = {
 	},
 	
 	"error":function(error, notFailure) {
+		installationInProgress = false;
 		this.closeProgressWindow();
 		if(!notFailure) {
 			this.prefBranch.setCharPref("version", this._version);
@@ -174,6 +180,7 @@ ZoteroPluginInstaller.prototype = {
 	},
 	
 	"cancelled":function(error) {
+		installationInProgress = false;
 		this.closeProgressWindow();
 		if(!this.force) this.prefBranch.setBoolPref("skipInstallation", true);
 	},
