@@ -171,8 +171,14 @@ public class Document {
     	
     	// Also make sure that the cursor is not in any other place we can't insert a citation
     	String position = getRangePosition(selection);
-    	// TODO: tables?
-		return (position.equals("SwXBodyText") || position.equals("SwXCell") || (!fieldType.equals("Bookmark") && position.equals("SwXFootnote")));
+    	
+    	if(position.equals("SwXTextFrame")) {
+    		displayAlert("Citations in text frames will be formatted as if they appear at the end of the document.", 2, 0);
+    		return true;
+    	}
+    	
+		return (position.equals("SwXBodyText") || position.equals("SwXCell")
+				|| (!fieldType.equals("Bookmark") && position.equals("SwXFootnote")));
 	}
 
     public ReferenceMark cursorInField(String fieldType) throws Exception {
