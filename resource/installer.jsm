@@ -45,6 +45,8 @@ const UNOPKG_LOCATIONS = {
 		"C:\\Program Files (x86)\\LibreOffice 3.3\\program\\unopkg.exe",
 		"C:\\Program Files\\LibreOffice 3.4\\program\\unopkg.exe",
 		"C:\\Program Files (x86)\\LibreOffice 3.4\\program\\unopkg.exe",
+		"C:\\Program Files\\LibreOffice 3.5\\program\\unopkg.exe",
+		"C:\\Program Files (x86)\\LibreOffice 3.5\\program\\unopkg.exe",
 		"C:\\Program Files\\OpenOffice.org 3.1\\program\\unopkg.exe",
 		"C:\\Program Files (x86)\\OpenOffice.org 3.1\\program\\unopkg.exe",
 		"C:\\Program Files\\OpenOffice.org 3.2\\program\\unopkg.exe",
@@ -53,6 +55,8 @@ const UNOPKG_LOCATIONS = {
 		"C:\\Program Files (x86)\\OpenOffice.org 3.3\\program\\unopkg.exe",
 		"C:\\Program Files\\OpenOffice.org 3.4\\program\\unopkg.exe",
 		"C:\\Program Files (x86)\\OpenOffice.org 3.4\\program\\unopkg.exe",
+		"C:\\Program Files\\OpenOffice.org 3.5\\program\\unopkg.exe",
+		"C:\\Program Files (x86)\\OpenOffice.org 3.5\\program\\unopkg.exe",
 		"C:\\Program Files\\OpenOffice.org 3\\program\\unopkg.exe",
 		"C:\\Program Files (x86)\\OpenOffice.org 3\\program\\unopkg.exe",
 		"C:\\Program Files\\OpenOffice.org 2.4\\program\\unopkg.exe",
@@ -78,6 +82,8 @@ const UNOPKG_LOCATIONS = {
 		"/usr/lib/ooo3/program/unopkg",
 		"/usr/lib64/ooo3/program/unopkg",
 		
+		"/opt/openoffice.org3.5/program/unopkg",
+		"/usr/local/opt/openoffice.org3.5/program/unopkg",
 		"/opt/openoffice.org3.4/program/unopkg",
 		"/usr/local/opt/openoffice.org3.4/program/unopkg",
 		"/opt/openoffice.org3.3/program/unopkg",
@@ -95,7 +101,8 @@ const UNOPKG_LOCATIONS = {
 		
 		"/opt/libreoffice/program/unopkg",
 		"/opt/libreoffice3/program/unopkg",
-		"/opt/libreoffice3.4/program/unopkg"
+		"/opt/libreoffice3.4/program/unopkg",
+		"/opt/libreoffice3.5/program/unopkg"
 	]
 };			
 
