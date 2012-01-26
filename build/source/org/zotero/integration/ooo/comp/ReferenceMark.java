@@ -287,8 +287,18 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		try {
 			cmp = doc.textRangeCompare.compareRegionStarts(range2, range1);
 		} catch (com.sun.star.lang.IllegalArgumentException e) {
-			doc.displayAlert(Document.getErrorString(e), 0, 0);
-			return 0;
+			// Assume that all ranges we don't recognize come at the end of the document
+			try {
+				doc.textRangeCompare.compareRegionStarts(range1, range1);
+				return -1;
+			} catch (com.sun.star.lang.IllegalArgumentException e1) {
+				try {
+					doc.textRangeCompare.compareRegionStarts(range2, range2);
+					return 1;
+				} catch (com.sun.star.lang.IllegalArgumentException e2) {
+					return 0;
+				}
+			}
 		}
 		
 		if(cmp == 0) {
