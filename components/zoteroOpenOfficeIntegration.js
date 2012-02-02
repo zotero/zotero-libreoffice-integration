@@ -175,7 +175,7 @@ var Comm = new function() {
 		 */
 		//"onDataAvailable":function(request, context, inputStream, offset, count) {
 		"onInputStreamReady":function(inputStream) {
-			if(!_readInProgress) {
+			if(!_readInProgress && this.iStream.available()) {
 				Zotero.debug("ZoteroOpenOfficeIntegration: Performing asynchronous read");
 				// keep track of the last connection we read on
 				_lastDataListener = this;
