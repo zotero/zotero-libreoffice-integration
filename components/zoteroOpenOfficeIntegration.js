@@ -233,8 +233,10 @@ var Comm = new function() {
 				.getService(Components.interfaces.nsIPromptService);
 			var shouldReinstall = ps.confirm(null, "Zotero OpenOffice.org Integration Error",
 				'The version of the Zotero OpenOffice.org Integration component installed within '+
-				'OpenOffice.org, LibreOffice, or NeoOffice does not appear to match the version '+
-				'currently installed within Firefox. Would you like to attempt to reinstall it?\n\n'+
+				'OpenOffice.org, LibreOffice, or NeoOffice does not appear to match '+
+				(Zotero.isStandalone ? 'this Zotero Standalone version'
+					: 'the version currently installed within Firefox')+
+				'. Would you like to attempt to reinstall it?\n\n'+
 				'Please ensure your OpenOffice.org installation is properly detected. If you '+
 				'continue to experience this error, click the "Manual Installation" button '+
 				'within the wizard to show the directory containing the OpenOffice.org component. '+

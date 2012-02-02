@@ -176,7 +176,7 @@ ZoteroPluginInstaller.prototype = {
 		Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
 			.getService(Components.interfaces.nsIPromptService)
 			.alert(null, this._addon.EXTENSION_STRING,
-			(error ? error : 'Installation could not be completed because an error occurred. Please ensure that '+this._addon.APP+' is closed, and then restart Firefox.'));
+			(error ? error : 'Installation could not be completed because an error occurred. Please ensure that '+this._addon.APP+' is closed, and then restart '+Zotero.appName+'.'));
 	},
 	
 	"cancelled":function(error) {
