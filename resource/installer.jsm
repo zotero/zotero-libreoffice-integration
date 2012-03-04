@@ -213,9 +213,11 @@ var Plugin = new function() {
 		// make sure paths exist
 		var extantPaths = [];
 		for each(var path in unopkgPaths) {
-			if(Plugin.getFile(path).exists()) {
-				extantPaths.push(path);
-			}
+			try {
+				if(Plugin.getFile(path).exists()) {
+					extantPaths.push(path);
+				}
+			} catch(e) {};
 		}
 		
 		if(!extantPaths.length) return [];
@@ -249,7 +251,11 @@ var Plugin = new function() {
 		}
 		
 		for each(var potentialLocation in potentialLocations) {
-			var file = Plugin.getFile(potentialLocation);
+			try {
+				var file = Plugin.getFile(potentialLocation);
+			} catch(e) {
+				continue;
+			}
 			
 			if(file.exists()) {
 				// skip files that are symlinked to existing locations, or that we already know of
