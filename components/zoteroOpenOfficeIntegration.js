@@ -205,10 +205,16 @@ var Comm = new function() {
 		_readInProgress = true;
 		
 		// Process some events until the input stream is ready
-		var mainThread = Zotero.mainThread;
+		var mainThread = Zotero.mainThread,
+			available = 0;
 		do {
 			mainThread.processNextEvent(false);
-		} while (iStream.available() === 0);
+			try {
+				available = iStream.available();
+			} catch(e) {
+				throw new Error("Connection closed while waiting for command");
+			}
+		} while(available === 0);
 		
 		_readInProgress = false;
 		var requestLength = iStream.read32();
@@ -217,6 +223,9 @@ var Comm = new function() {
 		
 		// convert to readable format
 		input = _converter.ConvertToUnicode(input);
+		if(input.substr(0, 4) == "ERR:") {
+			throw input.substr(4);
+		}
 		Zotero.debug("ZoteroOpenOfficeIntegration: Received "+input);
 		return JSON.parse(input);
 	}
