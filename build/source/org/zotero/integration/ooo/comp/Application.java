@@ -35,6 +35,7 @@ public class Application {
 	static XMultiServiceFactory factory;
 	static XDesktop desktop;
 	static String ooName;
+	static String ooVersion;
 	static XComponentContext ctx;
 	static SaveEventListener saveEventListener;
 
@@ -68,6 +69,7 @@ public class Application {
 				configProvider.createInstanceWithArguments(
 						"com.sun.star.configuration.ConfigurationAccess", new Object[] {nodepath}));
 		ooName = (String) settings.getByName("ooName");
+		ooVersion = (String) settings.getByName("ooSetupVersion");
 		
 		// create event listener if necessary
 		if(saveEventListener == null) saveEventListener = new SaveEventListener();

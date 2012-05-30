@@ -42,7 +42,6 @@ import com.sun.star.container.XEnumerationAccess;
 import com.sun.star.container.XIndexAccess;
 import com.sun.star.container.XNameAccess;
 import com.sun.star.container.XNameContainer;
-import com.sun.star.container.XNameReplace;
 import com.sun.star.container.XNamed;
 import com.sun.star.frame.XController;
 import com.sun.star.frame.XDesktop;
@@ -88,8 +87,8 @@ public class Document {
 	String runtimeUID;
 	Properties properties;
 	
-	private XNameReplace experimentalModeConfigurationAccess;
-	private boolean statusExperimentalMode = false;
+	private static boolean checkExperimentalMode = true;
+	private static boolean statusExperimentalMode = false;
 	
 	static final String[] PREFIXES = {"ZOTERO_", " CSL_", " ADDIN ZOTERO_"};
 	static final String[] PREFS_PROPERTIES = {"ZOTERO_PREF", "CSL_PREF"};
@@ -253,6 +252,30 @@ public class Document {
     }
     
     public String getDocumentData() throws Exception {
+    	if(checkExperimentalMode) {
+    		if(Application.ooName.equals("LibreOffice")) {
+    			String[] splitVersion = Application.ooVersion.split("\\.");
+    			int firstDigit = Integer.parseInt(splitVersion[0]);
+    			if(firstDigit >= 3 && Integer.parseInt(splitVersion[1]) >= 5) {
+    				XMultiServiceFactory configProvider = (XMultiServiceFactory) UnoRuntime.queryInterface(XMultiServiceFactory.class,
+    						factory.createInstance("com.sun.star.configuration.ConfigurationProvider"));
+    				PropertyValue nodepath = new PropertyValue();
+    				nodepath.Name = "nodepath";
+    				nodepath.Value = "/org.openoffice.Office.Common/Misc";
+    				Object configurationAccess = configProvider.createInstanceWithArguments("com.sun.star.configuration.ConfigurationAccess",
+    						new Object[] {nodepath});
+    				XNameAccess nameAccess = (XNameAccess) UnoRuntime.queryInterface(XNameAccess.class, configurationAccess);
+    				statusExperimentalMode = (Boolean) nameAccess.getByName("ExperimentalMode");
+    			}
+    		}
+    		checkExperimentalMode = false;
+    	}
+    	
+		if(statusExperimentalMode) {
+			displayAlert("\"Experimental (unstable) features\" are currently enabled in the LibreOffice preferences. In LibreOffice 3.5 and later, one of these experimental features is broken and prevents Zotero from operating properly.\n\nDisable \"Experimental (unstable) features\" in the LibreOffice preferences and restart LibreOffice.", 0, 0);
+			throw new Exception("ExceptionAlreadyDisplayed");
+    	}
+		
     	String data;
     	for(String prefsProperty : PREFS_PROPERTIES) {
     		data = properties.getProperty(prefsProperty);
@@ -419,25 +442,6 @@ public class Document {
 		styleProps.setPropertyValue("ParaTabStops", tabStopStruct);
 		
 		// this takes less than half as many lines in py-appscript!
-    }
-    
-    void ensureWorkingRTFFilter() throws Exception {
-    	if(experimentalModeConfigurationAccess == null) {
-			XMultiServiceFactory configProvider = (XMultiServiceFactory) UnoRuntime.queryInterface(XMultiServiceFactory.class,
-					factory.createInstance("com.sun.star.configuration.ConfigurationProvider"));
-			PropertyValue nodepath = new PropertyValue();
-			nodepath.Name = "nodepath";
-			nodepath.Value = "/org.openoffice.Office.Common/Misc";
-			Object configurationAccess = configProvider.createInstanceWithArguments("com.sun.star.configuration.ConfigurationUpdateAccess",
-					new Object[] {nodepath});
-			experimentalModeConfigurationAccess = (XNameReplace) UnoRuntime.queryInterface(XNameReplace.class, configurationAccess);
-			statusExperimentalMode = (Boolean) experimentalModeConfigurationAccess.getByName("ExperimentalMode");
-    	}
-    	
-		if(statusExperimentalMode) {
-			displayAlert("\"Experimental (unstable) features\" are currently enabled in the LibreOffice preferences. An experimental feature included in LibreOffice 3.5 is known to prevents Zotero from operating properly. Disable \"Experimental (unstable) features\" in the LibreOffice preferences and restart LibreOffice.", 0, 0);
-			throw new Exception("ExceptionAlreadyDisplayed");
-    	}
     }
     
     XTextViewCursor getSelection() {

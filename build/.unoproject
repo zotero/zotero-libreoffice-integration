@@ -1,5 +1,5 @@
 #UNO project configuration file
-#Tue Nov 08 01:43:43 EST 2011
+#Wed Jan 25 22:09:15 EST 2012
 project.srcdir=/source
 regclassname=org.zotero.integration.ooo.comp.RegistrationHandler
 javaversion=java4
