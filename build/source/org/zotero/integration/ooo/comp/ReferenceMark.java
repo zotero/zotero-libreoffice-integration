@@ -444,6 +444,8 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	}
 	
 	private void insertRTF(String text, XTextCursor cursor) throws Exception {
+		doc.ensureWorkingRTFFilter();
+		
 		PropertyValue filterName = new PropertyValue();
 		filterName.Name = "FilterName";
 		filterName.Value = "Rich Text Format";

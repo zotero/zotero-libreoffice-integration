@@ -35,12 +35,14 @@ import com.sun.star.awt.Rectangle;
 import com.sun.star.awt.XMessageBox;
 import com.sun.star.awt.XMessageBoxFactory;
 import com.sun.star.awt.XWindowPeer;
+import com.sun.star.beans.PropertyValue;
 import com.sun.star.beans.XPropertySet;
 import com.sun.star.container.XEnumeration;
 import com.sun.star.container.XEnumerationAccess;
 import com.sun.star.container.XIndexAccess;
 import com.sun.star.container.XNameAccess;
 import com.sun.star.container.XNameContainer;
+import com.sun.star.container.XNameReplace;
 import com.sun.star.container.XNamed;
 import com.sun.star.frame.XController;
 import com.sun.star.frame.XDesktop;
@@ -85,6 +87,9 @@ public class Document {
 	XComponent component;
 	String runtimeUID;
 	Properties properties;
+	
+	private XNameReplace experimentalModeConfigurationAccess;
+	private boolean statusExperimentalMode = false;
 	
 	static final String[] PREFIXES = {"ZOTERO_", " CSL_", " ADDIN ZOTERO_"};
 	static final String[] PREFS_PROPERTIES = {"ZOTERO_PREF", "CSL_PREF"};
@@ -414,6 +419,25 @@ public class Document {
 		styleProps.setPropertyValue("ParaTabStops", tabStopStruct);
 		
 		// this takes less than half as many lines in py-appscript!
+    }
+    
+    void ensureWorkingRTFFilter() throws Exception {
+    	if(experimentalModeConfigurationAccess == null) {
+			XMultiServiceFactory configProvider = (XMultiServiceFactory) UnoRuntime.queryInterface(XMultiServiceFactory.class,
+					factory.createInstance("com.sun.star.configuration.ConfigurationProvider"));
+			PropertyValue nodepath = new PropertyValue();
+			nodepath.Name = "nodepath";
+			nodepath.Value = "/org.openoffice.Office.Common/Misc";
+			Object configurationAccess = configProvider.createInstanceWithArguments("com.sun.star.configuration.ConfigurationUpdateAccess",
+					new Object[] {nodepath});
+			experimentalModeConfigurationAccess = (XNameReplace) UnoRuntime.queryInterface(XNameReplace.class, configurationAccess);
+			statusExperimentalMode = (Boolean) experimentalModeConfigurationAccess.getByName("ExperimentalMode");
+    	}
+    	
+		if(statusExperimentalMode) {
+			displayAlert("\"Experimental (unstable) features\" are currently enabled in the LibreOffice preferences. An experimental feature included in LibreOffice 3.5 is known to prevents Zotero from operating properly. Disable \"Experimental (unstable) features\" in the LibreOffice preferences and restart LibreOffice.", 0, 0);
+			throw new Exception("ExceptionAlreadyDisplayed");
+    	}
     }
     
     XTextViewCursor getSelection() {
