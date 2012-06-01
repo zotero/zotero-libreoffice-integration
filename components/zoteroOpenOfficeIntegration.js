@@ -28,8 +28,8 @@ var Zotero;
 const API_VERSION = 2;
 
 var Comm = new function() {
-	var _observersRegistered = false;
-	var _converter, _lastDataListener, _readInProgress;
+	var _observersRegistered = false, _converter, _lastDataListener,
+		_commandQueue = [], mainThread;
 	
 	/**
 	 * Observes browser startup to initialize ZoteroOpenOfficeIntegration HTTP server
@@ -38,6 +38,7 @@ var Comm = new function() {
 		Zotero = Components.classes["@zotero.org/Zotero;1"]
 			.getService(Components.interfaces.nsISupports)
 			.wrappedJSObject;
+		mainThread = Zotero.mainThread;
 		
 		if (Zotero.isConnector || Zotero.HTTP.browserIsOffline()) {
 			Zotero.debug('ZoteroOpenOfficeIntegration: Browser is offline or in connector mode -- not initializing communication server');
@@ -176,13 +177,16 @@ var Comm = new function() {
 		 */
 		//"onDataAvailable":function(request, context, inputStream, offset, count) {
 		"onInputStreamReady":function(inputStream) {
-			if(!_readInProgress && this.iStream.available()) {
+			if(this.iStream.available() && !CommandQueue.busy) {
 				Zotero.debug("ZoteroOpenOfficeIntegration: Performing asynchronous read");
 				// keep track of the last connection we read on
 				_lastDataListener = this;
-			
+				
 				// read data and forward to Zotero.Integration
+				CommandQueue.setBusy(true);
 				var payload = _receiveCommand(this.iStream);
+				CommandQueue.setBusy(false);
+				
 				try {
 					Zotero.Integration.execCommand("OpenOffice", payload, null);
 				} catch(e) {
@@ -201,13 +205,8 @@ var Comm = new function() {
 	 * length of the payload, followed by a JSON payload.
 	 */
 	function _receiveCommand(iStream) {
-		// read length int
-		Zotero.debug("Reading from stream");
-		_readInProgress = true;
-		
 		// Process some events until the input stream is ready
-		var mainThread = Zotero.mainThread,
-			available = 0;
+		var available = 0;
 		do {
 			mainThread.processNextEvent(false);
 			try {
@@ -217,7 +216,6 @@ var Comm = new function() {
 			}
 		} while(available === 0);
 		
-		_readInProgress = false;
 		var requestLength = iStream.read32();
 		Zotero.debug("ZoteroOpenOfficeIntegration: Reading "+requestLength+" bytes from stream");
 		var input = iStream.readBytes(requestLength);
@@ -232,10 +230,12 @@ var Comm = new function() {
 	}
 	
 	/**
-	 * Writes to the communication channel.
+	 * Sends a command. This differs from _writeCommand in that it serializes its
+	 * arguments and queues them if necessary.
 	 */
 	this.sendCommand = function(cmd, args) {
 		var payload = JSON.stringify([cmd, args]);
+		payload = _converter.ConvertFromUnicode(payload);
 		
 		// almost certainly indicates an outdated OpenOffice.org extension
 		if(!_lastDataListener) {
@@ -243,15 +243,66 @@ var Comm = new function() {
 			return;
 		}
 		
+		if(CommandQueue.busy) {
+			var waiting = true;
+			CommandQueue.queueFunction(function() {
+				waiting = false;
+			});
+			while(waiting) {
+				mainThread.processNextEvent(false);
+			}
+		}
+		
+		CommandQueue.setBusy(true);
+		
 		// write to stream
 		Zotero.debug("ZoteroOpenOfficeIntegration: Sending "+payload);
-		payload = _converter.ConvertFromUnicode(payload);
 		_lastDataListener.oStream.write32(payload.length);
 		_lastDataListener.oStream.writeBytes(payload, payload.length);
-		
 		var receivedData = _receiveCommand(_lastDataListener.iStream);
 		
+		CommandQueue.setBusy(false);
+		
 		return receivedData;
+	}
+	
+	/**
+	 * Writes to the communication channel, waiting asynchronously for a response.
+	 */
+	this.sendCommandAsync = function(cmd, args, callback) {
+		var payload = JSON.stringify([cmd, args]);
+		payload = _converter.ConvertFromUnicode(payload);
+		
+		// almost certainly indicates an outdated OpenOffice.org extension
+		if(!_lastDataListener) {
+			this.incompatibleVersion();
+			return;
+		}
+		
+		CommandQueue.queueFunction(function() {
+			CommandQueue.setBusy(true);
+			Zotero.debug("ZoteroOpenOfficeIntegration: Sending asynchronous command "+payload);
+			_lastDataListener.oStream.write32(payload.length);
+			_lastDataListener.oStream.writeBytes(payload, payload.length);
+			
+			var iStream = _lastDataListener.iStream;
+			Zotero.setTimeout(function() {
+				var available;
+				do {
+					mainThread.processNextEvent(false);
+					try {
+						available = iStream.available();
+					} catch(e) {
+						throw new Error("Connection closed while waiting for command");
+					}
+				} while(available === 0);
+				
+				var receivedData = _receiveCommand(_lastDataListener.iStream);
+				Zotero.debug(receivedData);
+				CommandQueue.setBusy(false);
+				callback(receivedData);
+			}, 0);
+		});
 	}
 	
 	/**
@@ -273,26 +324,40 @@ var Comm = new function() {
 			'NeoOffice to complete the installation procedure.');
 		
 		if(shouldReinstall) {
-			var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-				.getService(Components.interfaces.nsIWindowMediator);
-			var win = wm.getMostRecentWindow("navigator:browser");
-			if(win) {
-				new win.ZoteroPluginInstaller(win.ZoteroOpenOfficeIntegration, false, true);
-			} else {
-				var ww = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
-						   .getService(Components.interfaces.nsIWindowWatcher);
-				win = ww.openWindow(null, 'chrome://zotero/content/preferences/preferences.xul',
-					'zotero-prefs', 'chrome,titlebar,toolbar,centerscreen', {"pane":"zotero-prefpane-cite"});
-				win.addEventListener("load", function() {
-					win.updateOpenOfficeIntegration(new win.ZoteroPluginInstaller(win.ZoteroOpenOfficeIntegration, false, true));
-				}, false);
-			}
+			var ZoteroOpenOfficeInstaller = Components.utils.import("resource://zotero-openoffice-integration/installer.jsm").Installer;
+			var zpi = new ZoteroOpenOfficeInstaller(false, true);
 		}
 		
 		// We throw this error to avoid displaying another error dialog
 		Zotero.logError("Firefox and OpenOffice.org extension versions are incompatible");
 		throw Components.Exception("ExceptionAlreadyDisplayed");
 	}
+	
+	var CommandQueue = new function() {
+		this.busy = false;
+		this.queue = [];
+		
+		/**
+		 * Sets busy status
+		 */
+		this.setBusy = function(busy) {
+			this.busy = busy;
+			if(!this.busy && this.queue.length) {
+				Zotero.setTimeout(this.queue.shift(), 0);
+			}
+		};
+		
+		/**
+		 * Queues a function to be executed when not busy
+		 */
+		this.queueFunction = function(callback) {
+			if(this.busy || this.queue.length) {
+				this.queue.push(callback);
+			} else {
+				callback();
+			}
+		};
+	};
 }
 
 /**
@@ -377,8 +442,9 @@ Document.prototype.getFields = function() {
 	return new FieldEnumerator(retVal[0], retVal[1], retVal[2]);
 };
 Document.prototype.getFieldsAsync = function(fieldType, observer) {
-	var retVal = Comm.sendCommand("Document_getFields", [fieldType]);
-	observer.observe(new FieldEnumerator(retVal[0], retVal[1], retVal[2]), "fields-available", null);
+	Comm.sendCommandAsync("Document_getFields", [fieldType], function(retVal) {
+		observer.observe(new FieldEnumerator(retVal[0], retVal[1], retVal[2]), "fields-available", null);
+	});
 };
 Document.prototype.convert = function(enumerator, fieldType, noteTypes) {
 	var i = 0;
