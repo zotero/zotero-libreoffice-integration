@@ -8,14 +8,14 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Hashtable;
+import java.util.IdentityHashMap;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
 class Comm implements Runnable {
 	static final String COMMUNICATION_ERROR_STRING = "OpenOffice.org could not communicate with Zotero. Please ensure Firefox or Zotero Standalone is open and set to an online state and try again.";
 	private static final String INVALID_INPUT_STRING = "OpenOffice.org received invalid data from Zotero. Please ensure that your copy of Zotero OpenOffice.org Integration is up to date. If the problem persists, report this on the Zotero Forums.";
-	static final int API_VERSION = 1;
+	static final int API_VERSION = 2;
 	
 	private DataOutputStream mOutputStream;
 	private ObjectMapper mObjectMapper;
@@ -23,7 +23,8 @@ class Comm implements Runnable {
 	private CommReader mCommReader;
 	private Thread mThread;
 	private Document mActiveDocument;
-	private volatile Hashtable<String, ReferenceMark> mFields;
+	private ArrayList<ReferenceMark> mFields;
+	private IdentityHashMap<ReferenceMark, Integer> mFieldsHash;
 	CommData commData;
 	private volatile Object nextMessage;
 	volatile Socket mSocket;
@@ -150,12 +151,14 @@ class Comm implements Runnable {
 		ArrayList<Object> args = (ArrayList<Object>) message.get(1);
 		
 		if(command.equals("Application_getActiveDocument")) {
-			// We are about to execute a new command, so clear our field list
-			mFields = new Hashtable<String, ReferenceMark>();
-			
 			try {
 				mActiveDocument = mApplication.getActiveDocument();
 			} catch (Exception e) {}
+			
+			if(mFields == null) {
+				mFields = new ArrayList<ReferenceMark>();
+				mFieldsHash = new IdentityHashMap<ReferenceMark, Integer>();
+			}
 			return Comm.API_VERSION;
 		} else if(command.equals("Document_displayAlert")) {
 			return mActiveDocument.displayAlert((String) args.get(0), (Integer) args.get(1), (Integer) args.get(2));
@@ -166,7 +169,7 @@ class Comm implements Runnable {
 		} else if(command.equals("Document_cursorInField")) {
 			ReferenceMark field = mActiveDocument.cursorInField((String) args.get(0));
 			if(field != null) {
-				Object[] out = {getFieldIndex(field), field.getCode()};
+				Object[] out = {getFieldIndex(field), field.getCode(), field.getNoteIndex()};
 				return out;
 			}
 		} else if(command.equals("Document_getDocumentData")) {
@@ -175,22 +178,26 @@ class Comm implements Runnable {
 			mActiveDocument.setDocumentData((String) args.get(0));
 		} else if(command.equals("Document_insertField")) {
 			ReferenceMark field = mActiveDocument.insertField((String) args.get(0), (Integer) args.get(1));
-			Object[] out = {getFieldIndex(field), field.getCode()};
+			Object[] out = {getFieldIndex(field), field.getCode(), field.getNoteIndex()};
 			return out;
 		} else if(command.equals("Document_getFields")) {
 			ArrayList<ReferenceMark> fields = mActiveDocument.getFields((String) args.get(0));
+			mFields.addAll(fields);
 			
 			// get codes and rawCodes
 			int numFields = fields.size();
-			String[] fieldIndices = new String[numFields];
+			int[] fieldIndices = new int[numFields];
 			String[] fieldCodes = new String[numFields];
+			int[] noteIndices = new int[numFields];
+			
 			for(int i=0; i<numFields; i++) {
 				ReferenceMark field = fields.get(i);
-				fieldCodes[i] = field.getCode();
 				fieldIndices[i] = getFieldIndex(field);
+				fieldCodes[i] = field.getCode();
+				noteIndices[i] = field.getNoteIndex();
 			}
 			
-			Object[] out = {fieldIndices, fieldCodes};
+			Object[] out = {fieldIndices, fieldCodes, noteIndices};
 			return out;
 		} else if(command.equals("Document_setBibliographyStyle")) {
 			ArrayList<Number> arrayList = (ArrayList<Number>) args.get(4);
@@ -198,8 +205,13 @@ class Comm implements Runnable {
 				(Integer) args.get(2), (Integer) args.get(3), arrayList, (Integer) args.get(5));
 		} else if(command.equals("Document_cleanup")) {
 			mActiveDocument.cleanup();
+		} else if(command.equals("Document_complete")) {
+			// Clear our field list
+			mFields = new ArrayList<ReferenceMark>();
+			mFieldsHash = new IdentityHashMap<ReferenceMark, Integer>();
+			mActiveDocument = null;
 		} else if(command.startsWith("Field_")) {
-			ReferenceMark field = mFields.get((String) args.get(0));
+			ReferenceMark field = mFields.get((Integer) args.get(0));
 			if(command.equals("Field_delete")) {
 				field.delete();
 			} else if(command.equals("Field_select")) {
@@ -213,12 +225,7 @@ class Comm implements Runnable {
 			} else if(command.equals("Field_getCode")) {
 				return field.getCode();
 			} else if(command.equals("Field_setCode")) {
-				mFields.remove(field.rawCode);
 				field.setCode((String) args.get(1));
-				mFields.put(field.rawCode, field);
-				return field.rawCode;
-			} else if(command.equals("Field_getNoteIndex")) {
-				return field.getNoteIndex();
 			} else if(command.equals("Field_convert")) {
 				mActiveDocument.convert(field, (String) args.get(1), (Integer) args.get(2));
 			}
@@ -231,11 +238,14 @@ class Comm implements Runnable {
 	/**
 	 * Gets the index of a given field in the field list
 	 */
-	String getFieldIndex(ReferenceMark field) {
-		if(!mFields.containsKey(field.rawCode)) {
-			mFields.put(field.rawCode, field);
+	int getFieldIndex(ReferenceMark field) {
+		Integer index = mFieldsHash.get(field);
+		if(index == null) {
+			index = mFields.size();
+			mFields.add(field);
+			mFieldsHash.put(field, index);
 		}
-		return field.rawCode;
+		return index;
 	}
 	
 	/**

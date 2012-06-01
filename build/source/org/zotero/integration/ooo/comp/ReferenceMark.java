@@ -219,7 +219,9 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	}
 
 	public void setCode(String code) throws Exception {
+		String oldRawCode = rawCode;
 		rawCode = Document.PREFIXES[0] + code + " RND" + Document.getRandomString(Document.REFMARK_ADD_CHARS);
+		doc.mMarkManager.renameMark(oldRawCode, rawCode);
 		if(isTextSection) {
 			named.setName(rawCode);
 		} else {
@@ -254,7 +256,7 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 				return Integer.parseInt(((XFootnote) UnoRuntime.queryInterface(XFootnote.class, text)).getAnchor().getString());
 			} catch(NumberFormatException e) {}
 		}
-		return null;
+		return 0;
 	}
 	
 	public boolean equals(Object o) {

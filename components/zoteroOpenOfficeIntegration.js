@@ -25,6 +25,7 @@
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 var Zotero;
+const API_VERSION = 2;
 
 var Comm = new function() {
 	var _observersRegistered = false;
@@ -238,40 +239,7 @@ var Comm = new function() {
 		
 		// almost certainly indicates an outdated OpenOffice.org extension
 		if(!_lastDataListener) {
-			var ps = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
-				.getService(Components.interfaces.nsIPromptService);
-			var shouldReinstall = ps.confirm(null, "Zotero OpenOffice.org Integration Error",
-				'The version of the Zotero OpenOffice.org Integration component installed within '+
-				'OpenOffice.org, LibreOffice, or NeoOffice does not appear to match '+
-				(Zotero.isStandalone ? 'this Zotero Standalone version'
-					: 'the version currently installed within Firefox')+
-				'. Would you like to attempt to reinstall it?\n\n'+
-				'Please ensure your OpenOffice.org installation is properly detected. If you '+
-				'continue to experience this error, click the "Manual Installation" button '+
-				'within the wizard to show the directory containing the OpenOffice.org component. '+
-				'Double-click this component or add it from within OpenOffice.org, LibreOffice, or '+
-				'NeoOffice to complete the installation procedure.');
-			
-			if(shouldReinstall) {
-				var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-					.getService(Components.interfaces.nsIWindowMediator);
-				var win = wm.getMostRecentWindow("navigator:browser");
-				if(win) {
-					new win.ZoteroPluginInstaller(win.ZoteroOpenOfficeIntegration, false, true);
-				} else {
-					var ww = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
-							   .getService(Components.interfaces.nsIWindowWatcher);
-					win = ww.openWindow(null, 'chrome://zotero/content/preferences/preferences.xul',
-						'zotero-prefs', 'chrome,titlebar,toolbar,centerscreen', {"pane":"zotero-prefpane-cite"});
-					win.addEventListener("load", function() {
-						win.updateOpenOfficeIntegration(new win.ZoteroPluginInstaller(win.ZoteroOpenOfficeIntegration, false, true));
-					}, false);
-				}
-			}
-			
-			// We throw this error to avoid displaying another error dialog
-			Zotero.logError("Firefox and OpenOffice.org extension versions are incompatible");
-			throw Components.Exception("ExceptionAlreadyDisplayed");
+			this.incompatibleVersion();
 			return;
 		}
 		
@@ -284,6 +252,46 @@ var Comm = new function() {
 		var receivedData = _receiveCommand(_lastDataListener.iStream);
 		
 		return receivedData;
+	}
+	
+	/**
+	 * Displays a message warning the user that the LibreOffice extension is incompatible.
+	 */
+	this.incompatibleVersion = function() {
+		var ps = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
+			.getService(Components.interfaces.nsIPromptService);
+		var shouldReinstall = ps.confirm(null, "Zotero LibreOffice Integration Error",
+			'The version of the Zotero OpenOffice.org Integration component installed within '+
+			'LibreOffice, OpenOffice.org, or NeoOffice does not appear to match '+
+			(Zotero.isStandalone ? 'this Zotero Standalone version'
+				: 'the version currently installed within Firefox')+
+			'. Would you like to attempt to reinstall it?\n\n'+
+			'Please ensure your LibreOffice installation is properly detected. If you '+
+			'continue to experience this error, click the "Manual Installation" button '+
+			'within the wizard to show the directory containing the LibreOffice component. '+
+			'Double-click this component or add it from within LibreOffice, OpenOffice.org, or '+
+			'NeoOffice to complete the installation procedure.');
+		
+		if(shouldReinstall) {
+			var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+				.getService(Components.interfaces.nsIWindowMediator);
+			var win = wm.getMostRecentWindow("navigator:browser");
+			if(win) {
+				new win.ZoteroPluginInstaller(win.ZoteroOpenOfficeIntegration, false, true);
+			} else {
+				var ww = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
+						   .getService(Components.interfaces.nsIWindowWatcher);
+				win = ww.openWindow(null, 'chrome://zotero/content/preferences/preferences.xul',
+					'zotero-prefs', 'chrome,titlebar,toolbar,centerscreen', {"pane":"zotero-prefpane-cite"});
+				win.addEventListener("load", function() {
+					win.updateOpenOfficeIntegration(new win.ZoteroPluginInstaller(win.ZoteroOpenOfficeIntegration, false, true));
+				}, false);
+			}
+		}
+		
+		// We throw this error to avoid displaying another error dialog
+		Zotero.logError("Firefox and OpenOffice.org extension versions are incompatible");
+		throw Components.Exception("ExceptionAlreadyDisplayed");
 	}
 }
 
@@ -330,7 +338,8 @@ Application.prototype = {
 	}],
 	"service":		true,
 	"getActiveDocument":function() {
-		Comm.sendCommand("Application_getActiveDocument", []);
+		var apiVersion = Comm.sendCommand("Application_getActiveDocument", []);
+		if(apiVersion !== API_VERSION) Comm.incompatibleVersion();
 		return new Document();
 	},
 	"primaryFieldType":"ReferenceMark",
@@ -340,7 +349,9 @@ Application.prototype = {
 /**
  * See zoteroIntegration.idl
  */
-var Document = function() {};
+var Document = function() {
+	this.wrappedJSObject = this;
+};
 Document.prototype = {
 	classDescription: "Zotero OpenOffice.org Integration Document",
 	classID:		Components.ID("{e2e05bf9-40d4-4426-b0c9-62abca5be58f}"),
@@ -348,31 +359,31 @@ Document.prototype = {
 	QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsISupports, Components.interfaces.zoteroIntegrationDocument])
 };
 for each(var method in ["displayAlert", "activate", "canInsertField", "getDocumentData",
-	"setDocumentData", "setBibliographyStyle", "cleanup"]) {
+	"setDocumentData", "setBibliographyStyle", "cleanup", "complete"]) {
 	let methodStable = method;
 	Document.prototype[method] = function() Comm.sendCommand("Document_"+methodStable, _cleanArguments(arguments));
 }
 Document.prototype.cursorInField = function() {
 	var retVal = Comm.sendCommand("Document_cursorInField", _cleanArguments(arguments));
 	if(retVal === null) return null;
-	return new Field(retVal[0], retVal[1]);
+	return new Field(retVal[0], retVal[1], retVal[2]);
 };
 Document.prototype.insertField = function() {
 	var retVal = Comm.sendCommand("Document_insertField", _cleanArguments(arguments));
-	return new Field(retVal[0], retVal[1]);
+	return new Field(retVal[0], retVal[1], retVal[2]);
 };
 Document.prototype.getFields = function() {
 	var retVal = Comm.sendCommand("Document_getFields", _cleanArguments(arguments));
-	return new FieldEnumerator(retVal[0], retVal[1]);
+	return new FieldEnumerator(retVal[0], retVal[1], retVal[2]);
 };
 Document.prototype.getFieldsAsync = function(fieldType, observer) {
 	var retVal = Comm.sendCommand("Document_getFields", [fieldType]);
-	observer.observe(new FieldEnumerator(retVal[0], retVal[1]), "fields-available", null);
+	observer.observe(new FieldEnumerator(retVal[0], retVal[1], retVal[2]), "fields-available", null);
 };
 Document.prototype.convert = function(enumerator, fieldType, noteTypes) {
 	var i = 0;
 	while(enumerator.hasMoreElements()) {
-		Comm.sendCommand("Field_convert", [enumerator.getNext().wrappedJSObject._rawCode, fieldType, noteTypes[i]]);
+		Comm.sendCommand("Field_convert", [enumerator.getNext().wrappedJSObject._index, fieldType, noteTypes[i]]);
 		i++;
 	}
 };
@@ -380,9 +391,10 @@ Document.prototype.convert = function(enumerator, fieldType, noteTypes) {
 /**
  * An enumerator implementation to handle passing off fields
  */
-var FieldEnumerator = function(fieldIndices, fieldCodes) {
+var FieldEnumerator = function(fieldIndices, fieldCodes, noteIndices) {
 	this._fieldIndices = fieldIndices;
 	this._fieldCodes = fieldCodes;
+	this._noteIndices = noteIndices;
 	this._i = 0;
 };
 FieldEnumerator.prototype = {
@@ -391,7 +403,7 @@ FieldEnumerator.prototype = {
 	}, 
 	"getNext":function() {
 		if(this._i >= this._fieldIndices.length) throw "No more fields!";
-		var field = new Field(this._fieldIndices[this._i], this._fieldCodes[this._i]);
+		var field = new Field(this._fieldIndices[this._i], this._fieldCodes[this._i], this._noteIndices[this._i]);
 		this._i++;
 		return field;
 	},
@@ -401,9 +413,10 @@ FieldEnumerator.prototype = {
 /**
  * See zoteroIntegration.idl
  */
-var Field = function(rawCode, code) {
-	this._rawCode = rawCode;
+var Field = function(index, code, noteIndex) {
+	this._index = index;
 	this._code = code;
+	this._noteIndex = noteIndex;
 	this.wrappedJSObject = this;
 };
 Field.prototype = {
@@ -413,20 +426,22 @@ Field.prototype = {
 	QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsISupports, Components.interfaces.zoteroIntegrationField])
 };
 
-for each(var method in ["delete", "select", "removeCode", "setText",
-	"getText", "getNoteIndex"]) {
+for each(var method in ["delete", "select", "removeCode", "setText", "getText"]) {
 	let methodStable = method;
-	Field.prototype[method] = function() Comm.sendCommand("Field_"+methodStable, _cleanArguments(arguments, [this._rawCode]));
+	Field.prototype[method] = function() Comm.sendCommand("Field_"+methodStable, _cleanArguments(arguments, [this._index]));
 }
 Field.prototype.getCode = function() {
 	return this._code;
 }
 Field.prototype.setCode = function(code) {
 	this._code = code;
-	this._rawCode = Comm.sendCommand("Field_setCode", [this._rawCode, code]);
+	Comm.sendCommand("Field_setCode", [this._index, code]);
+}
+Field.prototype.getNoteIndex = function() {
+	return this._noteIndex;
 }
 Field.prototype.equals = function(arg) {
-	return this._rawCode === arg.wrappedJSObject._rawCode;
+	return this._index === arg.wrappedJSObject._index;
 }
 
 var classes = [

@@ -86,6 +86,7 @@ public class Document {
 	XComponent component;
 	String runtimeUID;
 	Properties properties;
+	MarkManager mMarkManager;
 	
 	private static boolean checkExperimentalMode = true;
 	private static boolean statusExperimentalMode = false;
@@ -118,6 +119,7 @@ public class Document {
 		textRangeCompare = (XTextRangeCompare) UnoRuntime.queryInterface(XTextRangeCompare.class, text);
 		properties = new Properties(component);
 		runtimeUID = (String) ((XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, component)).getPropertyValue("RuntimeUID");
+		mMarkManager = new MarkManager(this);
     }
     
     public void cleanup() {}
@@ -186,8 +188,6 @@ public class Document {
 	}
 
     public ReferenceMark cursorInField(String fieldType) throws Exception {
-    	Object mark;
-		
     	// create two text cursors containing the selection
     	XTextViewCursor selectionCursor = getSelection();
     	XText text = selectionCursor.getText();
@@ -212,39 +212,24 @@ public class Document {
     		XPropertySet textProperties = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, enumerator.nextElement());
     		String textPropertyType = (String) textProperties.getPropertyValue("TextPortionType");
     		if(textPropertyType.equals(fieldType)) {
-        		mark = textProperties.getPropertyValue(fieldType);
+        		ReferenceMark mark = mMarkManager.getMark(textProperties.getPropertyValue(fieldType), fieldType);
         		
-    			// see if it has an appropriate prefix
-    			XNamed named = (XNamed) UnoRuntime.queryInterface(XNamed.class, mark);
-    			String name = named.getName();
-    			for(String prefix : PREFIXES) {
-    				if(name.contains(prefix)) {
-						// check second enumerator for the same field
-    			    	enumeratorAccess = (XEnumerationAccess) UnoRuntime.queryInterface(XEnumerationAccess.class, paragraphCursor2);
-    			    	nextElement = enumeratorAccess.createEnumeration().nextElement();
-    			    	enumeratorAccess = (XEnumerationAccess) UnoRuntime.queryInterface(XEnumerationAccess.class, nextElement);
-    			    	XEnumeration enumerator2 = enumeratorAccess.createEnumeration();
-    			    	while(enumerator2.hasMoreElements()) {
-    			    		textProperties = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, enumerator2.nextElement());
-    			    		textPropertyType = (String) textProperties.getPropertyValue("TextPortionType");
-    			    		if(textPropertyType.equals(fieldType)) {
-    			        		mark = textProperties.getPropertyValue(fieldType);
-    			        		
-    			    			named = (XNamed) UnoRuntime.queryInterface(XNamed.class, mark);
-    			    			String name2 = named.getName();
-    			    			if(name.equals(name2)) {
-    			    				try {
-	    			    				if(textPropertyType.equals("ReferenceMark")) {
-	    			    					return new ReferenceMark(this, named, name);
-	    			    				} else {
-	    			    					return new Bookmark(this, named, name);
-	    			    				}
-    			    				} catch(IllegalArgumentException e) {}
-    			    			}
-    			    		}
-    			    	}
-    				}
-    			}
+        		if(mark != null) {
+					// check second enumerator for the same field
+			    	enumeratorAccess = (XEnumerationAccess) UnoRuntime.queryInterface(XEnumerationAccess.class, paragraphCursor2);
+			    	nextElement = enumeratorAccess.createEnumeration().nextElement();
+			    	enumeratorAccess = (XEnumerationAccess) UnoRuntime.queryInterface(XEnumerationAccess.class, nextElement);
+			    	XEnumeration enumerator2 = enumeratorAccess.createEnumeration();
+			    	while(enumerator2.hasMoreElements()) {
+			    		textProperties = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, enumerator2.nextElement());
+			    		textPropertyType = (String) textProperties.getPropertyValue("TextPortionType");
+			    		if(textPropertyType.equals(fieldType)) {
+			    			if(mark == mMarkManager.getMark(textProperties.getPropertyValue(fieldType), fieldType)) {
+			    				return mark;
+			    			}
+			    		}
+			    	}
+				}
     		}
     	}
     	
@@ -254,19 +239,21 @@ public class Document {
     public String getDocumentData() throws Exception {
     	if(checkExperimentalMode) {
     		if(Application.ooName.equals("LibreOffice")) {
-    			String[] splitVersion = Application.ooVersion.split("\\.");
-    			int firstDigit = Integer.parseInt(splitVersion[0]);
-    			if(firstDigit >= 3 && Integer.parseInt(splitVersion[1]) >= 5) {
-    				XMultiServiceFactory configProvider = (XMultiServiceFactory) UnoRuntime.queryInterface(XMultiServiceFactory.class,
-    						factory.createInstance("com.sun.star.configuration.ConfigurationProvider"));
-    				PropertyValue nodepath = new PropertyValue();
-    				nodepath.Name = "nodepath";
-    				nodepath.Value = "/org.openoffice.Office.Common/Misc";
-    				Object configurationAccess = configProvider.createInstanceWithArguments("com.sun.star.configuration.ConfigurationAccess",
-    						new Object[] {nodepath});
-    				XNameAccess nameAccess = (XNameAccess) UnoRuntime.queryInterface(XNameAccess.class, configurationAccess);
-    				statusExperimentalMode = (Boolean) nameAccess.getByName("ExperimentalMode");
-    			}
+        		try {
+	    			String[] splitVersion = Application.ooVersion.split("\\.");
+	    			int firstDigit = Integer.parseInt(splitVersion[0]);
+	    			if(firstDigit >= 3 && Integer.parseInt(splitVersion[1]) >= 5) {
+	    				XMultiServiceFactory configProvider = (XMultiServiceFactory) UnoRuntime.queryInterface(XMultiServiceFactory.class,
+	    						factory.createInstance("com.sun.star.configuration.ConfigurationProvider"));
+	    				PropertyValue nodepath = new PropertyValue();
+	    				nodepath.Name = "nodepath";
+	    				nodepath.Value = "/org.openoffice.Office.Common/Misc";
+	    				Object configurationAccess = configProvider.createInstanceWithArguments("com.sun.star.configuration.ConfigurationAccess",
+	    						new Object[] {nodepath});
+	    				XNameAccess nameAccess = (XNameAccess) UnoRuntime.queryInterface(XNameAccess.class, configurationAccess);
+	    				statusExperimentalMode = (Boolean) nameAccess.getByName("ExperimentalMode");
+	    			}
+        		} catch(Exception e) {}
     		}
     		checkExperimentalMode = false;
     	}
@@ -302,18 +289,8 @@ public class Document {
 					referenceMarksSupplier.getReferenceMarks());
 			int count = markIndexAccess.getCount();
 			for(int i = 0; i<count; i++) {
-				Object aMark = markIndexAccess.getByIndex(i);
-				XNamed named = ((XNamed) UnoRuntime.queryInterface(XNamed.class, aMark));
-				String name = named.getName();
-				
-				for(String prefix : Document.PREFIXES) {
-					if(name.contains(prefix)) {
-						try {
-							marks.add(new ReferenceMark(this, named, name));
-						} catch (IllegalArgumentException e) {}
-						break;
-					}
-				}
+				ReferenceMark mark = mMarkManager.getMark(markIndexAccess.getByIndex(i), fieldType);
+				if(mark != null) marks.add(mark);
 			}
     		
     		XTextSectionsSupplier textSectionSupplier = (XTextSectionsSupplier) 
@@ -322,18 +299,8 @@ public class Document {
 					textSectionSupplier.getTextSections());
 			count = markIndexAccess.getCount();
 			for(int i = 0; i<count; i++) {
-				Object aMark = markIndexAccess.getByIndex(i);
-				XNamed named = ((XNamed) UnoRuntime.queryInterface(XNamed.class, aMark));
-				String name = named.getName();
-				
-				for(String prefix : Document.PREFIXES) {
-					if(name.contains(prefix)) {
-						try {
-							marks.add(new ReferenceMark(this, named, name));
-						} catch (IllegalArgumentException e) {}
-						break;
-					}
-				}
+				ReferenceMark mark = mMarkManager.getMark(markIndexAccess.getByIndex(i), fieldType);
+				if(mark != null) marks.add(mark);
 			}
     	} else if(fieldType.equals("Bookmark")) {
     		// remove save event listener if necessary
@@ -350,11 +317,8 @@ public class Document {
 				
 				for(String prefix : Document.PREFIXES) {
 					if(name.contains(prefix)) {
-						Object aMark = markNameAccess.getByName(name);
-						XNamed named = ((XNamed) UnoRuntime.queryInterface(XNamed.class, aMark));
-						try {
-							marks.add(new Bookmark(this, named, name));
-						} catch (IllegalArgumentException e) {}
+						ReferenceMark mark = mMarkManager.getMark(markNameAccess.getByName(name), fieldType);
+						if(mark != null) marks.add(mark);
 						break;
 					}
 				}
@@ -407,7 +371,7 @@ public class Document {
 			styleProps = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class,
 					paraStyleNames.getByName("Bibliography 1"));
 		} catch(Exception e) {
-			// otherhttp://api.openoffice.org/servlets/ProjectMailingListListwise, create it
+			// otherwise, create it
 			XStyle style = (XStyle) UnoRuntime.queryInterface(XStyle.class,
 					docFactory.createInstance("com.sun.star.style.ParagraphStyle")); 
     	    XNameContainer styleNameContainer = (XNameContainer) UnoRuntime.queryInterface(XNameContainer.class,
@@ -497,15 +461,12 @@ public class Document {
     	// attach field to range
     	XTextContent markContent = (XTextContent) UnoRuntime.queryInterface(XTextContent.class, mark);
     	markContent.attach(rangeToInsert);
-
-    	// refmarks have code already set
-    	if(fieldType.equals("ReferenceMark")) {
-    		return new ReferenceMark(this, mark, rawCode);
+    	
+    	ReferenceMark newMark = mMarkManager.getMark(mark, fieldType);
+    	if(fieldType.equals("Bookmark") && customBookmarkName == null) {
+        	// set code for a bookmark
+        	newMark.setCode(code);
     	}
-
-    	// set code for a bookmark
-    	ReferenceMark newMark = new Bookmark(this, mark, rawCode);
-    	if(customBookmarkName == null) newMark.setCode(code);
     	return newMark;
     }
     
