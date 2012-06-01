@@ -21,6 +21,7 @@
     
     ***** END LICENSE BLOCK *****
 */
+"use strict";
 
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
@@ -154,6 +155,8 @@ var Comm = new function() {
 	}
 	
 	DataListener.prototype = {
+		"_asyncWaiting":true,
+		"_onDataCallback":null,
 		"_requestLength":null,
 		
 		/**
@@ -177,26 +180,49 @@ var Comm = new function() {
 		 */
 		//"onDataAvailable":function(request, context, inputStream, offset, count) {
 		"onInputStreamReady":function(inputStream) {
-			if(this.iStream.available() && !CommandQueue.busy) {
-				Zotero.debug("ZoteroOpenOfficeIntegration: Performing asynchronous read");
-				// keep track of the last connection we read on
-				_lastDataListener = this;
-				
-				// read data and forward to Zotero.Integration
-				CommandQueue.setBusy(true);
-				var payload = _receiveCommand(this.iStream);
-				CommandQueue.setBusy(false);
-				
-				try {
-					Zotero.Integration.execCommand("OpenOffice", payload, null);
-				} catch(e) {
-					Zotero.logError(e);
+			this._asyncWaiting = false;
+			
+			if(this.iStream.available()) {
+				if(this._onDataCallback) {
+					var callback = this._onDataCallback;
+					this._onDataCallback = null;
+					try {
+						callback();
+					} catch(e) {
+						Zotero.logError(e);
+					}
+				} else if(!CommandQueue.busy) {
+					Zotero.debug("ZoteroOpenOfficeIntegration: Performing asynchronous read");
+					// keep track of the last connection we read on
+					_lastDataListener = this;
+					
+					// read data and forward to Zotero.Integration
+					CommandQueue.setBusy(true);
+					var payload = _receiveCommand(this.iStream);
+					CommandQueue.setBusy(false);
+					
+					try {
+						Zotero.Integration.execCommand("OpenOffice", payload, null);
+					} catch(e) {
+						Zotero.logError(e);
+					}
 				}
 			}
 			
 			// do async waiting
-			this.rawiStream.QueryInterface(Components.interfaces.nsIAsyncInputStream)
-					.asyncWait(this, 0, 0, Zotero.mainThread);
+			this.asyncWait(null);
+		},
+		
+		/**
+		 * Tells the stream to wait asynchronously for new data
+		 */
+		"asyncWait":function(_onDataCallback) {
+			this._onDataCallback = _onDataCallback;
+			if(!this._asyncWaiting) {
+				this._asyncWaiting = true;
+				this.rawiStream.QueryInterface(Components.interfaces.nsIAsyncInputStream)
+						.asyncWait(this, 0, 0, Zotero.mainThread);
+			}
 		}
 	}
 	
@@ -284,24 +310,11 @@ var Comm = new function() {
 			Zotero.debug("ZoteroOpenOfficeIntegration: Sending asynchronous command "+payload);
 			_lastDataListener.oStream.write32(payload.length);
 			_lastDataListener.oStream.writeBytes(payload, payload.length);
-			
-			var iStream = _lastDataListener.iStream;
-			Zotero.setTimeout(function() {
-				var available;
-				do {
-					mainThread.processNextEvent(false);
-					try {
-						available = iStream.available();
-					} catch(e) {
-						throw new Error("Connection closed while waiting for command");
-					}
-				} while(available === 0);
-				
+			_lastDataListener.asyncWait(function() {
 				var receivedData = _receiveCommand(_lastDataListener.iStream);
-				Zotero.debug(receivedData);
 				CommandQueue.setBusy(false);
 				callback(receivedData);
-			}, 0);
+			});
 		});
 	}
 	
@@ -351,10 +364,12 @@ var Comm = new function() {
 		 * Queues a function to be executed when not busy
 		 */
 		this.queueFunction = function(callback) {
-			if(this.busy || this.queue.length) {
-				this.queue.push(callback);
-			} else {
-				callback();
+			this.queue.push(callback);
+			if(this.queue.length === 1) {
+				var me = this;
+				Zotero.setTimeout(function() {
+					if(!me.busy && me.queue.length) me.queue.shift()();
+				}, 0);
 			}
 		};
 	};
