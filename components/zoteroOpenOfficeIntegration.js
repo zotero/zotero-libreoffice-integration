@@ -431,10 +431,11 @@ Document.prototype = {
 	QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsISupports, Components.interfaces.zoteroIntegrationDocument])
 };
 for each(var method in ["displayAlert", "activate", "canInsertField", "getDocumentData",
-	"setDocumentData", "setBibliographyStyle", "cleanup", "complete"]) {
+	"setDocumentData", "setBibliographyStyle", "complete"]) {
 	let methodStable = method;
 	Document.prototype[method] = function() Comm.sendCommand("Document_"+methodStable, _cleanArguments(arguments));
 }
+Document.prototype.cleanup = function() {};
 Document.prototype.cursorInField = function() {
 	var retVal = Comm.sendCommand("Document_cursorInField", _cleanArguments(arguments));
 	if(retVal === null) return null;
