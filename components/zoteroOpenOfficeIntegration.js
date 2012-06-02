@@ -210,14 +210,14 @@ var Comm = new function() {
 			}
 			
 			// do async waiting
-			this.asyncWait(null);
+			this.asyncWait();
 		},
 		
 		/**
 		 * Tells the stream to wait asynchronously for new data
 		 */
 		"asyncWait":function(_onDataCallback) {
-			this._onDataCallback = _onDataCallback;
+			if(_onDataCallback !== undefined) this._onDataCallback = _onDataCallback;
 			if(!this._asyncWaiting) {
 				this._asyncWaiting = true;
 				this.rawiStream.QueryInterface(Components.interfaces.nsIAsyncInputStream)
