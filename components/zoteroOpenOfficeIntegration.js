@@ -269,14 +269,8 @@ var Comm = new function() {
 			return;
 		}
 		
-		if(CommandQueue.busy) {
-			var waiting = true;
-			CommandQueue.queueFunction(function() {
-				waiting = false;
-			});
-			while(waiting) {
-				mainThread.processNextEvent(false);
-			}
+		while(CommandQueue.busy) {
+			mainThread.processNextEvent(true);
 		}
 		
 		CommandQueue.setBusy(true);
@@ -364,12 +358,10 @@ var Comm = new function() {
 		 * Queues a function to be executed when not busy
 		 */
 		this.queueFunction = function(callback) {
-			this.queue.push(callback);
-			if(this.queue.length === 1) {
-				var me = this;
-				Zotero.setTimeout(function() {
-					if(!me.busy && me.queue.length) me.queue.shift()();
-				}, 0);
+			if(this.busy) {
+				this.queue.push(callback);
+			} else {
+				callback();
 			}
 		};
 	};
