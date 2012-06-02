@@ -182,7 +182,6 @@ class Comm implements Runnable {
 			return out;
 		} else if(command.equals("Document_getFields")) {
 			ArrayList<ReferenceMark> fields = mActiveDocument.getFields((String) args.get(0));
-			mFields.addAll(fields);
 			
 			// get codes and rawCodes
 			int numFields = fields.size();

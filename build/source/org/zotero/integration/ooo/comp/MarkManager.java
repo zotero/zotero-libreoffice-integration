@@ -1,17 +1,17 @@
 package org.zotero.integration.ooo.comp;
 
-import java.util.Hashtable;
+import java.util.HashMap;
 
 import com.sun.star.container.XNamed;
 import com.sun.star.uno.UnoRuntime;
 
 public class MarkManager {
-	private Hashtable<String, ReferenceMark> mMarks;
+	private HashMap<String, ReferenceMark> mMarks;
 	private Document mDoc;
 	
 	MarkManager(Document aDoc) {
 		mDoc = aDoc;
-		mMarks = new Hashtable<String, ReferenceMark>();
+		mMarks = new HashMap<String, ReferenceMark>();
 	}
 	
 	void renameMark(String aOldName, String aNewName) {
