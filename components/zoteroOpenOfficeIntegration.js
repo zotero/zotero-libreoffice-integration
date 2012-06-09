@@ -26,7 +26,7 @@
 Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 var Zotero;
-const API_VERSION = 2;
+const API_VERSION = 3;
 
 var Comm = new function() {
 	var _observersRegistered = false, _converter, _lastDataListener,
@@ -198,8 +198,11 @@ var Comm = new function() {
 					
 					// read data and forward to Zotero.Integration
 					CommandQueue.setBusy(true);
-					var payload = _receiveCommand(this.iStream);
-					CommandQueue.setBusy(false);
+					try {
+						var payload = _receiveCommand(this.iStream);
+					} finally {
+						CommandQueue.setBusy(false);
+					}
 					
 					try {
 						Zotero.Integration.execCommand("OpenOffice", payload, null);
@@ -275,13 +278,15 @@ var Comm = new function() {
 		
 		CommandQueue.setBusy(true);
 		
-		// write to stream
-		Zotero.debug("ZoteroOpenOfficeIntegration: Sending "+payload);
-		_lastDataListener.oStream.write32(payload.length);
-		_lastDataListener.oStream.writeBytes(payload, payload.length);
-		var receivedData = _receiveCommand(_lastDataListener.iStream);
-		
-		CommandQueue.setBusy(false);
+		try {
+			// write to stream
+			Zotero.debug("ZoteroOpenOfficeIntegration: Sending "+payload);
+			_lastDataListener.oStream.write32(payload.length);
+			_lastDataListener.oStream.writeBytes(payload, payload.length);
+			var receivedData = _receiveCommand(_lastDataListener.iStream);
+		} finally {
+			CommandQueue.setBusy(false);
+		}
 		
 		return receivedData;
 	}
@@ -305,8 +310,11 @@ var Comm = new function() {
 			_lastDataListener.oStream.write32(payload.length);
 			_lastDataListener.oStream.writeBytes(payload, payload.length);
 			_lastDataListener.asyncWait(function() {
-				var receivedData = _receiveCommand(_lastDataListener.iStream);
-				CommandQueue.setBusy(false);
+				try {
+					var receivedData = _receiveCommand(_lastDataListener.iStream);
+				} finally {
+					CommandQueue.setBusy(false);
+				}
 				callback(receivedData);
 			});
 		});
@@ -319,7 +327,7 @@ var Comm = new function() {
 		var ps = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
 			.getService(Components.interfaces.nsIPromptService);
 		var shouldReinstall = ps.confirm(null, "Zotero LibreOffice Integration Error",
-			'The version of the Zotero OpenOffice.org Integration component installed within '+
+			'The version of the Zotero LibreOffice Integration component installed within '+
 			'LibreOffice, OpenOffice.org, or NeoOffice does not appear to match '+
 			(Zotero.isStandalone ? 'this Zotero Standalone version'
 				: 'the version currently installed within Firefox')+
@@ -368,20 +376,6 @@ var Comm = new function() {
 }
 
 /**
- * Loops through an "arguments" object, converting it to an array
- * @param {arguments} args
- * @param {Array} [initial] An array to append to the start
- * @return {Array} Arguments as an array
- */
-function _cleanArguments(args, initial) {
-	var out = (initial ? initial : []);
-	for(var i=0; i<args.length; i++) {
-		out.push(args[i]);
-	}
-	return out;
-}
-
-/**
  * A service to initialize the integration server on startup
  */
 var Initializer = function() {
@@ -410,9 +404,9 @@ Application.prototype = {
 	}],
 	"service":		true,
 	"getActiveDocument":function() {
-		var apiVersion = Comm.sendCommand("Application_getActiveDocument", []);
-		if(apiVersion !== API_VERSION) Comm.incompatibleVersion();
-		return new Document();
+		var retVal = Comm.sendCommand("Application_getActiveDocument", [API_VERSION]);
+		if(typeof retVal !== "object" || retVal[0] !== API_VERSION) Comm.incompatibleVersion();
+		return new Document(retVal[1]);
 	},
 	"primaryFieldType":"ReferenceMark",
 	"secondaryFieldType":"Bookmark"
@@ -421,7 +415,8 @@ Application.prototype = {
 /**
  * See zoteroIntegration.idl
  */
-var Document = function() {
+var Document = function(documentID) {
+	this._documentID = documentID;
 	this.wrappedJSObject = this;
 };
 Document.prototype = {
@@ -433,31 +428,35 @@ Document.prototype = {
 for each(var method in ["displayAlert", "activate", "canInsertField", "getDocumentData",
 	"setDocumentData", "setBibliographyStyle", "complete"]) {
 	let methodStable = method;
-	Document.prototype[method] = function() Comm.sendCommand("Document_"+methodStable, _cleanArguments(arguments));
+	Document.prototype[method] = function() {
+		return Comm.sendCommand("Document_"+methodStable,
+			[this._documentID].concat(Array.prototype.slice.call(arguments)));
+	};
 }
 Document.prototype.cleanup = function() {};
-Document.prototype.cursorInField = function() {
-	var retVal = Comm.sendCommand("Document_cursorInField", _cleanArguments(arguments));
+Document.prototype.cursorInField = function(fieldType) {
+	var retVal = Comm.sendCommand("Document_cursorInField", [this._documentID, fieldType]);
 	if(retVal === null) return null;
-	return new Field(retVal[0], retVal[1], retVal[2]);
+	return new Field(this._documentID, retVal[0], retVal[1], retVal[2]);
 };
-Document.prototype.insertField = function() {
-	var retVal = Comm.sendCommand("Document_insertField", _cleanArguments(arguments));
-	return new Field(retVal[0], retVal[1], retVal[2]);
+Document.prototype.insertField = function(fieldType, noteType) {
+	var retVal = Comm.sendCommand("Document_insertField", [this._documentID, fieldType, noteType]);
+	return new Field(this._documentID, retVal[0], retVal[1], retVal[2]);
 };
-Document.prototype.getFields = function() {
-	var retVal = Comm.sendCommand("Document_getFields", _cleanArguments(arguments));
-	return new FieldEnumerator(retVal[0], retVal[1], retVal[2]);
+Document.prototype.getFields = function(fieldType) {
+	var retVal = Comm.sendCommand("Document_getFields", [this._documentID, fieldType]);
+	return new FieldEnumerator(this._documentID, retVal[0], retVal[1], retVal[2]);
 };
 Document.prototype.getFieldsAsync = function(fieldType, observer) {
-	Comm.sendCommandAsync("Document_getFields", [fieldType], function(retVal) {
-		observer.observe(new FieldEnumerator(retVal[0], retVal[1], retVal[2]), "fields-available", null);
+	var documentID = this._documentID;
+	Comm.sendCommandAsync("Document_getFields", [this._documentID, fieldType], function(retVal) {
+		observer.observe(new FieldEnumerator(documentID, retVal[0], retVal[1], retVal[2]), "fields-available", null);
 	});
 };
 Document.prototype.convert = function(enumerator, fieldType, noteTypes) {
 	var i = 0;
 	while(enumerator.hasMoreElements()) {
-		Comm.sendCommand("Field_convert", [enumerator.getNext().wrappedJSObject._index, fieldType, noteTypes[i]]);
+		Comm.sendCommand("Field_convert", [this._documentID, enumerator.getNext().wrappedJSObject._index, fieldType, noteTypes[i]]);
 		i++;
 	}
 };
@@ -465,7 +464,8 @@ Document.prototype.convert = function(enumerator, fieldType, noteTypes) {
 /**
  * An enumerator implementation to handle passing off fields
  */
-var FieldEnumerator = function(fieldIndices, fieldCodes, noteIndices) {
+var FieldEnumerator = function(documentID, fieldIndices, fieldCodes, noteIndices) {
+	this._documentID = documentID;
 	this._fieldIndices = fieldIndices;
 	this._fieldCodes = fieldCodes;
 	this._noteIndices = noteIndices;
@@ -477,7 +477,7 @@ FieldEnumerator.prototype = {
 	}, 
 	"getNext":function() {
 		if(this._i >= this._fieldIndices.length) throw "No more fields!";
-		var field = new Field(this._fieldIndices[this._i], this._fieldCodes[this._i], this._noteIndices[this._i]);
+		var field = new Field(this._documentID, this._fieldIndices[this._i], this._fieldCodes[this._i], this._noteIndices[this._i]);
 		this._i++;
 		return field;
 	},
@@ -487,7 +487,8 @@ FieldEnumerator.prototype = {
 /**
  * See zoteroIntegration.idl
  */
-var Field = function(index, code, noteIndex) {
+var Field = function(documentID, index, code, noteIndex) {
+	this._documentID = documentID; 
 	this._index = index;
 	this._code = code;
 	this._noteIndex = noteIndex;
@@ -502,14 +503,17 @@ Field.prototype = {
 
 for each(var method in ["delete", "select", "removeCode", "setText", "getText"]) {
 	let methodStable = method;
-	Field.prototype[method] = function() Comm.sendCommand("Field_"+methodStable, _cleanArguments(arguments, [this._index]));
+	Field.prototype[method] = function() {
+		return Comm.sendCommand("Field_"+methodStable,
+			[this._documentID, this._index].concat(Array.prototype.slice.call(arguments)));
+	};
 }
 Field.prototype.getCode = function() {
 	return this._code;
 }
 Field.prototype.setCode = function(code) {
 	this._code = code;
-	Comm.sendCommand("Field_setCode", [this._index, code]);
+	Comm.sendCommand("Field_setCode", [this._documentID, this._index, code]);
 }
 Field.prototype.getNoteIndex = function() {
 	return this._noteIndex;

@@ -8,23 +8,22 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
+import java.util.HashMap;
 
 import org.codehaus.jackson.map.ObjectMapper;
 
 class Comm implements Runnable {
 	static final String COMMUNICATION_ERROR_STRING = "OpenOffice.org could not communicate with Zotero. Please ensure Firefox or Zotero Standalone is open and set to an online state and try again.";
 	private static final String INVALID_INPUT_STRING = "OpenOffice.org received invalid data from Zotero. Please ensure that your copy of Zotero OpenOffice.org Integration is up to date. If the problem persists, report this on the Zotero Forums.";
-	static final int API_VERSION = 2;
+	static final int API_VERSION = 3;
 	
 	private DataOutputStream mOutputStream;
 	private ObjectMapper mObjectMapper;
 	private Application mApplication;
 	private CommReader mCommReader;
 	private Thread mThread;
-	private Document mActiveDocument;
-	private ArrayList<ReferenceMark> mFields;
-	private IdentityHashMap<ReferenceMark, Integer> mFieldsHash;
+	private HashMap <Integer, Document> mDocuments;
+	int lastDocumentID = 0;
 	CommData commData;
 	private volatile Object nextMessage;
 	volatile Socket mSocket;
@@ -38,6 +37,7 @@ class Comm implements Runnable {
 		mThread = new Thread(this);
 		commData = new CommData();
 		mObjectMapper = new ObjectMapper();
+		mDocuments = new HashMap<Integer, Document>();
 		mThread.start();
 		ZoteroOpenOfficeIntegrationImpl.debugPrint("Comm initialized");
 	}
@@ -151,100 +151,96 @@ class Comm implements Runnable {
 		ArrayList<Object> args = (ArrayList<Object>) message.get(1);
 		
 		if(command.equals("Application_getActiveDocument")) {
-			try {
-				mActiveDocument = mApplication.getActiveDocument();
-			} catch (Exception e) {}
+			Document document = mApplication.getActiveDocument();
 			
-			if(mFields == null) {
-				mFields = new ArrayList<ReferenceMark>();
-				mFieldsHash = new IdentityHashMap<ReferenceMark, Integer>();
+			if(args.size() == 0) {
+				mApplication.getActiveDocument().displayAlert("The version of the Zotero LibreOffice "+
+						"Integration component installed within LibreOffice, OpenOffice.org, or NeoOffice does not "+
+						"appear to match the version installed in Zotero Standalone or Firefox. Please ensure both "+
+						"components are up to date and try again.", 0, 0);
+				return null;
 			}
-			return Comm.API_VERSION;
-		} else if(command.equals("Document_displayAlert")) {
-			return mActiveDocument.displayAlert((String) args.get(0), (Integer) args.get(1), (Integer) args.get(2));
-		} else if(command.equals("Document_activate")) {
-			mActiveDocument.activate();
-		} else if(command.equals("Document_canInsertField")) {
-			return mActiveDocument.canInsertField((String) args.get(0));
-		} else if(command.equals("Document_cursorInField")) {
-			ReferenceMark field = mActiveDocument.cursorInField((String) args.get(0));
-			if(field != null) {
-				Object[] out = {getFieldIndex(field), field.getCode(), field.getNoteIndex()};
-				return out;
-			}
-		} else if(command.equals("Document_getDocumentData")) {
-			return mActiveDocument.getDocumentData();
-		} else if(command.equals("Document_setDocumentData")) {
-			mActiveDocument.setDocumentData((String) args.get(0));
-		} else if(command.equals("Document_insertField")) {
-			ReferenceMark field = mActiveDocument.insertField((String) args.get(0), (Integer) args.get(1));
-			Object[] out = {getFieldIndex(field), field.getCode(), field.getNoteIndex()};
+			
+			if(lastDocumentID == Integer.MAX_VALUE) lastDocumentID = 0;
+			Integer documentID = ++lastDocumentID;
+			mDocuments.put(documentID, document);
+			Object[] out = {Comm.API_VERSION, documentID};
 			return out;
-		} else if(command.equals("Document_getFields")) {
-			ArrayList<ReferenceMark> fields = mActiveDocument.getFields((String) args.get(0));
-			
-			// get codes and rawCodes
-			int numFields = fields.size();
-			int[] fieldIndices = new int[numFields];
-			String[] fieldCodes = new String[numFields];
-			int[] noteIndices = new int[numFields];
-			
-			for(int i=0; i<numFields; i++) {
-				ReferenceMark field = fields.get(i);
-				fieldIndices[i] = getFieldIndex(field);
-				fieldCodes[i] = field.getCode();
-				noteIndices[i] = field.getNoteIndex();
-			}
-			
-			Object[] out = {fieldIndices, fieldCodes, noteIndices};
-			return out;
-		} else if(command.equals("Document_setBibliographyStyle")) {
-			ArrayList<Number> arrayList = (ArrayList<Number>) args.get(4);
-			mActiveDocument.setBibliographyStyle((Integer) args.get(0), (Integer) args.get(1),
-				(Integer) args.get(2), (Integer) args.get(3), arrayList, (Integer) args.get(5));
-		} else if(command.equals("Document_cleanup")) {
-			mActiveDocument.cleanup();
-		} else if(command.equals("Document_complete")) {
-			// Clear our field list
-			mFields = new ArrayList<ReferenceMark>();
-			mFieldsHash = new IdentityHashMap<ReferenceMark, Integer>();
-			mActiveDocument = null;
-		} else if(command.startsWith("Field_")) {
-			ReferenceMark field = mFields.get((Integer) args.get(0));
-			if(command.equals("Field_delete")) {
-				field.delete();
-			} else if(command.equals("Field_select")) {
-				field.select();
-			} else if(command.equals("Field_removeCode")) {
-				field.removeCode();
-			} else if(command.equals("Field_getText")) {
-				return field.getText();
-			} else if(command.equals("Field_setText")) {
-				field.setText((String) args.get(1), (Boolean) args.get(2));
-			} else if(command.equals("Field_getCode")) {
-				return field.getCode();
-			} else if(command.equals("Field_setCode")) {
-				field.setCode((String) args.get(1));
-			} else if(command.equals("Field_convert")) {
-				mActiveDocument.convert(field, (String) args.get(1), (Integer) args.get(2));
-			}
 		} else {
-			throw new ParseException(command, 0);
+			int documentID = (Integer) args.get(0);
+			Document document = mDocuments.get(documentID);
+			
+			if(command.equals("Document_displayAlert")) {
+				return document.displayAlert((String) args.get(1), (Integer) args.get(2), (Integer) args.get(3));
+			} else if(command.equals("Document_activate")) {
+				document.activate();
+			} else if(command.equals("Document_canInsertField")) {
+				return document.canInsertField((String) args.get(1));
+			} else if(command.equals("Document_cursorInField")) {
+				ReferenceMark field = document.cursorInField((String) args.get(1));
+				if(field != null) {
+					Object[] out = {document.mMarkManager.getIDForMark(field), field.getCode(), field.getNoteIndex()};
+					return out;
+				}
+			} else if(command.equals("Document_getDocumentData")) {
+				return document.getDocumentData();
+			} else if(command.equals("Document_setDocumentData")) {
+				document.setDocumentData((String) args.get(1));
+			} else if(command.equals("Document_insertField")) {
+				ReferenceMark field = document.insertField((String) args.get(1), (Integer) args.get(2));
+				Object[] out = {document.mMarkManager.getIDForMark(field), field.getCode(), field.getNoteIndex()};
+				return out;
+			} else if(command.equals("Document_getFields")) {
+				ArrayList<ReferenceMark> fields = document.getFields((String) args.get(1));
+				
+				// get codes and rawCodes
+				int numFields = fields.size();
+				int[] fieldIndices = new int[numFields];
+				String[] fieldCodes = new String[numFields];
+				int[] noteIndices = new int[numFields];
+				
+				for(int i=0; i<numFields; i++) {
+					ReferenceMark field = fields.get(i);
+					fieldIndices[i] = document.mMarkManager.getIDForMark(field);
+					fieldCodes[i] = field.getCode();
+					noteIndices[i] = field.getNoteIndex();
+				}
+				
+				Object[] out = {fieldIndices, fieldCodes, noteIndices};
+				return out;
+			} else if(command.equals("Document_setBibliographyStyle")) {
+				ArrayList<Number> arrayList = (ArrayList<Number>) args.get(5);
+				document.setBibliographyStyle((Integer) args.get(1), (Integer) args.get(2),
+					(Integer) args.get(3), (Integer) args.get(4), arrayList, (Integer) args.get(6));
+			} else if(command.equals("Document_cleanup")) {
+				document.cleanup();
+			} else if(command.equals("Document_complete")) {
+				// Clear our field list
+				mDocuments.remove(documentID);
+			} else if(command.startsWith("Field_")) {
+				ReferenceMark field = document.mMarkManager.getMarkForID((Integer) args.get(1));
+				if(command.equals("Field_delete")) {
+					field.delete();
+				} else if(command.equals("Field_select")) {
+					field.select();
+				} else if(command.equals("Field_removeCode")) {
+					field.removeCode();
+				} else if(command.equals("Field_getText")) {
+					return field.getText();
+				} else if(command.equals("Field_setText")) {
+					field.setText((String) args.get(2), (Boolean) args.get(3));
+				} else if(command.equals("Field_getCode")) {
+					return field.getCode();
+				} else if(command.equals("Field_setCode")) {
+					field.setCode((String) args.get(2));
+				} else if(command.equals("Field_convert")) {
+					document.convert(field, (String) args.get(2), (Integer) args.get(3));
+				}
+			} else {
+				throw new ParseException(command, 0);
+			}
 		}
 		return null;
-	}
-	
-	/**
-	 * Gets the index of a given field in the field list
-	 */
-	int getFieldIndex(ReferenceMark field) {
-		Integer index = mFieldsHash.get(field);
-		if(index == null) {
-			index = mFields.size();
-			mFields.add(field);
-			mFieldsHash.put(field, index);
-		}
-		return index;
 	}
 	
 	/**
