@@ -30,7 +30,7 @@ const API_VERSION = 3;
 
 var Comm = new function() {
 	var _observersRegistered = false, _converter, _lastDataListener,
-		_commandQueue = [], mainThread;
+		mainThread;
 	
 	/**
 	 * Observes browser startup to initialize ZoteroOpenOfficeIntegration HTTP server
@@ -47,20 +47,47 @@ var Comm = new function() {
 			return;
 		}
 		
-		// initialize the converter
+		// Initialize the converter
 		_converter = Components.classes["@mozilla.org/intl/scriptableunicodeconverter"]
 			.createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
 		_converter.charset = "UTF-8";
 		
-		// start listening on socket
+		// Start listening on socket
 		var serv = Components.classes["@mozilla.org/network/server-socket;1"]
+					.createInstance(Components.interfaces.nsIServerSocket),
+			servCompat = Components.classes["@mozilla.org/network/server-socket;1"]
 					.createInstance(Components.interfaces.nsIServerSocket);
 		try {
-			// bind to a random port on loopback only
-			serv.init(19876, true, -1);
-			serv.asyncListen(SocketListener);
+			// Start main socket listener
+			serv.init(23116, true, -1);
+			serv.asyncListen({
+				"onSocketAccepted":function(socket, transport) {
+					Zotero.debug("ZoteroOpenOfficeIntegration: Connection received");
 			
+					// Close old data listener
+					if(_lastDataListener) {
+						try {
+							_lastDataListener.onStopRequest();
+						} catch(e) {}
+					}
+			
+					new DataListener(transport);
+				},
+				"onStopListening":function() {
+					Zotero.debug("ZoteroOpenOfficeIntegration: Communication server going offline");
+				}
+			});
 			Zotero.debug("ZoteroOpenOfficeIntegration: Communication server listening on 127.0.0.1:"+serv.port);
+			
+			// Start listener for socket to let user know their LO extension is out of date
+			servCompat.init(19876, true, -1);
+			servCompat.asyncListen({
+				"onSocketAccepted":function(socket, transport) {
+					Comm.incompatibleVersion();
+					transport.close();
+				},
+				"onStopListening":function() {}
+			});
 		} catch(e) {
 			Zotero.logError(e);
 			Zotero.debug("ZoteroOpenOfficeIntegration: Not initializing communication server");
@@ -71,9 +98,10 @@ var Comm = new function() {
 			Zotero.addShutdownListener(function() {
 				Zotero.debug("ZoteroOpenOfficeIntegration: Shutting down communication server");
 				
-				// close socket
-				serv.close();
-				// close data listener
+				// Close sockets
+				if(serv) serv.close();
+				if(servCompat) serv.close();
+				// Close data listener
 				if(_lastDataListener) {
 					try {
 						_lastDataListener.onStopRequest();
@@ -109,31 +137,6 @@ var Comm = new function() {
 		
 		_observersRegistered = true;
 	}
-	
-	/**
-	 * Accepts the socket and passes off to the DataListener
-	 */
-	var SocketListener = new function() {
-		/**
-		 * Called when a socket is opened
-		 */
-		this.onSocketAccepted = function(socket, transport) {
-			Zotero.debug("ZoteroOpenOfficeIntegration: Connection received");
-			
-			// close old data listener
-			if(_lastDataListener) {
-				try {
-					_lastDataListener.onStopRequest();
-				} catch(e) {}
-			}
-			
-			new DataListener(transport);
-		}
-		
-		this.onStopListening = function(serverSocket, status) {
-			Zotero.debug("ZoteroOpenOfficeIntegration: Communication server going offline");
-		}
-	}
 		
 	/**
 	 * Handles the actual acquisition of data
@@ -155,9 +158,17 @@ var Comm = new function() {
 	}
 	
 	DataListener.prototype = {
-		"_asyncWaiting":true,
-		"_onDataCallback":null,
-		"_requestLength":null,
+		"_transactionCallbacks":{
+			0:[
+				function(payload) {
+					Zotero.Integration.execCommand("OpenOffice", payload, null)
+				},
+				function(errString) {
+					Zotero.logError(e);
+				}
+			]
+		},
+		"_nextTransactionID":1,
 		
 		/**
 		 * Called when a request begins (although the request should have begun before
@@ -179,83 +190,67 @@ var Comm = new function() {
 		 * function.
 		 */
 		//"onDataAvailable":function(request, context, inputStream, offset, count) {
-		"onInputStreamReady":function(inputStream) {
-			this._asyncWaiting = false;
-			
+		"onInputStreamReady":function() {
 			if(this.iStream.available()) {
-				if(this._onDataCallback) {
-					var callback = this._onDataCallback;
-					this._onDataCallback = null;
-					try {
-						callback();
-					} catch(e) {
-						Zotero.logError(e);
+				Zotero.debug("ZoteroOpenOfficeIntegration: Performing asynchronous read");
+				
+				// Keep track of the last connection we read on
+				_lastDataListener = this;
+				
+				// Read frame from input stream
+				var transactionID = this.iStream.read32();
+				var requestLength = this.iStream.read32();
+				Zotero.debug("ZoteroOpenOfficeIntegration: Reading "+requestLength+" bytes from stream");
+				var input = _converter.ConvertToUnicode(this.iStream.readBytes(requestLength));
+				Zotero.debug("ZoteroOpenOfficeIntegration: Received "+transactionID+" "+input);
+				
+				var callbacks;
+				if((callbacks = this._transactionCallbacks[transactionID])) {
+					// Remove callback from list
+					if(transactionID !== 0) {
+						delete this._transactionCallbacks[transactionID];
 					}
-				} else if(!CommandQueue.busy) {
-					Zotero.debug("ZoteroOpenOfficeIntegration: Performing asynchronous read");
-					// keep track of the last connection we read on
-					_lastDataListener = this;
+		
+					// Parse JSON
+					var err, payload;
+					if(input.substr(0, 4) == "ERR:") {
+						err = input.substr(4);
+					} else {
+						try {
+							payload = JSON.parse(input);
+						} catch(e) {
+							err = e;
+						}
+					}
 					
-					// read data and forward to Zotero.Integration
-					CommandQueue.setBusy(true);
-					try {
-						var payload = _receiveCommand(this.iStream);
-					} finally {
-						CommandQueue.setBusy(false);
-					}
-					
-					try {
-						Zotero.Integration.execCommand("OpenOffice", payload, null);
-					} catch(e) {
-						Zotero.logError(e);
-					}
+					// Transmit to callback
+					Zotero.setTimeout(function() {
+						if(err) {
+							callbacks[1](err);
+						} else {
+							callbacks[0](payload);
+						}
+					}, 0);
 				}
 			}
 			
-			// do async waiting
-			this.asyncWait();
+			// Wait for next input
+			this.rawiStream.QueryInterface(Components.interfaces.nsIAsyncInputStream)
+					.asyncWait(this, 0, 0, Zotero.mainThread);
 		},
 		
 		/**
-		 * Tells the stream to wait asynchronously for new data
+		 * Get a transaction ID and register a callback for it
 		 */
-		"asyncWait":function(_onDataCallback) {
-			if(_onDataCallback !== undefined) this._onDataCallback = _onDataCallback;
-			if(!this._asyncWaiting) {
-				this._asyncWaiting = true;
-				this.rawiStream.QueryInterface(Components.interfaces.nsIAsyncInputStream)
-						.asyncWait(this, 0, 0, Zotero.mainThread);
+		"beginTransaction":function(successCallback, errorCallback) {
+			var transactionID = this._nextTransactionID++;
+			// Don't exceed MAX_INT
+			if(this._nextTransactionID === 2147483647) {
+				this._nextTransactionID = 1;
 			}
-		}
-	}
-	
-	/**
-	 * Reads from the communication channel. All commands consist of a 32 bit integer indicating the
-	 * length of the payload, followed by a JSON payload.
-	 */
-	function _receiveCommand(iStream) {
-		// Process some events until the input stream is ready
-		var available = 0;
-		do {
-			mainThread.processNextEvent(false);
-			try {
-				available = iStream.available();
-			} catch(e) {
-				throw new Error("Connection closed while waiting for command");
-			}
-		} while(available === 0);
-		
-		var requestLength = iStream.read32();
-		Zotero.debug("ZoteroOpenOfficeIntegration: Reading "+requestLength+" bytes from stream");
-		var input = iStream.readBytes(requestLength);
-		
-		// convert to readable format
-		input = _converter.ConvertToUnicode(input);
-		if(input.substr(0, 4) == "ERR:") {
-			throw input.substr(4);
-		}
-		Zotero.debug("ZoteroOpenOfficeIntegration: Received "+input);
-		return JSON.parse(input);
+			this._transactionCallbacks[transactionID] = [successCallback, errorCallback];
+			return transactionID;
+		},
 	}
 	
 	/**
@@ -263,30 +258,21 @@ var Comm = new function() {
 	 * arguments and queues them if necessary.
 	 */
 	this.sendCommand = function(cmd, args) {
-		var payload = JSON.stringify([cmd, args]);
-		payload = _converter.ConvertFromUnicode(payload);
+		var receivedData, error;
+		this.sendCommandAsync(cmd, args,
+			function(response) {
+				receivedData = response;
+			},
+			function(err) {
+				receivedData = true;
+				error = err;
+			}
+		);
 		
-		// almost certainly indicates an outdated OpenOffice.org extension
-		if(!_lastDataListener) {
-			this.incompatibleVersion();
-			return;
-		}
-		
-		while(CommandQueue.busy) {
+		while(receivedData === undefined) {
 			mainThread.processNextEvent(true);
 		}
-		
-		CommandQueue.setBusy(true);
-		
-		try {
-			// write to stream
-			Zotero.debug("ZoteroOpenOfficeIntegration: Sending "+payload);
-			_lastDataListener.oStream.write32(payload.length);
-			_lastDataListener.oStream.writeBytes(payload, payload.length);
-			var receivedData = _receiveCommand(_lastDataListener.iStream);
-		} finally {
-			CommandQueue.setBusy(false);
-		}
+		if(error) throw error;
 		
 		return receivedData;
 	}
@@ -294,30 +280,18 @@ var Comm = new function() {
 	/**
 	 * Writes to the communication channel, waiting asynchronously for a response.
 	 */
-	this.sendCommandAsync = function(cmd, args, callback) {
+	this.sendCommandAsync = function(cmd, args, successCallback, errorCallback) {
 		var payload = JSON.stringify([cmd, args]);
 		payload = _converter.ConvertFromUnicode(payload);
 		
-		// almost certainly indicates an outdated OpenOffice.org extension
-		if(!_lastDataListener) {
-			this.incompatibleVersion();
-			return;
-		}
+		var receivedData;
+		var transactionID = _lastDataListener.beginTransaction(successCallback, errorCallback);
 		
-		CommandQueue.queueFunction(function() {
-			CommandQueue.setBusy(true);
-			Zotero.debug("ZoteroOpenOfficeIntegration: Sending asynchronous command "+payload);
-			_lastDataListener.oStream.write32(payload.length);
-			_lastDataListener.oStream.writeBytes(payload, payload.length);
-			_lastDataListener.asyncWait(function() {
-				try {
-					var receivedData = _receiveCommand(_lastDataListener.iStream);
-				} finally {
-					CommandQueue.setBusy(false);
-				}
-				callback(receivedData);
-			});
-		});
+		// Write to stream
+		Zotero.debug("ZoteroOpenOfficeIntegration: Sending "+transactionID+" "+payload);
+		_lastDataListener.oStream.write32(transactionID);
+		_lastDataListener.oStream.write32(payload.length);
+		_lastDataListener.oStream.writeBytes(payload, payload.length);
 	}
 	
 	/**
@@ -347,33 +321,7 @@ var Comm = new function() {
 		Zotero.logError("Firefox and OpenOffice.org extension versions are incompatible");
 		throw Components.Exception("ExceptionAlreadyDisplayed");
 	}
-	
-	var CommandQueue = new function() {
-		this.busy = false;
-		this.queue = [];
-		
-		/**
-		 * Sets busy status
-		 */
-		this.setBusy = function(busy) {
-			this.busy = busy;
-			if(!this.busy && this.queue.length) {
-				Zotero.setTimeout(this.queue.shift(), 0);
-			}
-		};
-		
-		/**
-		 * Queues a function to be executed when not busy
-		 */
-		this.queueFunction = function(callback) {
-			if(this.busy) {
-				this.queue.push(callback);
-			} else {
-				callback();
-			}
-		};
-	};
-}
+};
 
 /**
  * A service to initialize the integration server on startup
@@ -449,9 +397,14 @@ Document.prototype.getFields = function(fieldType) {
 };
 Document.prototype.getFieldsAsync = function(fieldType, observer) {
 	var documentID = this._documentID;
-	Comm.sendCommandAsync("Document_getFields", [this._documentID, fieldType], function(retVal) {
-		observer.observe(new FieldEnumerator(documentID, retVal[0], retVal[1], retVal[2]), "fields-available", null);
-	});
+	Comm.sendCommandAsync("Document_getFields", [this._documentID, fieldType],
+		function(retVal) {
+			observer.observe(new FieldEnumerator(documentID, retVal[0], retVal[1], retVal[2]), "fields-available", null);
+		},
+		function(err) {
+			observer.observe(err, "fields-error", null);
+		}
+	);
 };
 Document.prototype.convert = function(enumerator, fieldType, noteTypes) {
 	var i = 0;

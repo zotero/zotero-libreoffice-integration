@@ -1,66 +1,42 @@
 package org.zotero.integration.ooo.comp;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.net.ConnectException;
-import java.net.Socket;
-import java.net.SocketException;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.SynchronousQueue;
 
-import org.codehaus.jackson.map.ObjectMapper;
-
-class Comm implements Runnable {
-	static final String COMMUNICATION_ERROR_STRING = "OpenOffice.org could not communicate with Zotero. Please ensure Firefox or Zotero Standalone is open and set to an online state and try again.";
-	private static final String INVALID_INPUT_STRING = "OpenOffice.org received invalid data from Zotero. Please ensure that your copy of Zotero OpenOffice.org Integration is up to date. If the problem persists, report this on the Zotero Forums.";
+class Comm {
 	static final int API_VERSION = 3;
-	
-	private DataOutputStream mOutputStream;
-	private ObjectMapper mObjectMapper;
-	private Application mApplication;
-	private CommReader mCommReader;
-	private Thread mThread;
-	private HashMap <Integer, Document> mDocuments;
-	int lastDocumentID = 0;
-	CommData commData;
-	private volatile Object nextMessage;
-	volatile Socket mSocket;
-	
-	/**
-	 * Constructor for communication socket
-	 * @param application
-	 */
-	public Comm(Application application) {
-		mApplication = application;
-		mThread = new Thread(this);
-		commData = new CommData();
-		mObjectMapper = new ObjectMapper();
-		mDocuments = new HashMap<Integer, Document>();
-		mThread.start();
-		ZoteroOpenOfficeIntegrationImpl.debugPrint("Comm initialized");
-	}
+	static final String COMMUNICATION_ERROR_STRING = "OpenOffice.org could not communicate with Zotero. "+
+			"Please ensure Firefox or Zotero Standalone is open and set to an online state and try again.";
+	static final String OLD_VERSION_STRING = "The version of the Zotero LibreOffice "+
+			"Integration component installed within LibreOffice, OpenOffice.org, or NeoOffice does not "+
+			"appear to match the version installed in Zotero Standalone or Firefox. Please ensure both "+
+			"components are up to date and try again.";
+	static Application application;
+	static BlockingQueue<CommFrame> writeQueue = new SynchronousQueue<CommFrame>();
+	static private Thread serverThread;
 	
 	/**
 	 * Sends a command to the writing thread to write to the Zotero socket
 	 * Should be called from the main OOo thread
 	 * @param command
 	 */
-	void sendCommand(String command) {
+	static void sendCommand(String command) {
 		// Execute command
-		nextMessage = command;
-		if(mThread.isAlive()) {
-			mThread.interrupt();
-		} else {
-			mThread = new Thread(this);
-			mThread.start();
+		if(serverThread == null || !serverThread.isAlive()) {
+			serverThread = new Thread(new CommServer());
+			serverThread.start();
+		}
+		
+		try {
+			writeQueue.put(new CommCommand(command));
+		} catch (InterruptedException e) {
+			return;
 		}
 	}
 	
-	void showError(String errString, Exception exception) {
+	static void showError(String errString, Exception exception) {
 		try {
-			mApplication.getActiveDocument().displayAlert(errString, 0, 0);
+			application.getActiveDocument().displayAlert(errString, 0, 0);
 		} catch (Exception e1) {
 			// Called if we couldn't get the active document to display a dialog.
 			e1.printStackTrace();
@@ -69,230 +45,5 @@ class Comm implements Runnable {
 		if(exception != null) {
 			exception.printStackTrace();
 		}
-	}
-	
-	/**
-	 * Writes to the Zotero socket
-	 * @param payload
-	 * @throws IOException
-	 */
-	void sendMessage(Object payload) {
-		byte[] data;
-		// serialize to JSON
-		if(payload instanceof byte[]) {
-			data = (byte[]) payload;
-		} else {
-			try {
-				data = mObjectMapper.writeValueAsBytes(payload);
-			} catch(Exception e) {
-				showError(Document.getErrorString(e), e);
-				return;
-			}
-		}
-		
-		try {
-			ZoteroOpenOfficeIntegrationImpl.debugPrint("Sending message "+(new String(data)));
-			// write length to stream
-			mOutputStream.writeInt(data.length);
-			// write data to stream
-			mOutputStream.write(data);
-		} catch(SocketException e) {
-			nextMessage = data;
-			this.run();
-		} catch(IOException e) {
-			showError(COMMUNICATION_ERROR_STRING, e);
-		}
-	}
-	
-	/**
-	 * Reads a message into JSON and executes the desired command
-	 * @param message
-	 * @throws IOException
-	 */
-	@SuppressWarnings("unchecked")
-	void readMessage(byte[] message) {
-		ArrayList<Object> root;
-		
-		// parse message
-		try {
-			root = mObjectMapper.readValue(message, 0, message.length, ArrayList.class);
-		} catch (Exception e) {
-			showError(INVALID_INPUT_STRING, e);
-			return;
-		}
-		
-		// get response to message
-		Object response;
-		try {
-			response = getMessageResponse(root);
-		} catch (ParseException e) {
-			showError(INVALID_INPUT_STRING, e);
-			return;
-		} catch (Exception e) {
-			String errString = Document.getErrorString(e);
-			
-			try {
-				sendMessage(("ERR:"+errString).getBytes("UTF-8"));
-			} catch(Exception e1) {
-				showError(errString, e);
-				e1.printStackTrace();
-			}
-			
-	    	return;
-		}
-		
-		// send response to message
-		sendMessage(response);
-	}
-	
-	@SuppressWarnings("unchecked")
-	Object getMessageResponse(ArrayList<Object> message) throws Exception {
-		String command = (String) message.get(0);
-		ArrayList<Object> args = (ArrayList<Object>) message.get(1);
-		
-		if(command.equals("Application_getActiveDocument")) {
-			Document document = mApplication.getActiveDocument();
-			
-			if(args.size() == 0) {
-				mApplication.getActiveDocument().displayAlert("The version of the Zotero LibreOffice "+
-						"Integration component installed within LibreOffice, OpenOffice.org, or NeoOffice does not "+
-						"appear to match the version installed in Zotero Standalone or Firefox. Please ensure both "+
-						"components are up to date and try again.", 0, 0);
-				return null;
-			}
-			
-			if(lastDocumentID == Integer.MAX_VALUE) lastDocumentID = 0;
-			Integer documentID = ++lastDocumentID;
-			mDocuments.put(documentID, document);
-			Object[] out = {Comm.API_VERSION, documentID};
-			return out;
-		} else {
-			int documentID = (Integer) args.get(0);
-			Document document = mDocuments.get(documentID);
-			
-			if(command.equals("Document_displayAlert")) {
-				return document.displayAlert((String) args.get(1), (Integer) args.get(2), (Integer) args.get(3));
-			} else if(command.equals("Document_activate")) {
-				document.activate();
-			} else if(command.equals("Document_canInsertField")) {
-				return document.canInsertField((String) args.get(1));
-			} else if(command.equals("Document_cursorInField")) {
-				ReferenceMark field = document.cursorInField((String) args.get(1));
-				if(field != null) {
-					Object[] out = {document.mMarkManager.getIDForMark(field), field.getCode(), field.getNoteIndex()};
-					return out;
-				}
-			} else if(command.equals("Document_getDocumentData")) {
-				return document.getDocumentData();
-			} else if(command.equals("Document_setDocumentData")) {
-				document.setDocumentData((String) args.get(1));
-			} else if(command.equals("Document_insertField")) {
-				ReferenceMark field = document.insertField((String) args.get(1), (Integer) args.get(2));
-				Object[] out = {document.mMarkManager.getIDForMark(field), field.getCode(), field.getNoteIndex()};
-				return out;
-			} else if(command.equals("Document_getFields")) {
-				ArrayList<ReferenceMark> fields = document.getFields((String) args.get(1));
-				
-				// get codes and rawCodes
-				int numFields = fields.size();
-				int[] fieldIndices = new int[numFields];
-				String[] fieldCodes = new String[numFields];
-				int[] noteIndices = new int[numFields];
-				
-				for(int i=0; i<numFields; i++) {
-					ReferenceMark field = fields.get(i);
-					fieldIndices[i] = document.mMarkManager.getIDForMark(field);
-					fieldCodes[i] = field.getCode();
-					noteIndices[i] = field.getNoteIndex();
-				}
-				
-				Object[] out = {fieldIndices, fieldCodes, noteIndices};
-				return out;
-			} else if(command.equals("Document_setBibliographyStyle")) {
-				ArrayList<Number> arrayList = (ArrayList<Number>) args.get(5);
-				document.setBibliographyStyle((Integer) args.get(1), (Integer) args.get(2),
-					(Integer) args.get(3), (Integer) args.get(4), arrayList, (Integer) args.get(6));
-			} else if(command.equals("Document_cleanup")) {
-				document.cleanup();
-			} else if(command.equals("Document_complete")) {
-				// Clear our field list
-				mDocuments.remove(documentID);
-			} else if(command.startsWith("Field_")) {
-				ReferenceMark field = document.mMarkManager.getMarkForID((Integer) args.get(1));
-				if(command.equals("Field_delete")) {
-					field.delete();
-				} else if(command.equals("Field_select")) {
-					field.select();
-				} else if(command.equals("Field_removeCode")) {
-					field.removeCode();
-				} else if(command.equals("Field_getText")) {
-					return field.getText();
-				} else if(command.equals("Field_setText")) {
-					field.setText((String) args.get(2), (Boolean) args.get(3));
-				} else if(command.equals("Field_getCode")) {
-					return field.getCode();
-				} else if(command.equals("Field_setCode")) {
-					field.setCode((String) args.get(2));
-				} else if(command.equals("Field_convert")) {
-					document.convert(field, (String) args.get(2), (Integer) args.get(3));
-				}
-			} else {
-				throw new ParseException(command, 0);
-			}
-		}
-		return null;
-	}
-	
-	/**
-	 * The main event loop. Waits for CommReader to read from the Zotero socket, but can be
-	 * interrupted by the main OOo thread to send a new command.
-	 * @throws IOException
-	 */
-	void mainLoop() {
-		while(true) {
-			ZoteroOpenOfficeIntegrationImpl.debugPrint("Iterating mainLoop");
-			// if there is a message to send, send it
-			if(nextMessage != null) {
-				sendMessage(nextMessage);
-				nextMessage = null;
-			}
-			
-			// allow an interrupt to get us out of waiting for new data to be read
-			byte[] bytes = null;
-			try {
-				bytes = commData.getBytes();
-			} catch (InterruptedException e) {}
-			
-			if(bytes != null) {
-				ZoteroOpenOfficeIntegrationImpl.debugPrint("Received message "+(new String(bytes)));
-				readMessage(bytes);
-			}
-		}
-	}
-	
-	/**
-	 * Called when new data is received to handle interfacing with Java methods
-	 */
-	public void run() {
-		// open a socket and get object mappers
-		DataInputStream inputStream;
-		try {
-			mSocket = new Socket("127.0.0.1", 19876);
-			inputStream = new DataInputStream(mSocket.getInputStream());
-			mOutputStream = new DataOutputStream(mSocket.getOutputStream());
-		} catch (ConnectException e) {
-			showError(COMMUNICATION_ERROR_STRING, null);
-			return;
-		} catch (Exception e) {
-			showError(Document.getErrorString(e), e);
-			return;
-		}
-		
-		// start another thread to read from the socket
-		mCommReader = new CommReader(this, inputStream);
-		(new Thread(mCommReader)).start();
-		
-		// start the main event loop
-		mainLoop();
 	}
 }

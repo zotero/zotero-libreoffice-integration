@@ -14,8 +14,6 @@ public final class ZoteroOpenOfficeIntegrationImpl extends WeakBase
    implements com.sun.star.task.XJobExecutor,
               com.sun.star.lang.XServiceInfo
 {
-    private static Application mApplication;
-    private static Comm mComm;
     private static final String m_implementationName = ZoteroOpenOfficeIntegrationImpl.class.getName();
     private static final String[] m_serviceNames = {
         "org.zotero.integration.ooo.ZoteroOpenOfficeIntegration" };
@@ -34,12 +32,12 @@ public final class ZoteroOpenOfficeIntegrationImpl extends WeakBase
     }
     
     public static void debugPrint(String msg) {
-    	System.out.println("ZoteroOpenOfficeIntegration: "+msg);
+    	//System.out.println("ZoteroOpenOfficeIntegration: "+msg);
     }
     
     public ZoteroOpenOfficeIntegrationImpl( XComponentContext context ) throws Exception
     {
-        mApplication = new Application(context);
+		Comm.application = new Application(context);
         debugPrint("Service initialized");
     };
 
@@ -104,15 +102,14 @@ public final class ZoteroOpenOfficeIntegrationImpl extends WeakBase
 		
 		debugPrint("Executing "+command);
 		try {
-			if(mComm == null) mComm = new Comm(mApplication);
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
 		
 		try {
-			mComm.sendCommand(command);
+			Comm.sendCommand(command);
 		} catch(Exception e) {
-			mComm.showError(Comm.COMMUNICATION_ERROR_STRING, e);
+			Comm.showError(Comm.COMMUNICATION_ERROR_STRING, e);
 		}
 	}
 }
