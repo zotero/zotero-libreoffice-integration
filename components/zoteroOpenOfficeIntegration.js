@@ -202,7 +202,7 @@ var Comm = new function() {
 				var requestLength = this.iStream.read32();
 				Zotero.debug("ZoteroOpenOfficeIntegration: Reading "+requestLength+" bytes from stream");
 				var input = _converter.ConvertToUnicode(this.iStream.readBytes(requestLength));
-				Zotero.debug("ZoteroOpenOfficeIntegration: Received "+transactionID+" "+input);
+				Zotero.debug("ZoteroOpenOfficeIntegration: Received "+input);
 				
 				var callbacks;
 				if((callbacks = this._transactionCallbacks[transactionID])) {
@@ -288,7 +288,7 @@ var Comm = new function() {
 		var transactionID = _lastDataListener.beginTransaction(successCallback, errorCallback);
 		
 		// Write to stream
-		Zotero.debug("ZoteroOpenOfficeIntegration: Sending "+transactionID+" "+payload);
+		Zotero.debug("ZoteroOpenOfficeIntegration: Sending "+payload);
 		_lastDataListener.oStream.write32(transactionID);
 		_lastDataListener.oStream.write32(payload.length);
 		_lastDataListener.oStream.writeBytes(payload, payload.length);
