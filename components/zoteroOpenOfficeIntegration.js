@@ -142,19 +142,21 @@ var Comm = new function() {
 	 * Handles the actual acquisition of data
 	 */
 	var DataListener = function(transport) {
-		this.rawiStream = transport.openInputStream(Components.interfaces.nsITransport.OPEN_BLOCKING, 0, 0);
-		this.rawoStream = transport.openOutputStream(Components.interfaces.nsITransport.OPEN_BLOCKING, 0, 0);
+		this.iStream = transport.openInputStream(0, 0, 0);
+		this.oStream = transport.openOutputStream(Components.interfaces.nsITransport.OPEN_BLOCKING, 0, 0);
 		
-		this.iStream = Components.classes["@mozilla.org/binaryinputstream;1"].
-			createInstance(Components.interfaces.nsIBinaryInputStream);
-		this.iStream.setInputStream(this.rawiStream);
+		this.bStream = Components.classes["@mozilla.org/binaryinputstream;1"].
+				createInstance(Components.interfaces.nsIBinaryInputStream);
+		this.bStream.setInputStream(this.iStream);
 		
-		this.oStream = Components.classes["@mozilla.org/binaryoutputstream;1"].
-			createInstance(Components.interfaces.nsIBinaryOutputStream);
-		this.oStream.setOutputStream(this.rawoStream);
-		
-		this.rawiStream.QueryInterface(Components.interfaces.nsIAsyncInputStream)
-				.asyncWait(this, 0, 0, Zotero.mainThread);
+		this.boStream = Components.classes["@mozilla.org/binaryoutputstream;1"].
+				createInstance(Components.interfaces.nsIBinaryOutputStream);
+		this.boStream.setOutputStream(this.oStream);
+	
+		this.pump = Components.classes["@mozilla.org/network/input-stream-pump;1"]
+							 .createInstance(Components.interfaces.nsIInputStreamPump);
+		this.pump.init(this.iStream, -1, -1, 0, 0, false);
+		this.pump.asyncRead(this, null);
 	}
 	
 	DataListener.prototype = {
@@ -169,12 +171,18 @@ var Comm = new function() {
 			]
 		},
 		"_nextTransactionID":1,
+		"_frameHeader":"",
+		"_frameTransactionID":null,
+		"_frameRemaining":null,
+		"_frameContent":"",
 		
 		/**
 		 * Called when a request begins (although the request should have begun before
 		 * the DataListener was generated)
 		 */
-		"onStartRequest":function(request, context) {},
+		"onStartRequest":function(request, context) {
+			Zotero.debug("Request started");
+		},
 		
 		/**
 		 * Called when a request stops
@@ -182,61 +190,90 @@ var Comm = new function() {
 		"onStopRequest":function(request, context, status) {
 			this.iStream.close();
 			this.oStream.close();
+			Zotero.debug("Request stopped");
 		},
-	
-		/**
-		 * Called when new data is available. This is used for commands initiated by OOo. Responses
-		 * to commands sent by Zotero are received synchronously as part of the sendCommand()
-		 * function.
-		 */
-		//"onDataAvailable":function(request, context, inputStream, offset, count) {
-		"onInputStreamReady":function() {
-			if(this.iStream.available()) {
-				Zotero.debug("ZoteroOpenOfficeIntegration: Performing asynchronous read");
-				
-				// Keep track of the last connection we read on
-				_lastDataListener = this;
-				
-				// Read frame from input stream
-				var transactionID = this.iStream.read32();
-				var requestLength = this.iStream.read32();
-				Zotero.debug("ZoteroOpenOfficeIntegration: Reading "+requestLength+" bytes from stream");
-				var input = _converter.ConvertToUnicode(this.iStream.readBytes(requestLength));
-				Zotero.debug("ZoteroOpenOfficeIntegration: Received "+input);
-				
-				var callbacks;
-				if((callbacks = this._transactionCallbacks[transactionID])) {
-					// Remove callback from list
-					if(transactionID !== 0) {
-						delete this._transactionCallbacks[transactionID];
-					}
 		
-					// Parse JSON
-					var err, payload;
-					if(input.substr(0, 4) == "ERR:") {
-						err = input.substr(4);
+		/**
+		 * Called when new data is available
+		 */
+		"onDataAvailable":function(request, context, inputStream, offset, count) {
+			Zotero.debug("ZoteroOpenOfficeIntegration: "+count+" bytes available");
+			
+			// Keep track of the last connection we read on
+			_lastDataListener = this;
+			
+			while(count) {
+				if(this._frameRemaining !== null) {
+					if(count >= this._frameRemaining) {
+						this._frameContent += this.bStream.readBytes(this._frameRemaining);
+						count -= this._frameRemaining;
+						this._frameRemaining = 0;
+						this._processFrame();
 					} else {
-						try {
-							payload = JSON.parse(input);
-						} catch(e) {
-							err = e;
-						}
+						this._frameContent += this.bStream.readBytes(count);
+						this._frameRemaining -= count;
+						return;
 					}
-					
-					// Transmit to callback
-					Zotero.setTimeout(function() {
-						if(err) {
-							callbacks[1](err);
-						} else {
-							callbacks[0](payload);
-						}
-					}, 0);
+				} else {
+					var readBytes = Math.min(8-this._frameHeader.length, count);
+					this._frameHeader += this.bStream.readBytes(readBytes);
+					if(this._frameHeader.length !== 8) return;
+					this._frameTransactionID = this._readUint32(this._frameHeader, 0);
+					this._frameRemaining = this._readUint32(this._frameHeader, 4);
+					count -= readBytes;
 				}
 			}
+		},
+		
+		/**
+		 * Converts 4 characters of a string to a uint32 (big endian)
+		 */
+		"_readUint32":function(string, offset) {
+			return (string.charCodeAt(offset) << 24)
+				+ (string.charCodeAt(offset+1) << 16)
+				+ (string.charCodeAt(offset+2) << 8)
+				+ string.charCodeAt(offset+3);
+		},
+		
+		/**
+		 * Processes a completed frame
+		 */
+		"_processFrame":function() {
+			this._frameHeader = "";
+			this._frameRemaining = null;
+			var input = _converter.ConvertToUnicode(this._frameContent);
+			this._frameContent = "";
 			
-			// Wait for next input
-			this.rawiStream.QueryInterface(Components.interfaces.nsIAsyncInputStream)
-					.asyncWait(this, 0, 0, Zotero.mainThread);
+			Zotero.debug("ZoteroOpenOfficeIntegration: Read "+this._frameTransactionID+" "+input);
+			
+			var callbacks;
+			if((callbacks = this._transactionCallbacks[this._frameTransactionID])) {
+				// Remove callback from list
+				if(this._frameTransactionID !== 0) {
+					delete this._transactionCallbacks[this._frameTransactionID];
+				}
+	
+				// Parse JSON
+				var err, payload;
+				if(input.substr(0, 4) == "ERR:") {
+					err = input.substr(4);
+				} else {
+					try {
+						payload = JSON.parse(input);
+					} catch(e) {
+						err = e;
+					}
+				}
+				
+				// Transmit to callback
+				Zotero.setTimeout(function() {
+					if(err) {
+						callbacks[1](err);
+					} else {
+						callbacks[0](payload);
+					}
+				}, 0);
+			}
 		},
 		
 		/**
@@ -288,10 +325,10 @@ var Comm = new function() {
 		var transactionID = _lastDataListener.beginTransaction(successCallback, errorCallback);
 		
 		// Write to stream
-		Zotero.debug("ZoteroOpenOfficeIntegration: Sending "+payload);
-		_lastDataListener.oStream.write32(transactionID);
-		_lastDataListener.oStream.write32(payload.length);
-		_lastDataListener.oStream.writeBytes(payload, payload.length);
+		Zotero.debug("ZoteroOpenOfficeIntegration: Sending "+transactionID+" "+payload);
+		_lastDataListener.boStream.write32(transactionID);
+		_lastDataListener.boStream.write32(payload.length);
+		_lastDataListener.boStream.writeBytes(payload, payload.length);
 	}
 	
 	/**
