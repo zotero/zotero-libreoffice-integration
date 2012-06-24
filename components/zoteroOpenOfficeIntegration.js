@@ -181,7 +181,6 @@ var Comm = new function() {
 		 * the DataListener was generated)
 		 */
 		"onStartRequest":function(request, context) {
-			Zotero.debug("Request started");
 		},
 		
 		/**
@@ -190,7 +189,6 @@ var Comm = new function() {
 		"onStopRequest":function(request, context, status) {
 			this.iStream.close();
 			this.oStream.close();
-			Zotero.debug("Request stopped");
 		},
 		
 		/**
