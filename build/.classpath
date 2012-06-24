@@ -5,8 +5,7 @@
 	<classpathentry kind="lib" path="lib/jackson-core-2.0.2.jar"/>
 	<classpathentry kind="lib" path="lib/jackson-databind-2.0.2.jar"/>
 	<classpathentry kind="lib" path="lib/jna.jar"/>
-	<classpathentry kind="lib" path="lib/jackson-annotations-2.0.2.jar"/>
 	<classpathentry kind="con" path="org.openoffice.ide.eclipse.java.OOO_CONTAINER/LibreOffice 3.4"/>
-	<classpathentry kind="lib" path="lib/platform.jar"/>
+	<classpathentry kind="lib" path="lib/jackson-annotations-2.0.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
