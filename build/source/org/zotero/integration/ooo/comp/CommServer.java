@@ -1,5 +1,6 @@
 package org.zotero.integration.ooo.comp;
 
+import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
@@ -20,7 +21,8 @@ public class CommServer implements Runnable {
 				try {
 					// Open socket and output stream
 					socket = new Socket("127.0.0.1", 23116);
-					outputStream = new DataOutputStream(socket.getOutputStream());
+					socket.setTcpNoDelay(true);
+					outputStream = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream(), 16384));
 					
 					// Start another thread to read from the socket
 					new Thread(new CommReader(socket)).start();
@@ -60,6 +62,7 @@ public class CommServer implements Runnable {
 							outputStream.writeInt(frame.getTransactionID());
 							outputStream.writeInt(payload.length);
 							outputStream.write(payload);
+							outputStream.flush();
 						} catch(SocketException e) {
 							deferredFrame = frame;
 							break;
