@@ -327,6 +327,7 @@ var Comm = new function() {
 		_lastDataListener.boStream.write32(transactionID);
 		_lastDataListener.boStream.write32(payload.length);
 		_lastDataListener.boStream.writeBytes(payload, payload.length);
+		_lastDataListener.boStream.flush();
 	}
 	
 	/**
