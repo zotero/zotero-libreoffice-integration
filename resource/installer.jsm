@@ -47,6 +47,8 @@ const UNOPKG_LOCATIONS = {
 		"C:\\Program Files (x86)\\LibreOffice 3.4\\program\\unopkg.exe",
 		"C:\\Program Files\\LibreOffice 3.5\\program\\unopkg.exe",
 		"C:\\Program Files (x86)\\LibreOffice 3.5\\program\\unopkg.exe",
+		"C:\\Program Files\\LibreOffice 3.6\\program\\unopkg.exe",
+		"C:\\Program Files (x86)\\LibreOffice 3.6\\program\\unopkg.exe",
 		"C:\\Program Files\\OpenOffice.org 3.1\\program\\unopkg.exe",
 		"C:\\Program Files (x86)\\OpenOffice.org 3.1\\program\\unopkg.exe",
 		"C:\\Program Files\\OpenOffice.org 3.2\\program\\unopkg.exe",
@@ -102,9 +104,10 @@ const UNOPKG_LOCATIONS = {
 		"/opt/libreoffice/program/unopkg",
 		"/opt/libreoffice3/program/unopkg",
 		"/opt/libreoffice3.4/program/unopkg",
-		"/opt/libreoffice3.5/program/unopkg"
+		"/opt/libreoffice3.5/program/unopkg",
+		"/opt/libreoffice3.6/program/unopkg"
 	]
-};			
+};
 
 const UNOPKG_RELPATHS = {
 	Mac:[
