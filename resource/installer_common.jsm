@@ -179,10 +179,10 @@ ZoteroPluginInstaller.prototype = {
 			(error ? error : 'Installation could not be completed because an error occurred. Please ensure that '+this._addon.APP+' is closed, and then restart '+Zotero.appName+'.'));
 	},
 	
-	"cancelled":function(error) {
+	"cancelled":function(dontSkipInstallation) {
 		installationInProgress = false;
 		this.closeProgressWindow();
-		if(!this.force) this.prefBranch.setBoolPref("skipInstallation", true);
+		if(!this.force && !dontSkip) this.prefBranch.setBoolPref("skipInstallation", true);
 	},
 	
 	"_firstRunListener":function() {

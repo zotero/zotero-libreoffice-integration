@@ -1,5 +1,6 @@
 <?xml version="1.0" ?>
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
+<?xml-stylesheet href="chrome://zotero/skin/zotero.css" type="text/css"?>
 <?xml-stylesheet href="chrome://zotero/skin/upgrade.css" type="text/css"?>
 <!DOCTYPE window SYSTEM "chrome://zotero/locale/zotero.dtd">
 
@@ -12,7 +13,7 @@
 	<script src="install.js"/>
 	
 	<wizardpage pageid="intro" label="Introduction" onpageshow="introPageShown()"
-	next="java-common">
+	next="openoffice-installations">
 		<description>
 			Zotero OpenOffice.org/NeoOffice/LibreOffice Integration makes it easy to insert Zotero
 			citations and bibliographies into these popular word processors. 
@@ -52,6 +53,16 @@
 			An error occurred installing required packages. While you can attempt to
 			install Zotero OpenOffice.org/LibreOffice Integration anyway, it is unlikely to work.
 			Click Cancel to abort the installation process.
+		</description>
+	</wizardpage>
+	
+	<wizardpage pageid="jre-required" onpageshow="jreRequiredPageShown()"
+	label="Install Required Components"
+	next="openoffice-installations">
+		<description>
+			Zotero OpenOffice.org/NeoOffice/LibreOffice Integration requires the Java 
+			Runtime Environment. Visit <label class="zotero-text-link" href="http://jdl.sun.com/webapps/getjava/BrowserRedirect?host=java.com">Java.com</label>
+			to download it.
 		</description>
 	</wizardpage>
 	
@@ -114,7 +125,7 @@
 			</description>
 			<description>
 				If this error persists, please review 
-				<label class="text-link" href="http://zotero.org/support/word_processor_plugin_installation_for_zotero_2.1#openoffice">troubleshooting instructions</label>.
+				<label class="zotero-text-link" href="http://zotero.org/support/word_processor_plugin_installation_for_zotero_2.1#openoffice">troubleshooting instructions</label>.
 				If these do not resolve the issue you are experiencing, click the button below to
 				submit an error report, and post the report ID as well as the text of any errors you
 				experienced during manual installation to <label class="text-link" href="http://forums.zotero.org/3/">the Zotero forums</label>.

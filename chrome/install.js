@@ -48,27 +48,33 @@ function onLoad() {
 	javaCommonCheckRun = false;
 	
 	for(var param in window.arguments[0].wrappedJSObject) window[param] = window.arguments[0].wrappedJSObject[param];
+	
+	if(Zotero.isWin) {
+		checkJRE();
+	} else if(!Zotero.isMac) {
+		wizard.getPageById("intro").next = "java-common";
 		
-	checkJavaCommon(function(success) {
-		// if openoffice.org-java-common check succeeds, we don't need to show the page for it
-		javaCommonCheckComplete = true;
-		
-		if(success) {
-			wizard.getPageById("intro").next = "openoffice-installations";
-			wizard.getPageById("java-common").next = "openoffice-installations";
-		} else {
-			wizard.getPageById("intro").next = "java-common";
-			wizard.getPageById("java-common").next = "java-common-install";
-			document.getElementById("java-common-required").hidden = false;
-			document.getElementById("java-common-progress").hidden = true;
-			document.getElementById("java-common-packages").textContent = neededPackages.join("\n");
-		}
-		
-		if(wizard.currentPage.pageid === "java-common") {
-			wizard.canAdvance = true;
-			if(success) wizard.advance();
-		}
-	});
+		checkJavaCommon(function(success) {
+			// if openoffice.org-java-common check succeeds, we don't need to show the page for it
+			javaCommonCheckComplete = true;
+			
+			if(success) {
+				wizard.getPageById("intro").next = "openoffice-installations";
+				wizard.getPageById("java-common").next = "openoffice-installations";
+			} else {
+				wizard.getPageById("intro").next = "java-common";
+				wizard.getPageById("java-common").next = "java-common-install";
+				document.getElementById("java-common-required").hidden = false;
+				document.getElementById("java-common-progress").hidden = true;
+				document.getElementById("java-common-packages").textContent = neededPackages.join("\n");
+			}
+			
+			if(wizard.currentPage.pageid === "java-common") {
+				wizard.canAdvance = true;
+				if(success) wizard.advance();
+			}
+		});
+	}
 }
 
 /**
@@ -77,12 +83,6 @@ function onLoad() {
  */
 function checkJavaCommon(callback) {
 	neededPackages = [];
-	
-	// no need to check on Mac or Win
-	if(Zotero.isMac || Zotero.isWin) {
-		callback(true);
-		return;
-	}
 	
 	// check for dpkg
 	var dpkg = ZoteroOpenOfficeIntegration.getFile("/usr/bin/dpkg");
@@ -151,6 +151,36 @@ function checkJavaCommonPkg(pkgMain, pkgRequired, callback) {
 			callback(true);
 		}
 	}});
+}
+
+/**
+ * Check if JRE is required on Windows
+ */
+function checkJRE() {
+	var isInstalled = false,
+		wrk = Components.classes["@mozilla.org/windows-registry-key;1"]
+			.createInstance(Components.interfaces.nsIWindowsRegKey);
+	try {
+		wrk.open(Components.interfaces.nsIWindowsRegKey.ROOT_KEY_LOCAL_MACHINE,
+			"Software\\JavaSoft\\Java Runtime Environment",
+			Components.interfaces.nsIWindowsRegKey.ACCESS_READ);
+		try {
+			isInstalled = !!wrk.readStringValue("CurrentVersion");
+		} finally {
+			wrk.close();
+		}
+	} catch(e) {}
+	
+	if(isInstalled) {
+		wizard.getPageById("intro").next = "openoffice-installations";
+		
+		if(wizard.currentPage.pageid === "jre-required") {
+			wizard.canAdvance = true;
+			wizard.advance();
+		}
+	} else {
+		wizard.getPageById("intro").next = "jre-required";
+	}
 }
 
 /*** intro-page ***/
@@ -224,6 +254,15 @@ function javaCommonVerifyInstallationCallback(success) {
 		document.getElementById("java-common-install-progress").hidden = true;
 		document.getElementById("java-common-install-error").hidden = false;
 	}
+}
+
+/*** jre-required page ***/
+
+/**
+ * Called when jre-required wizardpage is shown
+ */
+function jreRequiredPageShown() {
+	wizard.canAdvance = false;
 }
 
 /*** openoffice-installations-page ***/
@@ -432,12 +471,12 @@ function wizardCancelled() {
 function wizardBack() {
 	var pageid = wizard.currentPage.pageid;
 	
-	if(pageid === "java-common") {
+	if(pageid === "java-common" || pageid === "jre-required") {
 		wizard.goTo("intro");
 	} else if(pageid === "java-common-install") {
 		wizard.goTo("java-common");
 	} else if(pageid === "openoffice-installations") {
-		wizard.goTo(wizard.getPageById("intro").next === "openoffice-installations" ? "intro" : "java-common");
+		wizard.goTo(wizard.getPageById("intro").next === "openoffice-installations" ? "intro" : wizard.getPageById("intro").next);
 	} else if(pageid === "installing" || pageid === "installation-complete") {
 		wizard.goTo("openoffice-installations");
 	} else {
@@ -445,6 +484,15 @@ function wizardBack() {
 	}
 }
 
+function activated() {
+	var pageid = wizard.currentPage.pageid;
+	
+	if(pageid === "jre-required") {
+		checkJRE();
+	}
+}
+
 /*** EVENT LISTENERS ***/
 
 window.addEventListener("load", onLoad, false);
+window.addEventListener("activate", activated, false);
