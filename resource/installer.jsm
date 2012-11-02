@@ -211,7 +211,11 @@ var Plugin = new function() {
 	 */
 	this.getSelectedInstallations = function() {
 		// first try getting unopkg paths pref
-		var unopkgPaths = JSON.parse(zoteroPluginInstaller.prefBranch.getCharPref(this.UNOPKG_PATHS_PREF));
+		try {
+			var unopkgPaths = JSON.parse(zoteroPluginInstaller.prefBranch.getCharPref(this.UNOPKG_PATHS_PREF));
+		} catch(e) {
+			return [];
+		}
 		
 		// make sure paths exist
 		var extantPaths = [];
