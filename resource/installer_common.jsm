@@ -182,7 +182,7 @@ ZoteroPluginInstaller.prototype = {
 	"cancelled":function(dontSkipInstallation) {
 		installationInProgress = false;
 		this.closeProgressWindow();
-		if(!this.force && !dontSkip) this.prefBranch.setBoolPref("skipInstallation", true);
+		if(!this.force && !dontSkipInstallation) this.prefBranch.setBoolPref("skipInstallation", true);
 	},
 	
 	"_firstRunListener":function() {
