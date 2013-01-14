@@ -77,6 +77,8 @@ const UNOPKG_LOCATIONS = {
 		"/usr/lib/openoffice/program/unopkg",
 		"/usr/lib64/openoffice/program/unopkg",
 		
+		"/usr/lib/libreoffice4/program/unopkg",
+		"/usr/lib64/libreoffice4/program/unopkg",
 		"/usr/lib/libreoffice3/program/unopkg",
 		"/usr/lib64/libreoffice3/program/unopkg",
 		
@@ -108,7 +110,8 @@ const UNOPKG_LOCATIONS = {
 		"/opt/libreoffice3.4/program/unopkg",
 		"/opt/libreoffice3.5/program/unopkg",
 		"/opt/libreoffice3.6/program/unopkg",
-		"/opt/libreoffice3.7/program/unopkg"
+		"/opt/libreoffice3.7/program/unopkg",
+		"/opt/libreoffice4.0/program/unopkg"
 	]
 };
 
