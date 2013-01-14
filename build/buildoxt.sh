@@ -1,17 +1,20 @@
 #!/bin/bash
 # Compile definitions
-LO_DIR=/opt/libreoffice3.4
-BASIS_DIR="$LO_DIR"/basis3.4
+LO_DIR=/usr/share/libreoffice
+LO_SDK_DIR=/usr/lib/libreoffice/sdk
+URE_DIR=/usr/lib/ure
+IDL_DIR=/usr/share/idl/libreoffice
 
 cd idl
-"$BASIS_DIR"/sdk/bin/idlc -O../build/urd/org/zotero/integration/ooo -I"$BASIS_DIR"/sdk/idl org/zotero/integration/ooo/*idl
+"$LO_SDK_DIR"/bin/idlc -O../build/urd/org/zotero/integration/ooo -I"$IDL_DIR" org/zotero/integration/ooo/*idl
 cd ..
-"$LO_DIR"/ure/bin/regmerge types.rdb build/urd/org/zotero/integration/ooo/*urd /UCR 
+"$URE_DIR"/bin/regmerge types.rdb build/urd/org/zotero/integration/ooo/*urd /UCR 
 cd build
-"$BASIS_DIR"/sdk/bin/javamaker -BUCR ../types.rdb "$LO_DIR"/ure/share/misc/types.rdb
+"$LO_SDK_DIR"/bin/javamaker -BUCR ../types.rdb "$URE_DIR"/share/misc/types.rdb
 cd ..
 
 # Copy external jars
+mkdir -p oxt/external_jars
 cp -r lib/*jar oxt/external_jars
 cp -r types.rdb oxt/types.rdb
 
