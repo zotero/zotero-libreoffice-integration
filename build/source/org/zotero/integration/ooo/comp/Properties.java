@@ -29,8 +29,7 @@ import com.sun.star.beans.PropertyExistException;
 import com.sun.star.beans.UnknownPropertyException;
 import com.sun.star.beans.XPropertyContainer;
 import com.sun.star.beans.XPropertySet;
-import com.sun.star.document.XDocumentInfo;
-import com.sun.star.document.XDocumentInfoSupplier;
+import com.sun.star.document.XDocumentPropertiesSupplier;
 import com.sun.star.lang.XComponent;
 import com.sun.star.uno.Any;
 import com.sun.star.uno.UnoRuntime;
@@ -41,10 +40,10 @@ public class Properties {
 	private XPropertyContainer propertyContainer;
 	
 	public Properties(XComponent component) {
-		XDocumentInfoSupplier docInfoSupplier = (XDocumentInfoSupplier) UnoRuntime.queryInterface(XDocumentInfoSupplier.class, component);
-		XDocumentInfo docInfo = docInfoSupplier.getDocumentInfo();
-		propertySet = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, docInfo);
-		propertyContainer = (XPropertyContainer) UnoRuntime.queryInterface(XPropertyContainer.class, docInfo);
+		XDocumentPropertiesSupplier docInfoSupplier = (XDocumentPropertiesSupplier) UnoRuntime.queryInterface(XDocumentPropertiesSupplier.class, component);
+		XPropertyContainer docProperties = docInfoSupplier.getDocumentProperties().getUserDefinedProperties();
+		propertySet = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, docProperties);
+		propertyContainer = (XPropertyContainer) UnoRuntime.queryInterface(XPropertyContainer.class, docProperties);
 	}
 	
 	public String getProperty(String propertyName) throws Exception {
