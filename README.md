@@ -11,7 +11,7 @@ To build the LibreOffice extension under Ubuntu (and likely Debian), you will ne
 *  libreoffice-java-common
 *  libreoffice-dev
 
-It is possible to build using the 
+It is possible to build using the official LibreOffice packages from [libreoffice.org](http://www.libreoffice.org/) as well, although you will need to tweak some paths. (Be sure to install the SDK!)
 
 To build:
 
