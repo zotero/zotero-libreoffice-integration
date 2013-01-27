@@ -242,7 +242,7 @@ public class Document {
         		try {
 	    			String[] splitVersion = Application.ooVersion.split("\\.");
 	    			int firstDigit = Integer.parseInt(splitVersion[0]);
-	    			if(firstDigit >= 3 && Integer.parseInt(splitVersion[1]) >= 5) {
+	    			if(firstDigit == 3 && Integer.parseInt(splitVersion[1]) >= 5) {
 	    				XMultiServiceFactory configProvider = (XMultiServiceFactory) UnoRuntime.queryInterface(XMultiServiceFactory.class,
 	    						factory.createInstance("com.sun.star.configuration.ConfigurationProvider"));
 	    				PropertyValue nodepath = new PropertyValue();
