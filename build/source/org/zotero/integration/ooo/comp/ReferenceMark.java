@@ -160,19 +160,17 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 
 		XMultiPropertyStates rangePropStates = (XMultiPropertyStates) UnoRuntime.queryInterface(XMultiPropertyStates.class, cursor);
 		rangePropStates.setPropertiesToDefault(PROPERTIES_CHANGE_TO_DEFAULT);
-
+		
 		if(isRich) {
-			/*if(isBibliography) {
-				// Add a new line to the start of the bibliography so that the paragraph format
+			XPropertySet rangeProps = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, range);
+			
+			if(isBibliography) {
+				/*// Add a new line to the start of the bibliography so that the paragraph format
 				// for the first entry will be correct. Without the new line, when converting
 				// citation styles, the first entry of the bibliography will keep the same paragraph
 				// formatting as the previous citation style
-				textString = "{\\rtf\\\n" + textString.substring(6);
-			}*/
-
-			insertRTF(textString, cursor);
-
-			if(isBibliography) {
+				textString = "{\\rtf\\\n" + textString.substring(6);*/
+				insertRTF(textString, cursor);
 				// Remove the new line from the bibliography (added above). Have to remove the
 				// new line before the textSection and then adjust the range so the new line
 				// starting the textSection is outside of the range so that the 
@@ -190,8 +188,11 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 				}
 				cursor.collapseToStart();
 				moveCursorRight(cursor, previousLen-removeLastNewLine);
-				XPropertySet rangeProps = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, range);
 				rangeProps.setPropertyValue("ParaStyleName", "Bibliography 1");
+			} else {
+				String oldParaStyle = (String) rangeProps.getPropertyValue("ParaStyleName");
+				insertRTF(textString, cursor);
+				rangeProps.setPropertyValue("ParaStyleName", oldParaStyle);
 			}
 		} else {
 			range.setString(textString);
@@ -206,7 +207,13 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 				dupRange = text.createTextCursorByRange(range);
 				dupRange.collapseToEnd();
 				dupRange.goRight((short) 1, true);
-				dupRange.setString("");
+				if(dupRange.getString().equals("\n")) {
+					dupRange.setString("");
+				}
+				dupRange.goLeft((short) 1, true);
+				if(dupRange.getString().equals("\n")) {
+					dupRange.setString("");
+				}
 
 				dupRange = text.createTextCursorByRange(range);
 				dupRange.collapseToStart();
