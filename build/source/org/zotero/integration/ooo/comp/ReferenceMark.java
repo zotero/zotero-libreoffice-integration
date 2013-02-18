@@ -47,6 +47,7 @@ import com.sun.star.text.XTextContent;
 import com.sun.star.text.XTextCursor;
 import com.sun.star.text.XTextRange;
 import com.sun.star.text.XTextRangeCompare;
+import com.sun.star.uno.Any;
 import com.sun.star.uno.UnoRuntime;
 
 public class ReferenceMark implements Comparable<ReferenceMark> {
@@ -191,8 +192,24 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 				rangeProps.setPropertyValue("ParaStyleName", "Bibliography 1");
 			} else {
 				String oldParaStyle = (String) rangeProps.getPropertyValue("ParaStyleName");
+				
 				insertRTF(textString, cursor);
+				
+				// Inserting RTF in LibreOffice 4 resets the style to the document default, so
+				// we set it back to whatever it was before we inserted the RTF. However,
+				// setting the paragraph style will reset superscript and other character
+				// properties specified by the style, so we need to explicitly preserve these.
+				Object[] oldPropertyValues = new Object[PROPERTIES_CHANGE_TO_DEFAULT.length];
+				for(int i=0; i<PROPERTIES_CHANGE_TO_DEFAULT.length; i++) {
+					Object result = rangeProps.getPropertyValue(PROPERTIES_CHANGE_TO_DEFAULT[i]);
+					oldPropertyValues[i] = result instanceof Any ? ((Any) result).getObject() : result;
+				}
 				rangeProps.setPropertyValue("ParaStyleName", oldParaStyle);
+				for(int i=0; i<PROPERTIES_CHANGE_TO_DEFAULT.length; i++) {
+					if(oldPropertyValues[i] != null) {
+						rangeProps.setPropertyValue(PROPERTIES_CHANGE_TO_DEFAULT[i], oldPropertyValues[i]);
+					}
+				}
 			}
 		} else {
 			range.setString(textString);
