@@ -224,11 +224,19 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 				dupRange = text.createTextCursorByRange(range);
 				dupRange.collapseToEnd();
 				dupRange.goRight((short) 1, true);
-				if(dupRange.getString().equals("\n")) {
+				String str = dupRange.getString();
+				if(str.equals("\n")) {
+					dupRange.setString("");
+				} else if(str.equals("\r")) {
+					dupRange.goRight((short) 1, true);
 					dupRange.setString("");
 				}
 				dupRange.goLeft((short) 1, true);
 				if(dupRange.getString().equals("\n")) {
+					dupRange.setString("");
+				}
+				dupRange.goLeft((short) 1, true);
+				if(dupRange.getString().equals("\r")) {
 					dupRange.setString("");
 				}
 
