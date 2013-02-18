@@ -225,14 +225,15 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 				dupRange.collapseToEnd();
 				dupRange.goRight((short) 1, true);
 				String str = dupRange.getString();
-				if(str.equals("\n")) {
+				if(str.equals("\n") || str.equals("\r\n")) {
 					dupRange.setString("");
 				} else if(str.equals("\r")) {
 					dupRange.goRight((short) 1, true);
 					dupRange.setString("");
 				}
 				dupRange.goLeft((short) 1, true);
-				if(dupRange.getString().equals("\n")) {
+				str = dupRange.getString();
+				if(str.equals("\n") || str.equals("\r\n")) {
 					dupRange.setString("");
 				}
 				dupRange.goLeft((short) 1, true);
