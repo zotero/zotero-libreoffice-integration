@@ -106,9 +106,11 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	public void delete() throws Exception {
 		if(isWholeRange()) {
 			((XComponent) UnoRuntime.queryInterface(XComponent.class, text)).dispose();
-		} else {		
-			// delete mark
-			range.setString("");
+		} else {
+			XTextCursor dupRange = text.createTextCursorByRange(range);
+			text.removeTextContent(textContent);
+			range = dupRange;
+			
 			// dispose of a Bookmark or TextSection
 			if(isDisposable) {
 				((XComponent) UnoRuntime.queryInterface(XComponent.class, textContent)).dispose();
@@ -120,8 +122,16 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		if(isDisposable) {
 			((XComponent) UnoRuntime.queryInterface(XComponent.class, textContent)).dispose();
 		} else {
-			// TODO: won't work with formatted text
-			range.setString(range.getString());
+			String oldContents = range.getString();
+			if(oldContents.equals("")) {
+				// One cannot simply overwrite an empty ReferenceMark
+				XTextCursor dupRange = text.createTextCursorByRange(range);
+				text.removeTextContent(textContent);
+				range = dupRange;
+			} else {
+				// TODO: won't work with formatted text
+				range.setString(oldContents);
+			}
 		}
 	}
 	
@@ -145,6 +155,10 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		}
 		
 		XTextCursor cursor = text.createTextCursorByRange(range);
+		if(!isBibliography && range.getString().equals("")) {
+			// One cannot simply overwrite an empty ReferenceMark
+			delete();
+		}
 		range = cursor;
 		
 		if(!isBibliography) {
@@ -253,8 +267,7 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 			named.setName(rawCode);
 		} else {
 			// The only way to rename a ReferenceMark is to delete it and add it again
-			// TODO: won't work with formatted text
-			range.setString(range.getString());
+			removeCode();
 			reattachMark();
 		}
 	}
@@ -405,7 +418,7 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	
 	protected void prepareMultiline() throws Exception {
 		if(!isTextSection) {	// need to convert to TextSection
-			range.setString("");
+			delete();
 
 			// add a paragraph before creating multiline field at end of document
 			// if this is not done, it's hard to add text after the TextSection
