@@ -157,7 +157,7 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		XTextCursor cursor = text.createTextCursorByRange(range);
 		if(!isBibliography && range.getString().equals("")) {
 			// One cannot simply overwrite an empty ReferenceMark
-			delete();
+			text.removeTextContent(textContent);
 		}
 		range = cursor;
 		
