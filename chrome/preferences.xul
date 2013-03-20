@@ -11,18 +11,21 @@
 			</hbox>
 			<script>
 			<![CDATA[
-			var ZoteroOpenOfficeInstaller = Components.utils.import("resource://zotero-openoffice-integration/installer.jsm").Installer;
-			window.addEventListener("load", function() {
-				var zpi = new ZoteroOpenOfficeInstaller(true);
-				updateOpenOfficeIntegration(zpi);
-			}, false);
-			
-			function updateOpenOfficeIntegration(zpi) {
-				var isInstalled = zpi.isInstalled();
-				document.getElementById("wordProcessors-openOffice-description").textContent =
-					"The Zotero OpenOffice.org/LibreOffice/NeoOffice extension is "+(isInstalled ? "" : "not ")+"currently installed.";
-				document.getElementById("wordProcessors-openOffice-install").label =
-					(isInstalled ? "Reinstall" : "Install")+" Extension";
+			var ZoteroOpenOfficeInstaller;
+			if(!ZoteroOpenOfficeInstaller) {
+				ZoteroOpenOfficeInstaller = Components.utils.import("resource://zotero-openoffice-integration/installer.jsm").Installer;
+				window.addEventListener("load", function() {
+					var zpi = new ZoteroOpenOfficeInstaller(true);
+					updateOpenOfficeIntegration(zpi);
+				}, false);
+				
+				function updateOpenOfficeIntegration(zpi) {
+					var isInstalled = zpi.isInstalled();
+					document.getElementById("wordProcessors-openOffice-description").textContent =
+						"The Zotero OpenOffice.org/LibreOffice/NeoOffice extension is "+(isInstalled ? "" : "not ")+"currently installed.";
+					document.getElementById("wordProcessors-openOffice-install").label =
+						(isInstalled ? "Reinstall" : "Install")+" Extension";
+				}
 			}
 			]]>
 			</script>
