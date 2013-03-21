@@ -130,11 +130,11 @@ const UNOPKG_RELPATHS = {
 var Plugin = new function() {
 	this.UNOPKG_PATHS_PREF = "unopkgPaths";
 	
-	this.EXTENSION_STRING = "Zotero OpenOffice Integration";
+	this.EXTENSION_STRING = "Zotero LibreOffice Integration";
 	this.EXTENSION_ID = "zoteroOpenOfficeIntegration@zotero.org";
 	this.EXTENSION_PREF_BRANCH = "extensions.zoteroOpenOfficeIntegration.";
 	this.EXTENSION_DIR = "zotero-openoffice-integration";
-	this.APP = 'OpenOffice.org';
+	this.APP = 'LibreOffice/OpenOffice.org/NeoOffice';
 	
 	this.REQUIRED_ADDONS = [{
 		name: "Zotero",
@@ -156,6 +156,7 @@ var Plugin = new function() {
 		required: false
 	}];
 	
+	this.LAST_INSTALLED_FILE_UPDATE = "3.5.5";
 	this.DISABLE_PROGRESS_WINDOW = true;
 	
 	var zoteroPluginInstaller, pathToAddon, installing, prefBranch, wizardWindow;
