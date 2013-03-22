@@ -189,6 +189,7 @@ ZoteroPluginInstaller.prototype = {
 	"showPreferences":function(document) {
 		var isInstalled = this.isInstalled(),
 			groupbox = document.createElement("groupbox");
+		groupbox.id = this._addon.EXTENSION_DIR;
 
 		var caption = document.createElement("caption");
 		caption.setAttribute("label", this._addon.APP);
@@ -202,17 +203,23 @@ ZoteroPluginInstaller.prototype = {
 
 		var hbox = document.createElement("hbox");
 		hbox.setAttribute("pack", "center");
-		var button = document.createElement("button");
+		var button = document.createElement("button"),
+			addon = this._addon;
 		button.setAttribute("label", (isInstalled ? "Reinstall" : "Install")+" "+this._addon.APP+" Add-in");
 		button.addEventListener("command", function() {
-			var zpi = new ZoteroPluginInstaller(this._addon, false, true);
+			var zpi = new ZoteroPluginInstaller(addon, false, true);
 			zpi.showPreferences(document);
 		}, false);
 		hbox.appendChild(button);
 		groupbox.appendChild(hbox);
 
-		var tabpanel = document.getElementById("wordProcessors");
-		tabpanel.insertBefore(groupbox, tabpanel.firstChild);
+		var tabpanel = document.getElementById("wordProcessors"),
+			old = document.getElementById(this._addon.EXTENSION_DIR);
+		if(old) {
+			tabpanel.replaceChild(groupbox, old);
+		} else {
+			tabpanel.insertBefore(groupbox, tabpanel.firstChild);
+		}
 	},
 	
 	"_firstRunListener":function() {
