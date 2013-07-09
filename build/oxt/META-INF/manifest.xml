@@ -12,5 +12,4 @@
  <manifest:file-entry manifest:full-path="Office/UI/MathWindowState.xcu" manifest:media-type="application/vnd.sun.star.configuration-data"/>
  <manifest:file-entry manifest:full-path="Office/UI/DrawWindowState.xcu" manifest:media-type="application/vnd.sun.star.configuration-data"/>
  <manifest:file-entry manifest:full-path="Zotero.jar" manifest:media-type="application/vnd.sun.star.uno-component;type=Java"/>
- <manifest:file-entry manifest:media-type="application/vnd.sun.star.uno-typelibrary;type=RDB" manifest:full-path="types.rdb"/>
 </manifest:manifest>
