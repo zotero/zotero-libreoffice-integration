@@ -39,6 +39,12 @@ const UNOPKG_LOCATIONS = {
 		"/Applications/OpenOffice.org 2.4.app/Contents/MacOS/unopkg"
 	],
 	Win:[
+		"C:\\Program Files\\LibreOffice 4\\program\\unopkg.exe",
+		"C:\\Program Files (x86)\\LibreOffice 4\\program\\unopkg.exe",
+		"C:\\Program Files\\LibreOffice 4.0\\program\\unopkg.exe",
+		"C:\\Program Files (x86)\\LibreOffice 4.0\\program\\unopkg.exe",
+		"C:\\Program Files\\LibreOffice 4.1\\program\\unopkg.exe",
+		"C:\\Program Files (x86)\\LibreOffice 4.1\\program\\unopkg.exe",
 		"C:\\Program Files\\LibreOffice 3\\program\\unopkg.exe",
 		"C:\\Program Files (x86)\\LibreOffice 3\\program\\unopkg.exe",
 		"C:\\Program Files\\LibreOffice 3.3\\program\\unopkg.exe",
@@ -111,7 +117,8 @@ const UNOPKG_LOCATIONS = {
 		"/opt/libreoffice3.5/program/unopkg",
 		"/opt/libreoffice3.6/program/unopkg",
 		"/opt/libreoffice3.7/program/unopkg",
-		"/opt/libreoffice4.0/program/unopkg"
+		"/opt/libreoffice4.0/program/unopkg",
+		"/opt/libreoffice4.1/program/unopkg"
 	]
 };
 
