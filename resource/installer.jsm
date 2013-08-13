@@ -57,6 +57,8 @@ const UNOPKG_LOCATIONS = {
 		"C:\\Program Files (x86)\\LibreOffice 3.6\\program\\unopkg.exe",
 		"C:\\Program Files\\LibreOffice 3.7\\program\\unopkg.exe",
 		"C:\\Program Files (x86)\\LibreOffice 3.7\\program\\unopkg.exe",
+		"C:\\Program Files\\OpenOffice 4\\program\\unopkg.exe",
+		"C:\\Program Files (x86)\\OpenOffice 4\\program\\unopkg.exe",
 		"C:\\Program Files\\OpenOffice.org 3.1\\program\\unopkg.exe",
 		"C:\\Program Files (x86)\\OpenOffice.org 3.1\\program\\unopkg.exe",
 		"C:\\Program Files\\OpenOffice.org 3.2\\program\\unopkg.exe",
