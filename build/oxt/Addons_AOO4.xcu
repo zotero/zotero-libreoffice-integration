@@ -1,0 +1,145 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<oor:component-data 
+ xmlns:oor="http://openoffice.org/2001/registry"
+ xmlns:xs="http://www.w3.org/2001/XMLSchema"
+ oor:name="Addons"
+ oor:package="org.openoffice.Office">
+	<node oor:name="AddonUI">
+		<node oor:name="OfficeToolBar">
+			<node oor:name="Zotero.OfficeToolBar.AOO4" oor:op="replace">
+				<prop oor:name="Title" oor:type="xs:string">
+				  <value xml:lang="en-US">Zotero</value>
+				</prop>
+				<node oor:name="ToolBarItems">
+					<node oor:name="m1" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addCitation</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value>%origin%/icons/image1</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>Insert Citation</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+					</node>
+					<node oor:name="m2" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?editCitation</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value>%origin%/icons/image5</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>Edit Citation</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+					</node>
+					<node oor:name="m3" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addBibliography</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value>%origin%/icons/image2</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>Insert Bibliography</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+					</node>
+					<node oor:name="m4" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?editBibliography</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value>%origin%/icons/image6</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>Edit Bibliography</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+					</node>
+					<node oor:name="m5" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>private:separator</value>
+						</prop>
+					</node>
+					<node oor:name="m6" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?refresh</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value>%origin%/icons/image3</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>Refresh</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+					</node>
+					<node oor:name="m7" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?setDocPrefs</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value>%origin%/icons/image4</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>Set Document Preferences</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+					</node>
+					<node oor:name="m8" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?removeCodes</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value>%origin%/icons/image7</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>Remove Field Codes</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+					</node>
+				</node>
+			</node>
+		</node>
+	</node>
+</oor:component-data>
