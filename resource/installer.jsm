@@ -34,6 +34,7 @@ var Installer = function(failSilently, force) {
 const UNOPKG_LOCATIONS = {
 	Mac:[
 		"/Applications/LibreOffice.app/Contents/MacOS/unopkg",
+		"/Applications/OpenOffice.app/Contents/MacOS/unopkg",
 		"/Applications/OpenOffice.org.app/Contents/MacOS/unopkg",
 		"/Applications/NeoOffice.app/Contents/MacOS/unopkg",
 		"/Applications/OpenOffice.org 2.4.app/Contents/MacOS/unopkg"
