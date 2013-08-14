@@ -34,8 +34,8 @@ var Installer = function(failSilently, force) {
 const UNOPKG_LOCATIONS = {
 	Mac:[
 		"/Applications/LibreOffice.app/Contents/MacOS/unopkg",
-		"/Applications/OpenOffice.app/Contents/MacOS/unopkg",
 		"/Applications/OpenOffice.org.app/Contents/MacOS/unopkg",
+		"/Applications/OpenOffice.app/Contents/MacOS/unopkg",
 		"/Applications/NeoOffice.app/Contents/MacOS/unopkg",
 		"/Applications/OpenOffice.org 2.4.app/Contents/MacOS/unopkg"
 	],
@@ -192,10 +192,23 @@ var Plugin = new function() {
 		this.pathToAddon = zoteroPluginInstaller.getAddonPath(this.EXTENSION_ID);
 		
 		// look for installations
-		var installations = this.getSelectedInstallations();
-		if(installations.length && !zpi.force) {
-			// if there are installations already selected from a previous install and we are not
+		var installations = this.getInstallations(),
+			haveSelectedPaths = false,
+			havePaths = false;
+		for(var i in installations) {
+			haveSelectedPaths |= (installations[i] === true);
+			havePaths = true;
+		}
+
+		if(haveSelectedPaths && !zpi.force) {
+			// If there are installations already selected from a previous install and we are not
 			// being forced to show wizard, do silent install
+
+			// Automatically select new installations
+			for(var i in installations) {
+				if(installations[i] === null) installations[i] = true;
+			}
+
 			this.installComponents(installations, function(success) {
 				if(success) {
 					zpi.success();
@@ -203,8 +216,8 @@ var Plugin = new function() {
 					openInstallationWizard();
 				}
 			});
-		} else if(!zpi.failSilently || this.getPotentialInstallations().length) {
-			// otherwise, if there are installations and we are not failing silently, open the
+		} else if(!zpi.failSilently || havePaths) {
+			// Otherwise, if there are installations and we are not failing silently, open the
 			// wizard
 			openInstallationWizard();
 		}
@@ -222,42 +235,50 @@ var Plugin = new function() {
 	}
 	
 	/**
-	 * Gets a list of selected OpenOffice.org installations from the preferences
-	 * @return {String[]}
+	 * Gets a list of potential OpenOffice.org installations by
+	 * checking paths and checking the preferences.
+	 *
+	 * @return {Object} An object whose keys are paths and whose values
+	 * are either true, false, or null, representing installations that
+	 * the user has selected in the past, installations that the user
+	 * has not selected in the past, and installations that were not
+	 * previously known, respectively.
 	 */
-	this.getSelectedInstallations = function() {
-		// first try getting unopkg paths pref
+	this.getInstallations = function() {
+		// First try getting unopkg paths pref
+		var previousPaths, paths = {};
 		try {
-			var unopkgPaths = JSON.parse(zoteroPluginInstaller.prefBranch.getCharPref(this.UNOPKG_PATHS_PREF));
+			previousPaths = JSON.parse(zoteroPluginInstaller.prefBranch.getCharPref(this.UNOPKG_PATHS_PREF));
 		} catch(e) {
-			return [];
+			previousPaths = {};
+		}
+
+		if(previousPaths instanceof Array) {
+			// Convert old-format unopkg path array to object
+			var convertPaths = previousPaths;
+			previousPaths = {};
+			for(var i=0; i<convertPaths.length; i++) {
+				previousPaths[convertPaths[i]] = true;
+			}
 		}
 		
-		// make sure paths exist
-		var extantPaths = [];
-		for each(var path in unopkgPaths) {
+		// Add previousPaths that exist to paths array
+		for(var path in previousPaths) {
 			try {
 				if(Plugin.getFile(path).exists()) {
-					extantPaths.push(path);
+					paths[path] = previousPaths[path];
 				}
 			} catch(e) {};
 		}
 		
-		if(!extantPaths.length) return [];
-		return extantPaths;
-	}
-	
-	/**
-	 * Gets a list of potential OpenOffice.org installations by checking paths
-	 */
-	this.getPotentialInstallations = function() {
-		var installations = [];
-		var potentialLocations = UNOPKG_LOCATIONS[Plugin.platform].slice();
-		
+		// Start looking for paths from the list above, in case new
+		// copies/versions of LibreOffice/OpenOffice have been
+		// installed
+		var potentialLocations = UNOPKG_LOCATIONS[Plugin.platform];
+
 		if(Zotero.isWin) {
 			var wrk = Components.classes["@mozilla.org/windows-registry-key;1"]
-				.createInstance(Components.interfaces.nsIWindowsRegKey);
-			var path;
+				.createInstance(Components.interfaces.nsIWindowsRegKey), path;
 			try {
 				wrk.open(Components.interfaces.nsIWindowsRegKey.ROOT_KEY_LOCAL_MACHINE,
 					"Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\unopkg.exe",
@@ -269,10 +290,11 @@ var Plugin = new function() {
 				}
 			} catch(e) {}
 			if(path) {
+				potentialLocations = potentialLocations.slice();
 				potentialLocations.push(path);
 			}
 		}
-		
+
 		for each(var potentialLocation in potentialLocations) {
 			try {
 				var file = Plugin.getFile(potentialLocation);
@@ -280,15 +302,12 @@ var Plugin = new function() {
 				continue;
 			}
 			
-			if(file.exists()) {
-				// skip files that are symlinked to existing locations, or that we already know of
-				if(installations.indexOf(file.path) === -1) {
-					installations.push(file.path);
-				}
+			if(!paths.hasOwnProperty(file.path) && file.exists()) {
+				paths[file.path] = null;
 			}
 		}
 		
-		return installations;
+		return paths;
 	}
 	
 	/**
@@ -316,7 +335,11 @@ var Plugin = new function() {
 		var oxt = this.getOxtPath();
 		
 		// start installing
-		installComponent(oxt, unopkgPaths, callback);
+		var usePaths = [];
+		for(var i in unopkgPaths) {
+			if(unopkgPaths[i]) usePaths.push(i);
+		}
+		installComponent(oxt, usePaths, callback);
 	}
 	
 	/**

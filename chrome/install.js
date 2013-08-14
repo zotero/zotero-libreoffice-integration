@@ -273,18 +273,7 @@ function jreRequiredPageShown() {
 function openofficeInstallationsPageShown() {
 	wizard.canAdvance = false;
 	
-	var selectedInstallations = ZoteroOpenOfficeIntegration.getSelectedInstallations();
-	var potentialInstallations = ZoteroOpenOfficeIntegration.getPotentialInstallations();
-	
-	var uncheckedInstallations = {};
-	var installations = {};
-	for each(var installation in selectedInstallations) installations[installation] = true;
-	for each(var installation in potentialInstallations) {
-		if(selectedInstallations.length && !installations[installation]) {
-			uncheckedInstallations[installation] = true;
-		}
-		installations[installation] = true;
-	}
+	var installations = ZoteroOpenOfficeIntegration.getInstallations();
 	
 	// add installations to listbox
 	var listbox = document.getElementById("installations-listbox");
@@ -293,7 +282,7 @@ function openofficeInstallationsPageShown() {
 		var itemNode = document.createElement("listitem");
 		itemNode.setAttribute("type", "checkbox");
 		itemNode.setAttribute("label", installation);
-		if(!uncheckedInstallations.hasOwnProperty(installation)) {
+		if(installations[installation] !== false) {
 			itemNode.setAttribute("checked", "true");
 			wizard.canAdvance = true;
 		}
@@ -359,7 +348,7 @@ function openofficeInstallationsAddDirectory() {
 function openofficeInstallationsManualInstallation() {
 	// clear saved unopkg paths so we force manual install on upgrade
 	ZoteroPluginInstaller.prefBranch.setCharPref(
-		ZoteroOpenOfficeIntegration.UNOPKG_PATHS_PREF, "[]");
+		ZoteroOpenOfficeIntegration.UNOPKG_PATHS_PREF, "{}");
 	
 	// get oxt path and set it in the dialog
 	var oxtPath = ZoteroOpenOfficeIntegration.getOxtPath();
@@ -424,9 +413,9 @@ function installingPageShown() {
 	wizard.canRewind = false;
 	
 	var listbox = document.getElementById("installations-listbox");
-	var paths = [];
+	var paths = {};
 	for each(var node in listbox.childNodes) {
-		if(node.checked) paths.push(node.label);
+		paths[node.label] = !!node.checked;
 	}
 	ZoteroOpenOfficeIntegration.installComponents(paths,
 			function(success) {
