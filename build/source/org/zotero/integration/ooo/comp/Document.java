@@ -26,6 +26,7 @@ package org.zotero.integration.ooo.comp;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
@@ -124,7 +125,8 @@ public class Document {
     
     public void cleanup() {}
     
-    public int displayAlert(String text, int icon, int buttons) {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public int displayAlert(String text, int icon, int buttons) {
     	// figure out appropriate buttons
     	int ooButtons = MessageBoxButtons.BUTTONS_OK;
     	if(buttons == 1) {
@@ -137,11 +139,30 @@ public class Document {
     		ooButtons = MessageBoxButtons.BUTTONS_OK;
     	}
     	
-    	final String[] boxTypes = {"errorbox", "messbox", "warningbox"};
-    	
         XWindowPeer xWindow = (XWindowPeer) UnoRuntime.queryInterface(XWindowPeer.class, frame.getContainerWindow());
         XMessageBoxFactory xToolkit = (XMessageBoxFactory) UnoRuntime.queryInterface(XMessageBoxFactory.class, xWindow.getToolkit());
-		XMessageBox box = xToolkit.createMessageBox(xWindow, new Rectangle(), boxTypes[icon], ooButtons, "Zotero Integration", text);
+        XMessageBox box;
+        if(Application.ooName.equals("OpenOffice") && Integer.parseInt(Application.ooVersion.substring(0, 1)) >= 4) {
+        	// CreateMessageBox method differs in AOO 4, so get it using reflection
+			try {
+				Class MessageBoxTypeClass = (Class<Enum>) Class.forName("com.sun.star.awt.MessageBoxType");
+				Method createMessageBox = XMessageBoxFactory.class.getDeclaredMethod("createMessageBox",
+	        			new Class[]{XWindowPeer.class, MessageBoxTypeClass, int.class, String.class, String.class});
+				
+				// Get box types using reflection
+				Object iconObj = icon == 0 ? MessageBoxTypeClass.getDeclaredField("ERRORBOX").get(null) :
+					icon == 1 ? MessageBoxTypeClass.getDeclaredField("INFOBOX").get(null) :
+						MessageBoxTypeClass.getDeclaredField("WARNINGBOX").get(null);
+						
+				box = (XMessageBox) createMessageBox.invoke(xToolkit, xWindow, iconObj, ooButtons, "Zotero Integration", text);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return 0;
+			}
+        } else {
+        	String[] boxTypes = {"errorbox", "messbox", "warningbox"};
+        	box = xToolkit.createMessageBox(xWindow, new Rectangle(), boxTypes[icon], ooButtons, "Zotero Integration", text);
+        }
 		short result = box.execute();
 		
 		if(buttons == 2) {
