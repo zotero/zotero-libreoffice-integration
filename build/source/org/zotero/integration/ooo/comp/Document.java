@@ -144,26 +144,26 @@ public class Document {
         XMessageBox box;
         if(Application.ooName.equals("OpenOffice") && Integer.parseInt(Application.ooVersion.substring(0, 1)) >= 4) {
         	// CreateMessageBox method differs in AOO 4, so get it using reflection
-			try {
-				Class MessageBoxTypeClass = (Class<Enum>) Class.forName("com.sun.star.awt.MessageBoxType");
-				Method createMessageBox = XMessageBoxFactory.class.getDeclaredMethod("createMessageBox",
-	        			new Class[]{XWindowPeer.class, MessageBoxTypeClass, int.class, String.class, String.class});
-				
-				// Get box types using reflection
-				Object iconObj = icon == 0 ? MessageBoxTypeClass.getDeclaredField("ERRORBOX").get(null) :
-					icon == 1 ? MessageBoxTypeClass.getDeclaredField("INFOBOX").get(null) :
-						MessageBoxTypeClass.getDeclaredField("WARNINGBOX").get(null);
-						
-				box = (XMessageBox) createMessageBox.invoke(xToolkit, xWindow, iconObj, ooButtons, "Zotero Integration", text);
-			} catch (Exception e) {
-				e.printStackTrace();
-				return 0;
-			}
+        	try {
+        		Class MessageBoxTypeClass = (Class<Enum>) Class.forName("com.sun.star.awt.MessageBoxType");
+        		Method createMessageBox = XMessageBoxFactory.class.getDeclaredMethod("createMessageBox",
+        				new Class[]{XWindowPeer.class, MessageBoxTypeClass, int.class, String.class, String.class});
+
+        		// Get box types using reflection
+        		Object iconObj = icon == 0 ? MessageBoxTypeClass.getDeclaredField("ERRORBOX").get(null) :
+        			icon == 1 ? MessageBoxTypeClass.getDeclaredField("INFOBOX").get(null) :
+        				MessageBoxTypeClass.getDeclaredField("WARNINGBOX").get(null);
+
+        			box = (XMessageBox) createMessageBox.invoke(xToolkit, xWindow, iconObj, ooButtons, "Zotero Integration", text);
+        	} catch (Exception e) {
+        		e.printStackTrace();
+        		return 0;
+        	}
         } else {
         	String[] boxTypes = {"errorbox", "messbox", "warningbox"};
         	box = xToolkit.createMessageBox(xWindow, new Rectangle(), boxTypes[icon], ooButtons, "Zotero Integration", text);
         }
-		short result = box.execute();
+        short result = box.execute();
 		
 		if(buttons == 2) {
 			return (result == 3 ? 0 : 1);
