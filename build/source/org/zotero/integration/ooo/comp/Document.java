@@ -142,8 +142,11 @@ public class Document {
         XWindowPeer xWindow = (XWindowPeer) UnoRuntime.queryInterface(XWindowPeer.class, frame.getContainerWindow());
         XMessageBoxFactory xToolkit = (XMessageBoxFactory) UnoRuntime.queryInterface(XMessageBoxFactory.class, xWindow.getToolkit());
         XMessageBox box;
-        if(Application.ooName.equals("OpenOffice") && Integer.parseInt(Application.ooVersion.substring(0, 1)) >= 4) {
-        	// CreateMessageBox method differs in AOO 4, so get it using reflection
+        int majorVersion = Integer.parseInt(Application.ooVersion.substring(0, 1));
+        if(majorVersion > 4 ||
+           (majorVersion == 4 && (Application.ooName.equals("OpenOffice") ||
+        		                  Integer.parseInt(Application.ooVersion.substring(2, 3)) >= 1))) {
+        	// CreateMessageBox method differs in AOO 4+ and LO 4.1+, so get it using reflection
         	try {
         		Class MessageBoxTypeClass = (Class<Enum>) Class.forName("com.sun.star.awt.MessageBoxType");
         		Method createMessageBox = XMessageBoxFactory.class.getDeclaredMethod("createMessageBox",
