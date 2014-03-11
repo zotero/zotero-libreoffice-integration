@@ -145,7 +145,7 @@ public class Document {
         int majorVersion = Integer.parseInt(Application.ooVersion.substring(0, 1));
         if(majorVersion > 4 ||
            (majorVersion == 4 && (Application.ooName.equals("OpenOffice") ||
-        		                  Integer.parseInt(Application.ooVersion.substring(2, 3)) >= 1))) {
+        		                  Integer.parseInt(Application.ooVersion.substring(2, 3)) >= 2))) {
         	// CreateMessageBox method differs in AOO 4+ and LO 4.1+, so get it using reflection
         	try {
         		Class MessageBoxTypeClass = (Class<Enum>) Class.forName("com.sun.star.awt.MessageBoxType");
