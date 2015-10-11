@@ -61,7 +61,7 @@
 	next="openoffice-installations">
 		<description>
 			Zotero OpenOffice.org/NeoOffice/LibreOffice Integration requires the Java 
-			Runtime Environment. Visit <label class="zotero-text-link" href="http://jdl.sun.com/webapps/getjava/BrowserRedirect?host=java.com">Java.com</label>
+			Runtime Environment. Visit <label class="zotero-text-link" href="http://java.com/inc/BrowserRedirect1.jsp">Java.com</label>
 			to download it.
 		</description>
 	</wizardpage>
