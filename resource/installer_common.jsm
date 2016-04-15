@@ -63,7 +63,7 @@ var ZoteroPluginInstaller = function(addon, failSilently, force) {
 	this.prefBranch = prefService.getBranch(this._addon.EXTENSION_PREF_BRANCH);
 	
 	var me = this;
-	var extensionIDs = [this._addon.EXTENSION_ID].concat([req.id for each(req in this._addon.REQUIRED_ADDONS)]);
+	var extensionIDs = [this._addon.EXTENSION_ID].concat(this._addon.REQUIRED_ADDONS.map(req => req.id));
 	if(AddonManager) {
 		AddonManager.getAddonsByIDs(extensionIDs, function(addons) {
 			me._addons = addons;
@@ -72,7 +72,7 @@ var ZoteroPluginInstaller = function(addon, failSilently, force) {
 	} else {
 		var extMan = Components.classes['@mozilla.org/extensions/manager;1'].
 								getService(Components.interfaces.nsIExtensionManager)
-		this._addons = [extMan.getItemForID(id) for each(id in extensionIDs)];
+		this._addons = extensionIDs.map(id => extMan.getItemForID(id));
 		this._addonInfoAvailable();
 	}
 }
