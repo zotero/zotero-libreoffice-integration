@@ -7,7 +7,7 @@
 	<em:version>3.5.12.SOURCE</em:version>
 	<em:creator>Center for History and New Media<br/>George Mason University</em:creator>
 	<em:developer>Simon Kornblith</em:developer>
-	<em:homepageURL>http://www.zotero.org</em:homepageURL>
+	<em:homepageURL>https://www.zotero.org</em:homepageURL>
 	<em:updateURL>https://www.zotero.org/download/update-source.rdf</em:updateURL>
 	<em:iconURL>chrome://zotero/skin/zotero_z_32px.png</em:iconURL>
     <em:optionsURL>chrome://zotero/content/preferences/preferences.xul#cite</em:optionsURL>
@@ -25,8 +25,8 @@
 	<em:targetApplication>
 		<Description>
 			<em:id>zotero@chnm.gmu.edu</em:id>
-			<em:minVersion>2.1a1</em:minVersion>
-			<em:maxVersion>4.0.*</em:maxVersion>
+			<em:minVersion>4.0</em:minVersion>
+			<em:maxVersion>5.0.*</em:maxVersion>
 		</Description>
 	</em:targetApplication>
 </Description>

@@ -20,7 +20,7 @@
             <RDF:Description>
               <id>zotero@chnm.gmu.edu</id>
               <minVersion>4.0</minVersion>
-              <maxVersion>4.0.*</maxVersion>
+              <maxVersion>5.0.*</maxVersion>
               <updateLink>http://download.zotero.org/integration/Zotero-LibreOffice-Plugin.xpi</updateLink>
               <updateHash>sha1:</updateHash>
             </RDF:Description>
