@@ -340,9 +340,8 @@ var Comm = new function() {
 		var shouldReinstall = ps.confirm(null, "Zotero LibreOffice Integration Error",
 			'The version of the Zotero LibreOffice Integration component installed within '+
 			'LibreOffice, OpenOffice.org, or NeoOffice does not appear to match '+
-			(Zotero.isStandalone ? 'this Zotero Standalone version'
-				: 'the version currently installed within Firefox')+
-			'. Would you like to attempt to reinstall it?\n\n'+
+			'this Zotero Standalone version. '+
+			'Would you like to attempt to reinstall it?\n\n'+
 			'Please ensure your LibreOffice installation is properly detected. If you '+
 			'continue to experience this error, click the "Manual Installation" button '+
 			'within the wizard to show the directory containing the LibreOffice component. '+
@@ -355,7 +354,7 @@ var Comm = new function() {
 		}
 		
 		// We throw this error to avoid displaying another error dialog
-		Zotero.logError("Firefox and OpenOffice.org extension versions are incompatible");
+		Zotero.logError("Zotero and OpenOffice.org extension versions are incompatible");
 		throw Components.Exception("ExceptionAlreadyDisplayed");
 	}
 };
@@ -519,12 +518,5 @@ var classes = [
 	Document
 ];
 
-/**
-* XPCOMUtils.generateNSGetFactory was introduced in Mozilla 2 (Firefox 4).
-* XPCOMUtils.generateNSGetModule is for Mozilla 1.9.2 (Firefox 3.6).
-*/
-if(XPCOMUtils.generateNSGetFactory) {
-	var NSGetFactory = XPCOMUtils.generateNSGetFactory(classes);
-} else {
-	var NSGetModule = XPCOMUtils.generateNSGetModule(classes);
-}
+var NSGetFactory = XPCOMUtils.generateNSGetFactory(classes);
+

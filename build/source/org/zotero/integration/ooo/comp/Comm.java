@@ -6,10 +6,10 @@ import java.util.concurrent.SynchronousQueue;
 class Comm {
 	static final int API_VERSION = 3;
 	static final String COMMUNICATION_ERROR_STRING = "OpenOffice.org could not communicate with Zotero. "+
-			"Please ensure Firefox or Zotero Standalone is open and set to an online state and try again.";
+			"Please ensure Zotero is open and set to an online state and try again.";
 	static final String OLD_VERSION_STRING = "The version of the Zotero LibreOffice "+
 			"Integration component installed within LibreOffice, OpenOffice.org, or NeoOffice does not "+
-			"appear to match the version installed in Zotero Standalone or Firefox. Please ensure both "+
+			"appear to match the version installed in Zotero. Please ensure both "+
 			"components are up to date and try again.";
 	static Application application;
 	static BlockingQueue<CommFrame> writeQueue = new SynchronousQueue<CommFrame>();
