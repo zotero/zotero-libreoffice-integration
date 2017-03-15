@@ -3,12 +3,12 @@
 xmlns:d="http://openoffice.org/extensions/description/2006"
 xmlns:xlink="http://www.w3.org/1999/xlink">
  
-  <version value="3.5.9" />   
+  <version value="5.0.0" />   
  
   <identifier value="org.Zotero.integration.openoffice" />
  
   <dependencies>
-    <OpenOffice.org-minimal-version value="3.0" d:name="OpenOffice.org 3.0"/>
+    <OpenOffice.org-minimal-version value="4.1" d:name="OpenOffice.org 4.1"/>
   </dependencies>
  
   <update-information>

@@ -32,7 +32,7 @@ public final class ZoteroOpenOfficeIntegrationImpl extends WeakBase
     }
     
     public static void debugPrint(String msg) {
-    	//System.out.println("ZoteroOpenOfficeIntegration: "+msg);
+    	System.out.println("ZoteroOpenOfficeIntegration: "+msg);
     }
     
     public ZoteroOpenOfficeIntegrationImpl( XComponentContext context ) throws Exception

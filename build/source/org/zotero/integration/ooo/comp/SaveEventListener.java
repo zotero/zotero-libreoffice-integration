@@ -3,7 +3,7 @@ package org.zotero.integration.ooo.comp;
 import java.util.Hashtable;
 
 import com.sun.star.awt.MessageBoxButtons;
-import com.sun.star.awt.Rectangle;
+import com.sun.star.awt.MessageBoxType;
 import com.sun.star.awt.XMessageBox;
 import com.sun.star.awt.XMessageBoxFactory;
 import com.sun.star.awt.XWindowPeer;
@@ -36,7 +36,7 @@ class SaveEventListener implements XEventListener {
 			XFrame frame = Application.desktop.getCurrentFrame();
 			XWindowPeer xWindow = (XWindowPeer) UnoRuntime.queryInterface(XWindowPeer.class, frame.getContainerWindow());
 	        XMessageBoxFactory xToolkit = (XMessageBoxFactory) UnoRuntime.queryInterface(XMessageBoxFactory.class, xWindow.getToolkit());
-			XMessageBox box = xToolkit.createMessageBox(xWindow, new Rectangle(), "warningBox",
+			XMessageBox box = xToolkit.createMessageBox(xWindow, MessageBoxType.WARNINGBOX,
 					MessageBoxButtons.BUTTONS_OK, "Zotero Integration",
 					Document.SAVE_WARNING_STRING);
 			box.execute();
