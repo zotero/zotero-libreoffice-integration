@@ -12,7 +12,7 @@ LibreOffice SDK is not required.
 
 To build:
 
-1.  Create a symlink `build/lib/libreoffice-sdk` which points to `<LibreOfficeInstall>/program/classes` on linux or `/Applications/LibreOffice/Contents/..`
+1.  Create a symlink `build/lib/libreoffice-sdk` which points to `<LibreOfficeInstall>/program/classes` on linux or `/Applications/LibreOffice/Contents/Resources/java` on MacOS
 1.  Open Eclipse and import this project into your workspace.
 1.  Right-click the project in the Eclipse Package Explorer and select "Java Build Path." Click the libraries tab and ensure that all referenced files exist, or else correct the paths.
 1.  Double-click Zotero.jardesc. Click "Finish" to build Zotero.jar.
