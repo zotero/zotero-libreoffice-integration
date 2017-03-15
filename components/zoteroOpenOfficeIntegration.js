@@ -27,6 +27,7 @@ Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
 
 var Zotero;
 const API_VERSION = 3;
+const SERVER_PORT = 23116;
 
 var Comm = new function() {
 	var _observersRegistered = false, _converter, _lastDataListener,
@@ -59,7 +60,7 @@ var Comm = new function() {
 					.createInstance(Components.interfaces.nsIServerSocket);
 		try {
 			// Start main socket listener
-			serv.init(23116, true, -1);
+			serv.init(SERVER_PORT, true, -1);
 			serv.asyncListen({
 				"onSocketAccepted":function(socket, transport) {
 					Zotero.debug("ZoteroOpenOfficeIntegration: Connection received");

@@ -6,22 +6,20 @@
 	<classpathentry kind="lib" path="lib/jackson-databind-2.0.2.jar"/>
 	<classpathentry kind="lib" path="lib/jna.jar"/>
 	<classpathentry kind="lib" path="lib/jackson-annotations-2.0.2.jar"/>
-	<classpathentry kind="lib" path="/usr/share/libreoffice/program/classes/agenda.jar"/>
-	<classpathentry kind="lib" path="/usr/share/libreoffice/program/classes/commonwizards.jar"/>
-	<classpathentry kind="lib" path="/usr/share/libreoffice/program/classes/form.jar"/>
-	<classpathentry kind="lib" path="/usr/share/libreoffice/program/classes/query.jar"/>
-	<classpathentry kind="lib" path="/usr/share/libreoffice/program/classes/report.jar"/>
-	<classpathentry kind="lib" path="/usr/share/libreoffice/program/classes/ScriptFramework.jar"/>
-	<classpathentry kind="lib" path="/usr/share/libreoffice/program/classes/ScriptProviderForJava.jar"/>
-	<classpathentry kind="lib" path="/usr/share/libreoffice/program/classes/table.jar"/>
-	<classpathentry kind="lib" path="/usr/share/libreoffice/program/classes/unoil.jar"/>
-	<classpathentry kind="lib" path="/usr/share/libreoffice/program/classes/web.jar"/>
-	<classpathentry kind="lib" path="/usr/share/libreoffice/program/classes/xmerge.jar"/>
-	<classpathentry kind="lib" path="/usr/share/libreoffice/program/classes/XMergeBridge.jar"/>
-	<classpathentry kind="lib" path="/usr/lib/ure/share/java/java_uno.jar"/>
-	<classpathentry kind="lib" path="/usr/lib/ure/share/java/juh.jar"/>
-	<classpathentry kind="lib" path="/usr/lib/ure/share/java/jurt.jar"/>
-	<classpathentry kind="lib" path="/usr/lib/ure/share/java/ridl.jar"/>
-	<classpathentry kind="lib" path="/usr/lib/ure/share/java/unoloader.jar"/>
+    <classpathentry kind="lib" path="lib/libreoffice-sdk/commonwizards.jar"/>
+	<classpathentry kind="lib" path="lib/libreoffice-sdk/form.jar"/>
+	<classpathentry kind="lib" path="lib/libreoffice-sdk/query.jar"/>
+	<classpathentry kind="lib" path="lib/libreoffice-sdk/report.jar"/>
+	<classpathentry kind="lib" path="lib/libreoffice-sdk/ScriptFramework.jar"/>
+	<classpathentry kind="lib" path="lib/libreoffice-sdk/ScriptProviderForJava.jar"/>
+	<classpathentry kind="lib" path="lib/libreoffice-sdk/table.jar"/>
+	<classpathentry kind="lib" path="lib/libreoffice-sdk/unoil.jar"/>
+	<classpathentry kind="lib" path="lib/libreoffice-sdk/xmerge.jar"/>
+	<classpathentry kind="lib" path="lib/libreoffice-sdk/XMergeBridge.jar"/>
+    <classpathentry kind="lib" path="lib/libreoffice-sdk/java_uno.jar"/>
+	<classpathentry kind="lib" path="lib/libreoffice-sdk/juh.jar"/>
+	<classpathentry kind="lib" path="lib/libreoffice-sdk/jurt.jar"/>
+	<classpathentry kind="lib" path="lib/libreoffice-sdk/ridl.jar"/>
+	<classpathentry kind="lib" path="lib/libreoffice-sdk/unoloader.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
