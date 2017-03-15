@@ -165,7 +165,7 @@ var Plugin = new function() {
 		required: false
 	}];
 	
-	this.LAST_INSTALLED_FILE_UPDATE = "3.5.7.999";
+	this.LAST_INSTALLED_FILE_UPDATE = "5.0.0pre";
 	this.DISABLE_PROGRESS_WINDOW = true;
 	
 	var zoteroPluginInstaller, pathToAddon, installing, prefBranch, wizardWindow;
