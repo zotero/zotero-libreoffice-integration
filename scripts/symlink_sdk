@@ -12,12 +12,12 @@ if [[ -e $SYMLINK_LOCATION ]]; then
 	fi
 fi
 
-#SDK_LOCATION=""
-#if [[ "`uname`" = "Darwin" ]]; then
-#	SDK_LOCATION="/Applications/LibreOffice.app/Contents/Resources/java"
-#elif [[ "`uname`" = "Linux" ]]; then
-#	SDK_LOCATION="$(echo /opt/libreoffice*/program/classes)"
-#fi
+SDK_LOCATION=""
+if [[ "`uname`" = "Darwin" ]]; then
+	SDK_LOCATION="/Applications/LibreOffice.app/Contents/Resources/java"
+elif [[ "`uname`" = "Linux" ]]; then
+	SDK_LOCATION="$(echo /opt/libreoffice*/program/classes)"
+fi
 
 SEARCH=""
 if [[ ! -e "$SDK_LOCATION/java_uno.jar" ]]; then
