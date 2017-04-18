@@ -1,8 +1,8 @@
 /*
-    ***** BEGIN LICENSE BLOCK *****
+	***** BEGIN LICENSE BLOCK *****
 	
-	Copyright (c) 2009  Zotero
-	                    Center for History and New Media
+	Copyright (c) 2017  Zotero
+						Center for History and New Media
 						George Mason University, Fairfax, Virginia, USA
 						http://zotero.org
 	
@@ -18,8 +18,8 @@
 	
 	You should have received a copy of the GNU Affero General Public License
 	along with Zotero.  If not, see <http://www.gnu.org/licenses/>.
-    
-    ***** END LICENSE BLOCK *****
+	
+	***** END LICENSE BLOCK *****
 */
 
 package org.zotero.integration.ooo.comp;

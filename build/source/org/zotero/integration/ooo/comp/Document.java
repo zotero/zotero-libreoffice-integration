@@ -1,8 +1,8 @@
 /*
-    ***** BEGIN LICENSE BLOCK *****
+	***** BEGIN LICENSE BLOCK *****
 	
-	Copyright (c) 2009  Zotero
-	                    Center for History and New Media
+	Copyright (c) 2017  Zotero
+						Center for History and New Media
 						George Mason University, Fairfax, Virginia, USA
 						http://zotero.org
 	
@@ -18,8 +18,8 @@
 	
 	You should have received a copy of the GNU Affero General Public License
 	along with Zotero.  If not, see <http://www.gnu.org/licenses/>.
-    
-    ***** END LICENSE BLOCK *****
+	
+	***** END LICENSE BLOCK *****
 */
 
 package org.zotero.integration.ooo.comp;
@@ -112,10 +112,10 @@ public class Document {
 	static String SAVE_WARNING_STRING = "This document contains Zotero ReferenceMarks. Upon reopening the document, Zotero will be unable to edit existing citations or add new references to the bibliography.\n\nTo save Zotero citation information, please select the \"ODF Text Document\" format when saving, or switch to Bookmarks in the Zotero Document Preferences.";
 	TextTableManager textTableManager;
 	
-    public Document(Application anApp, int anID) throws Exception {
-    	app = anApp;
-    	ID = anID;
-    	factory = Application.factory;
+	public Document(Application anApp, int anID) throws Exception {
+		app = anApp;
+		ID = anID;
+		factory = Application.factory;
 		desktop = Application.desktop;
 		frame = desktop.getCurrentFrame();
 		component = desktop.getCurrentComponent();
@@ -130,40 +130,40 @@ public class Document {
 		XUndoManagerSupplier ums = (XUndoManagerSupplier) UnoRuntime.queryInterface(XUndoManagerSupplier.class, component); 
 		undoManager = ums.getUndoManager();
 		undoManager.enterUndoContext(UNDO_RECORD_NAME);
-    }
-    
-    public void cleanup() {}
+	}
+	
+	public void cleanup() {}
 
 	public void complete() throws InvalidStateException {
 		undoManager.leaveUndoContext();
 		app.documentComplete(ID);
 	}
-    
+	
 	public int displayAlert(String text, int icon, int buttons) {
-    	// figure out appropriate buttons
-    	int ooButtons = MessageBoxButtons.BUTTONS_OK;
-    	if(buttons == 1) {
-    		ooButtons = MessageBoxButtons.BUTTONS_OK_CANCEL + MessageBoxButtons.DEFAULT_BUTTON_OK;
-    	} else if(buttons == 2) {
-    		ooButtons = MessageBoxButtons.BUTTONS_YES_NO + MessageBoxButtons.DEFAULT_BUTTON_YES;
-    	} else if(buttons == 3) {
-    		ooButtons = MessageBoxButtons.BUTTONS_YES_NO_CANCEL + MessageBoxButtons.DEFAULT_BUTTON_YES;
-    	} else {
-    		ooButtons = MessageBoxButtons.BUTTONS_OK;
-    	}
-    	
-        XWindowPeer xWindow = (XWindowPeer) UnoRuntime.queryInterface(XWindowPeer.class, 	frame.getContainerWindow());
-        XMessageBoxFactory xToolkit = (XMessageBoxFactory) UnoRuntime.queryInterface(XMessageBoxFactory.class, xWindow.getToolkit());
-        MessageBoxType[] boxTypes = {MessageBoxType.ERRORBOX, MessageBoxType.MESSAGEBOX, MessageBoxType.WARNINGBOX};
-        
-        if (boxTypes[icon] == MessageBoxType.MESSAGEBOX && ooButtons != MessageBoxButtons.BUTTONS_OK) {
-        	// MessageBox ignores ooButtons and only displays the OK button in LO 4.2+, so we change to WarningBox
-        	icon = 2;
-        }
-        
-        XMessageBox box = xToolkit.createMessageBox(xWindow, boxTypes[icon], ooButtons, "Zotero Integration", text);        	
-        	
-        short result = box.execute();
+		// figure out appropriate buttons
+		int ooButtons = MessageBoxButtons.BUTTONS_OK;
+		if(buttons == 1) {
+			ooButtons = MessageBoxButtons.BUTTONS_OK_CANCEL + MessageBoxButtons.DEFAULT_BUTTON_OK;
+		} else if(buttons == 2) {
+			ooButtons = MessageBoxButtons.BUTTONS_YES_NO + MessageBoxButtons.DEFAULT_BUTTON_YES;
+		} else if(buttons == 3) {
+			ooButtons = MessageBoxButtons.BUTTONS_YES_NO_CANCEL + MessageBoxButtons.DEFAULT_BUTTON_YES;
+		} else {
+			ooButtons = MessageBoxButtons.BUTTONS_OK;
+		}
+		
+		XWindowPeer xWindow = (XWindowPeer) UnoRuntime.queryInterface(XWindowPeer.class, 	frame.getContainerWindow());
+		XMessageBoxFactory xToolkit = (XMessageBoxFactory) UnoRuntime.queryInterface(XMessageBoxFactory.class, xWindow.getToolkit());
+		MessageBoxType[] boxTypes = {MessageBoxType.ERRORBOX, MessageBoxType.MESSAGEBOX, MessageBoxType.WARNINGBOX};
+		
+		if (boxTypes[icon] == MessageBoxType.MESSAGEBOX && ooButtons != MessageBoxButtons.BUTTONS_OK) {
+			// MessageBox ignores ooButtons and only displays the OK button in LO 4.2+, so we change to WarningBox
+			icon = 2;
+		}
+		
+		XMessageBox box = xToolkit.createMessageBox(xWindow, boxTypes[icon], ooButtons, "Zotero Integration", text);			
+			
+		short result = box.execute();
 		
 		if(buttons == 2) {
 			return (result == 3 ? 0 : 1);
@@ -173,139 +173,139 @@ public class Document {
 			return 0;
 		}
 		return result;
-    }
-        
-    public void activate() throws Exception {
-    	if(System.getProperty("os.name").equals("Mac OS X")) {
-    		Runtime runtime = Runtime.getRuntime();
-    		runtime.exec(new String[] {"/usr/bin/osascript", "-e", "tell application \""+Application.ooName+"\" to activate"});
-    	}
-    }
-    
-    public boolean canInsertField(String fieldType) {
-    	// first, check if cursor is in the bibliography (no sense offering to replace it)
-    	XTextViewCursor selection = getSelection();
-    	XTextSection section = (XTextSection) UnoRuntime.queryInterface(XTextSection.class, selection);
-    	if(section != null) {
-    		XNamed sectionNamed = (XNamed) UnoRuntime.queryInterface(XNamed.class, section);
-    		String name = sectionNamed.getName();
-    		for(String prefix : PREFIXES) {
-    			if(name.contains(prefix)) {
-    				return false;
-    			}
-    		}
-    	}
-    	
-    	// Also make sure that the cursor is not in any other place we can't insert a citation
-    	String position = getRangePosition(selection);
-    	
-    	if(position.equals("SwXTextFrame")) {
-    		displayAlert("Citations in text frames will be formatted as if they appear at the end of the document.", 2, 0);
-    		return true;
-    	}
-    	
+	}
+		
+	public void activate() throws Exception {
+		if(System.getProperty("os.name").equals("Mac OS X")) {
+			Runtime runtime = Runtime.getRuntime();
+			runtime.exec(new String[] {"/usr/bin/osascript", "-e", "tell application \""+Application.ooName+"\" to activate"});
+		}
+	}
+	
+	public boolean canInsertField(String fieldType) {
+		// first, check if cursor is in the bibliography (no sense offering to replace it)
+		XTextViewCursor selection = getSelection();
+		XTextSection section = (XTextSection) UnoRuntime.queryInterface(XTextSection.class, selection);
+		if(section != null) {
+			XNamed sectionNamed = (XNamed) UnoRuntime.queryInterface(XNamed.class, section);
+			String name = sectionNamed.getName();
+			for(String prefix : PREFIXES) {
+				if(name.contains(prefix)) {
+					return false;
+				}
+			}
+		}
+		
+		// Also make sure that the cursor is not in any other place we can't insert a citation
+		String position = getRangePosition(selection);
+		
+		if(position.equals("SwXTextFrame")) {
+			displayAlert("Citations in text frames will be formatted as if they appear at the end of the document.", 2, 0);
+			return true;
+		}
+		
 		return (position.equals("SwXBodyText") || position.equals("SwXCell")
 				|| (!fieldType.equals("Bookmark") && position.equals("SwXFootnote")));
 	}
 
-    public ReferenceMark cursorInField(String fieldType) throws Exception {
-    	// create two text cursors containing the selection
-    	XTextViewCursor selectionCursor = getSelection();
-    	XText text = selectionCursor.getText();
-       	XParagraphCursor paragraphCursor1 = (XParagraphCursor) UnoRuntime.queryInterface(XParagraphCursor.class,
-       			text.createTextCursorByRange(selectionCursor));
-    	XParagraphCursor paragraphCursor2 = (XParagraphCursor) UnoRuntime.queryInterface(XParagraphCursor.class,
-    			text.createTextCursorByRange(selectionCursor));
-    	
-    	// extend one cursor to the beginning of the paragraph and one to the end
-    	paragraphCursor1.goLeft((short) 1, false);
-    	paragraphCursor1.gotoStartOfParagraph(true);
-    	paragraphCursor2.gotoEndOfParagraph(true);
-    	
-    	// get enumerator corresponding to first cursor
-    	XEnumerationAccess enumeratorAccess = (XEnumerationAccess) UnoRuntime.queryInterface(XEnumerationAccess.class, paragraphCursor1);
-    	Object nextElement = enumeratorAccess.createEnumeration().nextElement();
-    	enumeratorAccess = (XEnumerationAccess) UnoRuntime.queryInterface(XEnumerationAccess.class, nextElement);
-    	XEnumeration enumerator = enumeratorAccess.createEnumeration();
-    	
-    	while(enumerator.hasMoreElements()) {
-    		// look for a ReferenceMark or Bookmark
-    		XPropertySet textProperties = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, enumerator.nextElement());
-    		String textPropertyType = (String) textProperties.getPropertyValue("TextPortionType");
-    		if(textPropertyType.equals(fieldType)) {
-        		ReferenceMark mark = mMarkManager.getMark(textProperties.getPropertyValue(fieldType), fieldType);
-        		
-        		if(mark != null) {
+	public ReferenceMark cursorInField(String fieldType) throws Exception {
+		// create two text cursors containing the selection
+		XTextViewCursor selectionCursor = getSelection();
+		XText text = selectionCursor.getText();
+	   	XParagraphCursor paragraphCursor1 = (XParagraphCursor) UnoRuntime.queryInterface(XParagraphCursor.class,
+	   			text.createTextCursorByRange(selectionCursor));
+		XParagraphCursor paragraphCursor2 = (XParagraphCursor) UnoRuntime.queryInterface(XParagraphCursor.class,
+				text.createTextCursorByRange(selectionCursor));
+		
+		// extend one cursor to the beginning of the paragraph and one to the end
+		paragraphCursor1.goLeft((short) 1, false);
+		paragraphCursor1.gotoStartOfParagraph(true);
+		paragraphCursor2.gotoEndOfParagraph(true);
+		
+		// get enumerator corresponding to first cursor
+		XEnumerationAccess enumeratorAccess = (XEnumerationAccess) UnoRuntime.queryInterface(XEnumerationAccess.class, paragraphCursor1);
+		Object nextElement = enumeratorAccess.createEnumeration().nextElement();
+		enumeratorAccess = (XEnumerationAccess) UnoRuntime.queryInterface(XEnumerationAccess.class, nextElement);
+		XEnumeration enumerator = enumeratorAccess.createEnumeration();
+		
+		while(enumerator.hasMoreElements()) {
+			// look for a ReferenceMark or Bookmark
+			XPropertySet textProperties = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, enumerator.nextElement());
+			String textPropertyType = (String) textProperties.getPropertyValue("TextPortionType");
+			if(textPropertyType.equals(fieldType)) {
+				ReferenceMark mark = mMarkManager.getMark(textProperties.getPropertyValue(fieldType), fieldType);
+				
+				if(mark != null) {
 					// check second enumerator for the same field
-			    	enumeratorAccess = (XEnumerationAccess) UnoRuntime.queryInterface(XEnumerationAccess.class, paragraphCursor2);
-			    	nextElement = enumeratorAccess.createEnumeration().nextElement();
-			    	enumeratorAccess = (XEnumerationAccess) UnoRuntime.queryInterface(XEnumerationAccess.class, nextElement);
-			    	XEnumeration enumerator2 = enumeratorAccess.createEnumeration();
-			    	while(enumerator2.hasMoreElements()) {
-			    		textProperties = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, enumerator2.nextElement());
-			    		textPropertyType = (String) textProperties.getPropertyValue("TextPortionType");
-			    		if(textPropertyType.equals(fieldType)) {
-			    			if(mark == mMarkManager.getMark(textProperties.getPropertyValue(fieldType), fieldType)) {
-			    				return mark;
-			    			}
-			    		}
-			    	}
+					enumeratorAccess = (XEnumerationAccess) UnoRuntime.queryInterface(XEnumerationAccess.class, paragraphCursor2);
+					nextElement = enumeratorAccess.createEnumeration().nextElement();
+					enumeratorAccess = (XEnumerationAccess) UnoRuntime.queryInterface(XEnumerationAccess.class, nextElement);
+					XEnumeration enumerator2 = enumeratorAccess.createEnumeration();
+					while(enumerator2.hasMoreElements()) {
+						textProperties = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, enumerator2.nextElement());
+						textPropertyType = (String) textProperties.getPropertyValue("TextPortionType");
+						if(textPropertyType.equals(fieldType)) {
+							if(mark == mMarkManager.getMark(textProperties.getPropertyValue(fieldType), fieldType)) {
+								return mark;
+							}
+						}
+					}
 				}
-    		}
-    	}
-    	
-    	return null;
-    }
-    
-    public String getDocumentData() throws Exception {
-    	if(checkExperimentalMode) {
-    		if(Application.ooName.equals("LibreOffice")) {
-        		try {
-	    			String[] splitVersion = Application.ooVersion.split("\\.");
-	    			int firstDigit = Integer.parseInt(splitVersion[0]);
-	    			if(firstDigit == 3 && Integer.parseInt(splitVersion[1]) >= 5) {
-	    				XMultiServiceFactory configProvider = (XMultiServiceFactory) UnoRuntime.queryInterface(XMultiServiceFactory.class,
-	    						factory.createInstance("com.sun.star.configuration.ConfigurationProvider"));
-	    				PropertyValue nodepath = new PropertyValue();
-	    				nodepath.Name = "nodepath";
-	    				nodepath.Value = "/org.openoffice.Office.Common/Misc";
-	    				Object configurationAccess = configProvider.createInstanceWithArguments("com.sun.star.configuration.ConfigurationAccess",
-	    						new Object[] {nodepath});
-	    				XNameAccess nameAccess = (XNameAccess) UnoRuntime.queryInterface(XNameAccess.class, configurationAccess);
-	    				statusExperimentalMode = (Boolean) nameAccess.getByName("ExperimentalMode");
-	    			}
-        		} catch(Exception e) {}
-    		}
-    		checkExperimentalMode = false;
-    	}
-    	
+			}
+		}
+		
+		return null;
+	}
+	
+	public String getDocumentData() throws Exception {
+		if(checkExperimentalMode) {
+			if(Application.ooName.equals("LibreOffice")) {
+				try {
+					String[] splitVersion = Application.ooVersion.split("\\.");
+					int firstDigit = Integer.parseInt(splitVersion[0]);
+					if(firstDigit == 3 && Integer.parseInt(splitVersion[1]) >= 5) {
+						XMultiServiceFactory configProvider = (XMultiServiceFactory) UnoRuntime.queryInterface(XMultiServiceFactory.class,
+								factory.createInstance("com.sun.star.configuration.ConfigurationProvider"));
+						PropertyValue nodepath = new PropertyValue();
+						nodepath.Name = "nodepath";
+						nodepath.Value = "/org.openoffice.Office.Common/Misc";
+						Object configurationAccess = configProvider.createInstanceWithArguments("com.sun.star.configuration.ConfigurationAccess",
+								new Object[] {nodepath});
+						XNameAccess nameAccess = (XNameAccess) UnoRuntime.queryInterface(XNameAccess.class, configurationAccess);
+						statusExperimentalMode = (Boolean) nameAccess.getByName("ExperimentalMode");
+					}
+				} catch(Exception e) {}
+			}
+			checkExperimentalMode = false;
+		}
+		
 		if(statusExperimentalMode) {
 			displayAlert("\"Experimental (unstable) features\" are currently enabled in the LibreOffice preferences. In LibreOffice 3.5 and later, one of these experimental features is broken and prevents Zotero from operating properly.\n\nDisable \"Experimental (unstable) features\" in the LibreOffice preferences and restart LibreOffice.", 0, 0);
 			throw new Exception("ExceptionAlreadyDisplayed");
-    	}
+		}
 		
-    	String data;
-    	for(String prefsProperty : PREFS_PROPERTIES) {
-    		data = properties.getProperty(prefsProperty);
-    		if(data != "") return data;
-    	}
-    	return "";
-    }
-    
-    public void setDocumentData(String data) throws Exception {
+		String data;
+		for(String prefsProperty : PREFS_PROPERTIES) {
+			data = properties.getProperty(prefsProperty);
+			if(data != "") return data;
+		}
+		return "";
+	}
+	
+	public void setDocumentData(String data) throws Exception {
 		properties.setProperty(PREFS_PROPERTIES[0], data);
-    }
-    
-    public ArrayList<ReferenceMark> getFields(String fieldType) throws Exception {
-    	ArrayList<ReferenceMark> marks = new ArrayList<ReferenceMark>();
-    	
-    	// get all ReferenceMarks/Bookmarks
-    	if(fieldType.equals("ReferenceMark")) {
-    		// add save event listener if necessary
-    		Application.saveEventListener.attachTo(component, runtimeUID);
-    		
-    		XReferenceMarksSupplier referenceMarksSupplier = (XReferenceMarksSupplier) 
-    			UnoRuntime.queryInterface(XReferenceMarksSupplier.class, component);
+	}
+	
+	public ArrayList<ReferenceMark> getFields(String fieldType) throws Exception {
+		ArrayList<ReferenceMark> marks = new ArrayList<ReferenceMark>();
+		
+		// get all ReferenceMarks/Bookmarks
+		if(fieldType.equals("ReferenceMark")) {
+			// add save event listener if necessary
+			Application.saveEventListener.attachTo(component, runtimeUID);
+			
+			XReferenceMarksSupplier referenceMarksSupplier = (XReferenceMarksSupplier) 
+				UnoRuntime.queryInterface(XReferenceMarksSupplier.class, component);
 			XIndexAccess markIndexAccess = (XIndexAccess) UnoRuntime.queryInterface(XIndexAccess.class,
 					referenceMarksSupplier.getReferenceMarks());
 			int count = markIndexAccess.getCount();
@@ -313,9 +313,9 @@ public class Document {
 				ReferenceMark mark = mMarkManager.getMark(markIndexAccess.getByIndex(i), fieldType);
 				if(mark != null) marks.add(mark);
 			}
-    		
-    		XTextSectionsSupplier textSectionSupplier = (XTextSectionsSupplier) 
-    			UnoRuntime.queryInterface(XTextSectionsSupplier.class, component);
+			
+			XTextSectionsSupplier textSectionSupplier = (XTextSectionsSupplier) 
+				UnoRuntime.queryInterface(XTextSectionsSupplier.class, component);
 			markIndexAccess = (XIndexAccess) UnoRuntime.queryInterface(XIndexAccess.class,
 					textSectionSupplier.getTextSections());
 			count = markIndexAccess.getCount();
@@ -323,14 +323,14 @@ public class Document {
 				ReferenceMark mark = mMarkManager.getMark(markIndexAccess.getByIndex(i), fieldType);
 				if(mark != null) marks.add(mark);
 			}
-    	} else if(fieldType.equals("Bookmark")) {
-    		// remove save event listener if necessary
-    		Application.saveEventListener.detachFrom(component, runtimeUID);
-    		
-    		XBookmarksSupplier bookmarksSupplier = (XBookmarksSupplier) 
-    			UnoRuntime.queryInterface(XBookmarksSupplier.class, component);
-    		XNameAccess markNameAccess = (XNameAccess) UnoRuntime.queryInterface(XNameAccess.class,
-    				bookmarksSupplier.getBookmarks());
+		} else if(fieldType.equals("Bookmark")) {
+			// remove save event listener if necessary
+			Application.saveEventListener.detachFrom(component, runtimeUID);
+			
+			XBookmarksSupplier bookmarksSupplier = (XBookmarksSupplier) 
+				UnoRuntime.queryInterface(XBookmarksSupplier.class, component);
+			XNameAccess markNameAccess = (XNameAccess) UnoRuntime.queryInterface(XNameAccess.class,
+					bookmarksSupplier.getBookmarks());
 			String[] markNames = markNameAccess.getElementNames();
 			
 			for(int i = 0; i<markNames.length; i++) {
@@ -344,42 +344,42 @@ public class Document {
 					}
 				}
 			}
-    	} else {
-    		throw new Exception("Invalid field type "+fieldType);
-    	}
+		} else {
+			throw new Exception("Invalid field type "+fieldType);
+		}
 
-    	Collections.sort(marks);
-    	return marks;
-    }
-    
-    public ReferenceMark insertField(String fieldType, int noteType) throws Exception {
+		Collections.sort(marks);
+		return marks;
+	}
+	
+	public ReferenceMark insertField(String fieldType, int noteType) throws Exception {
 		// duplicate selection cursor
 		XTextViewCursor selectionCursor = getSelection();
-    	XTextCursor rangeToInsert = (XParagraphCursor) UnoRuntime.queryInterface(XParagraphCursor.class,
-       			selectionCursor.getText().createTextCursorByRange(selectionCursor));
-    	
-    	return insertMarkAtRange(fieldType, noteType, rangeToInsert, null, null);
-    }
-    
-    public void convert(ReferenceMark mark, String fieldType, int noteType) throws Exception {
+		XTextCursor rangeToInsert = (XParagraphCursor) UnoRuntime.queryInterface(XParagraphCursor.class,
+	   			selectionCursor.getText().createTextCursorByRange(selectionCursor));
+		
+		return insertMarkAtRange(fieldType, noteType, rangeToInsert, null, null);
+	}
+	
+	public void convert(ReferenceMark mark, String fieldType, int noteType) throws Exception {
 		XTextCursor range = mark.getReplacementCursor();
 		
 		boolean isBookmark = mark instanceof Bookmark;
 		if(isBookmark && fieldType.equals("Bookmark")) {
 			// convert from one bookmark type to another
-    		insertMarkAtRange(fieldType, noteType, range, null, mark.rawCode);
+			insertMarkAtRange(fieldType, noteType, range, null, mark.rawCode);
 		} else if(!isBookmark && fieldType.equals("ReferenceMark")) {
 			// convert from one referenceMark type to another
-    		insertMarkAtRange(fieldType, noteType, range, mark.rawCode, null);
+			insertMarkAtRange(fieldType, noteType, range, mark.rawCode, null);
 		} else {
-    		String code = mark.getCode();
-    		ReferenceMark newMark = insertMarkAtRange(fieldType, noteType, range, null, null);
-    		newMark.setCode(code);
+			String code = mark.getCode();
+			ReferenceMark newMark = insertMarkAtRange(fieldType, noteType, range, null, null);
+			newMark.setCode(code);
 		}
-    }
-    
-    public void setBibliographyStyle(int firstLineIndent, int bodyIndent, int lineSpacing,
-    		int entrySpacing, ArrayList<Number> arrayList, int tabStopCount) throws Exception { 
+	}
+	
+	public void setBibliographyStyle(int firstLineIndent, int bodyIndent, int lineSpacing,
+			int entrySpacing, ArrayList<Number> arrayList, int tabStopCount) throws Exception { 
 		XStyleFamiliesSupplier styleFamilies = (XStyleFamiliesSupplier) UnoRuntime.queryInterface(
 				XStyleFamiliesSupplier.class, component);
 		XNameAccess styleFamilyNames = styleFamilies.getStyleFamilies();
@@ -395,8 +395,8 @@ public class Document {
 			// otherwise, create it
 			XStyle style = (XStyle) UnoRuntime.queryInterface(XStyle.class,
 					docFactory.createInstance("com.sun.star.style.ParagraphStyle")); 
-    	    XNameContainer styleNameContainer = (XNameContainer) UnoRuntime.queryInterface(XNameContainer.class,
-    	    		styleFamilyNames.getByName("ParagraphStyles")); 
+			XNameContainer styleNameContainer = (XNameContainer) UnoRuntime.queryInterface(XNameContainer.class,
+					styleFamilyNames.getByName("ParagraphStyles")); 
 			styleNameContainer.insertByName("Bibliography 1", style);
 			style.setParentStyle("Default");
 			styleProps = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, style);
@@ -427,87 +427,87 @@ public class Document {
 		styleProps.setPropertyValue("ParaTabStops", tabStopStruct);
 		
 		// this takes less than half as many lines in py-appscript!
-    }
-    
-    XTextViewCursor getSelection() {
-    	XTextViewCursorSupplier supplier = (XTextViewCursorSupplier) UnoRuntime.queryInterface(XTextViewCursorSupplier.class, controller);
-    	return supplier.getViewCursor();
-    }
-    
-    private ReferenceMark insertMarkAtRange(String fieldType, int noteType, XTextCursor rangeToInsert, String code, String customBookmarkName) throws Exception {    	
-    	XNamed mark;
-    	String rawCode;
+	}
+	
+	XTextViewCursor getSelection() {
+		XTextViewCursorSupplier supplier = (XTextViewCursorSupplier) UnoRuntime.queryInterface(XTextViewCursorSupplier.class, controller);
+		return supplier.getViewCursor();
+	}
+	
+	private ReferenceMark insertMarkAtRange(String fieldType, int noteType, XTextCursor rangeToInsert, String code, String customBookmarkName) throws Exception {		
+		XNamed mark;
+		String rawCode;
 
-    	// handle null code
-    	if(code == null) {
-    		code = PREFIXES[0];
-    	}
+		// handle null code
+		if(code == null) {
+			code = PREFIXES[0];
+		}
 
-    	// make footnote or endnote if cursor is in body text and a note style is selected
-    	if(noteType != 0 && getRangePosition(rangeToInsert).equals("SwXBodyText")) {
-    		Object note;
-    		if(noteType == NOTE_FOOTNOTE) {
-    			note = docFactory.createInstance("com.sun.star.text.Footnote");
-    		} else {
-    			note = docFactory.createInstance("com.sun.star.text.Endnote");
-    		}
-    		XTextContent noteTextContent = (XTextContent) UnoRuntime.queryInterface(XTextContent.class, note);
-    		rangeToInsert.getText().insertTextContent(rangeToInsert, noteTextContent, true);
-    		XTextRange noteTextRange = (XTextRange) UnoRuntime.queryInterface(XTextRange.class, note);
-    		rangeToInsert = noteTextRange.getText().createTextCursorByRange(noteTextRange);
-    	}
+		// make footnote or endnote if cursor is in body text and a note style is selected
+		if(noteType != 0 && getRangePosition(rangeToInsert).equals("SwXBodyText")) {
+			Object note;
+			if(noteType == NOTE_FOOTNOTE) {
+				note = docFactory.createInstance("com.sun.star.text.Footnote");
+			} else {
+				note = docFactory.createInstance("com.sun.star.text.Endnote");
+			}
+			XTextContent noteTextContent = (XTextContent) UnoRuntime.queryInterface(XTextContent.class, note);
+			rangeToInsert.getText().insertTextContent(rangeToInsert, noteTextContent, true);
+			XTextRange noteTextRange = (XTextRange) UnoRuntime.queryInterface(XTextRange.class, note);
+			rangeToInsert = noteTextRange.getText().createTextCursorByRange(noteTextRange);
+		}
 
-    	rangeToInsert.setString(FIELD_PLACEHOLDER);
+		rangeToInsert.setString(FIELD_PLACEHOLDER);
 
-    	// create mark
-    	if(fieldType.equals("ReferenceMark")) {
-    		mark = (XNamed) UnoRuntime.queryInterface(XNamed.class,
-    				docFactory.createInstance("com.sun.star.text.ReferenceMark"));
-    		rawCode = code + " RND" + Document.getRandomString(Document.REFMARK_ADD_CHARS);
-    		mark.setName(rawCode);
-    	} else if(fieldType.equals("Bookmark")) {
-        	// determine appropriate name for the bookmark
-        	rawCode = customBookmarkName;
-        	if(rawCode == null) {
-        		rawCode = BOOKMARK_REFERENCE_PROPERTY+getRandomString(BOOKMARK_ADD_CHARS);
-        	}
-        	
-    		mark = (XNamed) UnoRuntime.queryInterface(XNamed.class,
-    				docFactory.createInstance("com.sun.star.text.Bookmark"));
-    		mark.setName(rawCode);
-    	} else {
-    		throw new Exception("Invalid field type "+fieldType);
-    	}
+		// create mark
+		if(fieldType.equals("ReferenceMark")) {
+			mark = (XNamed) UnoRuntime.queryInterface(XNamed.class,
+					docFactory.createInstance("com.sun.star.text.ReferenceMark"));
+			rawCode = code + " RND" + Document.getRandomString(Document.REFMARK_ADD_CHARS);
+			mark.setName(rawCode);
+		} else if(fieldType.equals("Bookmark")) {
+			// determine appropriate name for the bookmark
+			rawCode = customBookmarkName;
+			if(rawCode == null) {
+				rawCode = BOOKMARK_REFERENCE_PROPERTY+getRandomString(BOOKMARK_ADD_CHARS);
+			}
+			
+			mark = (XNamed) UnoRuntime.queryInterface(XNamed.class,
+					docFactory.createInstance("com.sun.star.text.Bookmark"));
+			mark.setName(rawCode);
+		} else {
+			throw new Exception("Invalid field type "+fieldType);
+		}
 
-    	// attach field to range
-    	XTextContent markContent = (XTextContent) UnoRuntime.queryInterface(XTextContent.class, mark);
-    	markContent.attach(rangeToInsert);
-    	
-    	ReferenceMark newMark = mMarkManager.getMark(mark, fieldType);
-    	if(fieldType.equals("Bookmark") && customBookmarkName == null) {
-        	// set code for a bookmark
-        	newMark.setCode(code);
-    	}
-    	return newMark;
-    }
-    
-    private String getRangePosition(XTextRange selection) {
-    	XServiceInfo serviceInfo = (XServiceInfo) UnoRuntime.queryInterface(XServiceInfo.class, selection.getText());
-    	return serviceInfo.getImplementationName();
+		// attach field to range
+		XTextContent markContent = (XTextContent) UnoRuntime.queryInterface(XTextContent.class, mark);
+		markContent.attach(rangeToInsert);
+		
+		ReferenceMark newMark = mMarkManager.getMark(mark, fieldType);
+		if(fieldType.equals("Bookmark") && customBookmarkName == null) {
+			// set code for a bookmark
+			newMark.setCode(code);
+		}
+		return newMark;
+	}
+	
+	private String getRangePosition(XTextRange selection) {
+		XServiceInfo serviceInfo = (XServiceInfo) UnoRuntime.queryInterface(XServiceInfo.class, selection.getText());
+		return serviceInfo.getImplementationName();
 	}
 
 	private static final String randomCharacterSet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 	private static Random rand = null;
-    static String getRandomString(int len) {
-    	if(rand == null) rand = new Random();
-    	StringBuilder sb = new StringBuilder(len);
-    	for(int i = 0; i < len; i++) sb.append(randomCharacterSet.charAt(rand.nextInt(randomCharacterSet.length())));
-    	return sb.toString();
-    }
-    
-    static String getErrorString(Exception e) {
-    	StringWriter sw = new StringWriter();
-    	e.printStackTrace(new PrintWriter(sw));
-    	return "An error occurred communicating with Zotero:\n"+sw.toString();
-    }
+	static String getRandomString(int len) {
+		if(rand == null) rand = new Random();
+		StringBuilder sb = new StringBuilder(len);
+		for(int i = 0; i < len; i++) sb.append(randomCharacterSet.charAt(rand.nextInt(randomCharacterSet.length())));
+		return sb.toString();
+	}
+	
+	static String getErrorString(Exception e) {
+		StringWriter sw = new StringWriter();
+		e.printStackTrace(new PrintWriter(sw));
+		return "An error occurred communicating with Zotero:\n"+sw.toString();
+	}
 }

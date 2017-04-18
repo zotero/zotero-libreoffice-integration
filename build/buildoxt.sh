@@ -1,17 +1,18 @@
 #!/bin/bash
-# Compile definitions
+
+CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Copy external jars
-mkdir -p oxt/external_jars
-cp -r lib/*jar oxt/external_jars
+mkdir -p $CWD/oxt/external_jars
+cp -r $CWD/lib/*jar $CWD/oxt/external_jars
 
 # Fix MANIFEST.MF
-zip oxt/Zotero.jar META-INF/MANIFEST.MF
+zip $CWD/oxt/Zotero.jar $CWD/META-INF/MANIFEST.MF
 
 # Zip up oxt
-cd oxt
-rm ../../install/Zotero_OpenOffice_Integration.oxt
+cd $CWD/oxt
+rm -f ../../install/Zotero_OpenOffice_Integration.oxt
 zip -r ../../install/Zotero_OpenOffice_Integration.oxt * -x \*/.svn/\* -x \*/.DS_Store
 
 # Clean up
-rm -r Zotero.jar external_jars
+rm -rf Zotero.jar external_jars

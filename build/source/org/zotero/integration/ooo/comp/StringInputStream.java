@@ -1,8 +1,8 @@
 /*
-    ***** BEGIN LICENSE BLOCK *****
+	***** BEGIN LICENSE BLOCK *****
 	
-	Copyright (c) 2009  Zotero
-	                    Center for History and New Media
+	Copyright (c) 2017  Zotero
+						Center for History and New Media
 						George Mason University, Fairfax, Virginia, USA
 						http://zotero.org
 	
@@ -18,8 +18,8 @@
 	
 	You should have received a copy of the GNU Affero General Public License
 	along with Zotero.  If not, see <http://www.gnu.org/licenses/>.
-    
-    ***** END LICENSE BLOCK *****
+	
+	***** END LICENSE BLOCK *****
 */
 
 package org.zotero.integration.ooo.comp;
@@ -36,71 +36,71 @@ import com.sun.star.io.XSeekable;
 */
 public class StringInputStream extends ByteArrayInputStream implements XInputStream, XSeekable {
 
-    public StringInputStream(byte[] buf) {
-        super(buf);
-    }
+	public StringInputStream(byte[] buf) {
+		super(buf);
+	}
 
 
-    //
-    // Implement XInputStream
-    //
+	//
+	// Implement XInputStream
+	//
 
-    public int readBytes(byte[][] buffer, int bufferSize) throws NotConnectedException, BufferSizeExceededException, com.sun.star.io.IOException {
-        int numberOfReadBytes;
-        try {
-            byte[] bytes = new byte[bufferSize];
-            numberOfReadBytes = super.read(bytes);
-            if(numberOfReadBytes > 0) {
-                if(numberOfReadBytes < bufferSize) {
-                    byte[] smallerBuffer = new byte[numberOfReadBytes];
-                    System.arraycopy(bytes, 0, smallerBuffer, 0, numberOfReadBytes);
-                    bytes = smallerBuffer;
-                }
-            }
-            else {
-                bytes = new byte[0];
-                numberOfReadBytes = 0;
-            }
+	public int readBytes(byte[][] buffer, int bufferSize) throws NotConnectedException, BufferSizeExceededException, com.sun.star.io.IOException {
+		int numberOfReadBytes;
+		try {
+			byte[] bytes = new byte[bufferSize];
+			numberOfReadBytes = super.read(bytes);
+			if(numberOfReadBytes > 0) {
+				if(numberOfReadBytes < bufferSize) {
+					byte[] smallerBuffer = new byte[numberOfReadBytes];
+					System.arraycopy(bytes, 0, smallerBuffer, 0, numberOfReadBytes);
+					bytes = smallerBuffer;
+				}
+			}
+			else {
+				bytes = new byte[0];
+				numberOfReadBytes = 0;
+			}
 
-            buffer[0]=bytes;
-            return numberOfReadBytes;
-        }
-        catch (java.io.IOException e) {
-            throw new com.sun.star.io.IOException(e.getMessage(),this);
-        }
-    }
+			buffer[0]=bytes;
+			return numberOfReadBytes;
+		}
+		catch (java.io.IOException e) {
+			throw new com.sun.star.io.IOException(e.getMessage(),this);
+		}
+	}
 
-    public int readSomeBytes(byte[][] buffer, int bufferSize) throws NotConnectedException, BufferSizeExceededException, com.sun.star.io.IOException {
-        return readBytes(buffer, bufferSize);
-    }
+	public int readSomeBytes(byte[][] buffer, int bufferSize) throws NotConnectedException, BufferSizeExceededException, com.sun.star.io.IOException {
+		return readBytes(buffer, bufferSize);
+	}
 
-    public void skipBytes(int skipLength) throws NotConnectedException, BufferSizeExceededException, com.sun.star.io.IOException {
-        skip(skipLength);
-    }
+	public void skipBytes(int skipLength) throws NotConnectedException, BufferSizeExceededException, com.sun.star.io.IOException {
+		skip(skipLength);
+	}
 
-    public void closeInput() throws NotConnectedException, com.sun.star.io.IOException {
-        try {
-            close();
-        }
-        catch (java.io.IOException e) {
-            throw new com.sun.star.io.IOException(e.getMessage(), this);
-        }
-    }
+	public void closeInput() throws NotConnectedException, com.sun.star.io.IOException {
+		try {
+			close();
+		}
+		catch (java.io.IOException e) {
+			throw new com.sun.star.io.IOException(e.getMessage(), this);
+		}
+	}
 
 
-    //
-    // Implement XSeekable
-    //
+	//
+	// Implement XSeekable
+	//
 
-    public long getLength() throws com.sun.star.io.IOException {
-        return count;
-    }
+	public long getLength() throws com.sun.star.io.IOException {
+		return count;
+	}
 
-    public long getPosition() throws com.sun.star.io.IOException {
-        return pos;
-    }
+	public long getPosition() throws com.sun.star.io.IOException {
+		return pos;
+	}
 
-    public void seek(long position) throws IllegalArgumentException, com.sun.star.io.IOException {
-        pos = (int) position;
-    }
+	public void seek(long position) throws IllegalArgumentException, com.sun.star.io.IOException {
+		pos = (int) position;
+	}
 }
