@@ -301,7 +301,7 @@ var Plugin = new function() {
 			}
 		}
 
-		for each(var potentialLocation in potentialLocations) {
+		for (let potentialLocation of potentialLocations) {
 			try {
 				var file = Plugin.getFile(potentialLocation);
 			} catch(e) {

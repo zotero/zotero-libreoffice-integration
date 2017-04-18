@@ -369,7 +369,7 @@ function openofficeInstallationsManualInstallation() {
  */
 function openofficeInstallationsListboxSelectionChanged() {
 	var listbox = document.getElementById("installations-listbox");
-	for each(var node in listbox.childNodes) {
+	for (let node of listbox.childNodes) {
 		if(node.checked) {
 			wizard.canAdvance = true;
 			return;
@@ -384,7 +384,7 @@ function openofficeInstallationsListboxSelectionChanged() {
  */
 function showInstallationComplete(vboxToShow) {
 	// show correct description
-	for each(var vbox in ["manual", "error", "successful"]) {
+	for (let vbox of ["manual", "error", "successful"]) {
 		var vboxElem = document.getElementById("installation-"+vbox);
 		vboxElem.hidden = vbox != vboxToShow;
 	}
@@ -414,7 +414,7 @@ function installingPageShown() {
 	
 	var listbox = document.getElementById("installations-listbox");
 	var paths = {};
-	for each(var node in listbox.childNodes) {
+	for (let node of listbox.childNodes) {
 		paths[node.label] = !!node.checked;
 	}
 	ZoteroOpenOfficeIntegration.installComponents(paths,

@@ -409,7 +409,7 @@ Document.prototype = {
 	contractID:		"@zotero.org/Zotero/integration/document?agent=OpenOffice;1",
 	QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsISupports, Components.interfaces.zoteroIntegrationDocument])
 };
-for each(var method in ["displayAlert", "activate", "canInsertField", "getDocumentData",
+for (let method of ["displayAlert", "activate", "canInsertField", "getDocumentData",
 	"setDocumentData", "setBibliographyStyle", "complete"]) {
 	let methodStable = method;
 	Document.prototype[method] = function() {
@@ -490,7 +490,7 @@ Field.prototype = {
 	QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsISupports, Components.interfaces.zoteroIntegrationField])
 };
 
-for each(var method in ["delete", "select", "removeCode", "setText", "getText"]) {
+for (let method of ["delete", "select", "removeCode", "setText", "getText"]) {
 	let methodStable = method;
 	Field.prototype[method] = function() {
 		return Comm.sendCommand("Field_"+methodStable,
