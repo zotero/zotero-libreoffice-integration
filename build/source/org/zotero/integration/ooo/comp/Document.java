@@ -43,6 +43,8 @@ import com.sun.star.container.XIndexAccess;
 import com.sun.star.container.XNameAccess;
 import com.sun.star.container.XNameContainer;
 import com.sun.star.container.XNamed;
+import com.sun.star.document.XUndoManager;
+import com.sun.star.document.XUndoManagerSupplier;
 import com.sun.star.frame.XController;
 import com.sun.star.frame.XDesktop;
 import com.sun.star.frame.XFrame;
@@ -69,12 +71,14 @@ import com.sun.star.text.XTextSectionsSupplier;
 import com.sun.star.text.XTextViewCursor;
 import com.sun.star.text.XTextViewCursorSupplier;
 import com.sun.star.uno.UnoRuntime;
+import com.sun.star.util.InvalidStateException;
 
 public class Document {
 	static final int NOTE_FOOTNOTE = 1;
 	static final int NOTE_ENDNOTE = 2;
 	
 	Application app;
+	int ID;
 	XTextRangeCompare textRangeCompare;
 	XTextDocument textDocument;
 	XText text;
@@ -87,6 +91,7 @@ public class Document {
 	String runtimeUID;
 	Properties properties;
 	MarkManager mMarkManager;
+	XUndoManager undoManager;
 	
 	private static boolean checkExperimentalMode = true;
 	private static boolean statusExperimentalMode = false;
@@ -95,6 +100,7 @@ public class Document {
 	static final String[] PREFS_PROPERTIES = {"ZOTERO_PREF", "CSL_PREF"};
 	static final String FIELD_PLACEHOLDER = "{Citation}";
 	static final String BOOKMARK_REFERENCE_PROPERTY = "ZOTERO_BREF_";
+	static final String UNDO_RECORD_NAME = "Zotero Action"; 
 	
 	static final int BOOKMARK_ADD_CHARS = 12;
 	static final int REFMARK_ADD_CHARS = 10;
@@ -106,8 +112,9 @@ public class Document {
 	static String SAVE_WARNING_STRING = "This document contains Zotero ReferenceMarks. Upon reopening the document, Zotero will be unable to edit existing citations or add new references to the bibliography.\n\nTo save Zotero citation information, please select the \"ODF Text Document\" format when saving, or switch to Bookmarks in the Zotero Document Preferences.";
 	TextTableManager textTableManager;
 	
-    public Document(Application anApp) throws Exception {
+    public Document(Application anApp, int anID) throws Exception {
     	app = anApp;
+    	ID = anID;
     	factory = Application.factory;
 		desktop = Application.desktop;
 		frame = desktop.getCurrentFrame();
@@ -120,9 +127,17 @@ public class Document {
 		properties = new Properties(component);
 		runtimeUID = (String) ((XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, component)).getPropertyValue("RuntimeUID");
 		mMarkManager = new MarkManager(this);
+		XUndoManagerSupplier ums = (XUndoManagerSupplier) UnoRuntime.queryInterface(XUndoManagerSupplier.class, component); 
+		undoManager = ums.getUndoManager();
+		undoManager.enterUndoContext(UNDO_RECORD_NAME);
     }
     
     public void cleanup() {}
+
+	public void complete() throws InvalidStateException {
+		undoManager.leaveUndoContext();
+		app.documentComplete(ID);
+	}
     
 	public int displayAlert(String text, int icon, int buttons) {
     	// figure out appropriate buttons

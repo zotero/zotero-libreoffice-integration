@@ -2,14 +2,11 @@ package org.zotero.integration.ooo.comp;
 
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 class CommMessage implements CommFrame {
 	static ObjectMapper objectMapper = new ObjectMapper();
-	private static int lastDocumentID = 0;
-	private static HashMap <Integer, Document> documents = new HashMap<Integer, Document>();
 	private byte[] mInputBytes;
 	private byte[] mOutputBytes;
 	private int mTransactionID;
@@ -56,15 +53,11 @@ class CommMessage implements CommFrame {
 		ArrayList<Object> args = (ArrayList<Object>) message.get(1);
 		
 		if(command.equals("Application_getActiveDocument")) {
-			Document document = Comm.application.getActiveDocument();
-			if(lastDocumentID == Integer.MAX_VALUE) lastDocumentID = 0;
-			Integer documentID = ++lastDocumentID;
-			documents.put(documentID, document);
-			Object[] out = {Comm.API_VERSION, documentID};
+			Object[] out = {Comm.API_VERSION, Comm.application.getActiveDocumentID()};
 			return out;
 		} else {
 			int documentID = (Integer) args.get(0);
-			Document document = documents.get(documentID);
+			Document document = Comm.application.getDocument(documentID);
 			
 			if(command.equals("Document_displayAlert")) {
 				return document.displayAlert((String) args.get(1), (Integer) args.get(2), (Integer) args.get(3));
@@ -111,8 +104,7 @@ class CommMessage implements CommFrame {
 			} else if(command.equals("Document_cleanup")) {
 				document.cleanup();
 			} else if(command.equals("Document_complete")) {
-				// Clear our field list
-				documents.remove(documentID);
+				document.complete();
 			} else if(command.startsWith("Field_")) {
 				ReferenceMark field = document.mMarkManager.getMarkForID((Integer) args.get(1));
 				if(command.equals("Field_delete")) {
