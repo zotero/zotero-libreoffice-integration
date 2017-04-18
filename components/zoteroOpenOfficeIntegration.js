@@ -374,14 +374,16 @@ Initializer.prototype = {
 };
 
 /**
- * See zoteroIntegration.idl
+ * See integrationTests.js
  */
-var Application = function() {};
+var Application = function() {
+	this.wrappedJSObject = this;
+};
 Application.prototype = {
 	classDescription: "Zotero OpenOffice.org Integration Application",
 	classID:		Components.ID("{8478cd98-5ba0-4848-925a-75adffff2dbf}"),
 	contractID:		"@zotero.org/Zotero/integration/application?agent=OpenOffice;1",
-	QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsISupports, Components.interfaces.zoteroIntegrationApplication]),
+	QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsISupports]),
 	_xpcom_categories: [{
 		category: "profile-after-change",
 		service: true
@@ -397,18 +399,12 @@ Application.prototype = {
 };
 
 /**
- * See zoteroIntegration.idl
+ * See integrationTests.js
  */
 var Document = function(documentID) {
 	this._documentID = documentID;
-	this.wrappedJSObject = this;
 };
-Document.prototype = {
-	classDescription: "Zotero OpenOffice.org Integration Document",
-	classID:		Components.ID("{e2e05bf9-40d4-4426-b0c9-62abca5be58f}"),
-	contractID:		"@zotero.org/Zotero/integration/document?agent=OpenOffice;1",
-	QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsISupports, Components.interfaces.zoteroIntegrationDocument])
-};
+Document.prototype = {};
 for (let method of ["displayAlert", "activate", "canInsertField", "getDocumentData",
 	"setDocumentData", "setBibliographyStyle", "complete"]) {
 	let methodStable = method;
@@ -424,7 +420,7 @@ Document.prototype.cursorInField = function(fieldType) {
 	return new Field(this._documentID, retVal[0], retVal[1], retVal[2]);
 };
 Document.prototype.insertField = function(fieldType, noteType) {
-	var retVal = Comm.sendCommand("Document_insertField", [this._documentID, fieldType, noteType]);
+	var retVal = Comm.sendCommand("Document_insertField", [this._documentID, fieldType, parseInt(noteType) || 0]);
 	return new Field(this._documentID, retVal[0], retVal[1], retVal[2]);
 };
 Document.prototype.getFields = function(fieldType) {
@@ -445,7 +441,7 @@ Document.prototype.getFieldsAsync = function(fieldType, observer) {
 Document.prototype.convert = function(enumerator, fieldType, noteTypes) {
 	var i = 0;
 	while(enumerator.hasMoreElements()) {
-		Comm.sendCommand("Field_convert", [this._documentID, enumerator.getNext().wrappedJSObject._index, fieldType, noteTypes[i]]);
+		Comm.sendCommand("Field_convert", [this._documentID, enumerator.getNext()._index, fieldType, noteTypes[i]]);
 		i++;
 	}
 };
@@ -474,21 +470,15 @@ FieldEnumerator.prototype = {
 };
 
 /**
- * See zoteroIntegration.idl
+ * See integrationTests.js
  */
 var Field = function(documentID, index, code, noteIndex) {
 	this._documentID = documentID; 
 	this._index = index;
 	this._code = code;
 	this._noteIndex = noteIndex;
-	this.wrappedJSObject = this;
 };
-Field.prototype = {
-	classDescription: "Zotero OpenOffice.org Integration Field",
-	classID:		Components.ID("{82483c48-304c-460e-ab31-fac872f20379}"),
-	contractID:		"@zotero.org/Zotero/integration/field?agent=OpenOffice;1",
-	QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsISupports, Components.interfaces.zoteroIntegrationField])
-};
+Field.prototype = {};
 
 for (let method of ["delete", "select", "removeCode", "setText", "getText"]) {
 	let methodStable = method;
@@ -508,14 +498,12 @@ Field.prototype.getNoteIndex = function() {
 	return this._noteIndex;
 }
 Field.prototype.equals = function(arg) {
-	return this._index === arg.wrappedJSObject._index;
+	return this._index === arg._index;
 }
 
 var classes = [
 	Initializer,
 	Application,
-	Field,
-	Document
 ];
 
 var NSGetFactory = XPCOMUtils.generateNSGetFactory(classes);
