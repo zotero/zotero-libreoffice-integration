@@ -149,6 +149,7 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	
 	public void setText(String textString, boolean isRich) throws Exception {
 		boolean isBibliography = getCode().startsWith("BIBL");
+		XTextCursor viewCursor = doc.getSelection();
 		
 		if(isBibliography) {
 			prepareMultiline();
@@ -169,6 +170,11 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 				text.insertControlCharacter(range, ControlCharacter.PARAGRAPH_BREAK, false);
 				text.insertControlCharacter(range.getEnd(), ControlCharacter.PARAGRAPH_BREAK, false);
 				cursor.collapseToStart();
+				// LibreOffice crashes here if we don't move the viewCursor.
+				// Affects Ubuntu and maybe MacOS.
+				// Don't ask me why it crashes though. 
+				viewCursor.gotoRange((XTextRange) cursor, false);
+				viewCursor.goLeft((short)1, false);
 				moveCursorRight(cursor, previousLen);
 			}
 		}
@@ -248,6 +254,10 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 				if(str.equals("\n") || str.equals("\r\n")) {
 					dupRange.setString("");
 				}
+				
+				// Restoring cursor position
+				viewCursor.gotoRange(dupRange, false);
+				viewCursor.collapseToEnd();
 
 				dupRange = text.createTextCursorByRange(range);
 				dupRange.collapseToStart();

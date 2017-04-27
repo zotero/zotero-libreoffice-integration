@@ -429,7 +429,7 @@ public class Document {
 		// this takes less than half as many lines in py-appscript!
 	}
 	
-	XTextViewCursor getSelection() {
+	public XTextViewCursor getSelection() {
 		XTextViewCursorSupplier supplier = (XTextViewCursorSupplier) UnoRuntime.queryInterface(XTextViewCursorSupplier.class, controller);
 		return supplier.getViewCursor();
 	}
