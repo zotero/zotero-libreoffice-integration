@@ -170,11 +170,16 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 				text.insertControlCharacter(range, ControlCharacter.PARAGRAPH_BREAK, false);
 				text.insertControlCharacter(range.getEnd(), ControlCharacter.PARAGRAPH_BREAK, false);
 				cursor.collapseToStart();
-				// LibreOffice crashes here if we don't move the viewCursor.
-				// Affects Ubuntu and maybe MacOS.
-				// Don't ask me why it crashes though. 
-				viewCursor.gotoRange((XTextRange) cursor, false);
-				viewCursor.goLeft((short)1, false);
+				
+				// But don't move the cursor to the note
+				if (!isNote) {
+					// LibreOffice crashes while inserting RTF if we don't move the viewCursor here.
+					// Affects Ubuntu and maybe MacOS.
+					// Don't ask me why it crashes though. 
+					viewCursor.gotoRange((XTextRange) cursor, false);
+					viewCursor.goLeft((short)1, false);
+				}
+				
 				moveCursorRight(cursor, previousLen);
 			}
 		}
@@ -255,9 +260,11 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 					dupRange.setString("");
 				}
 				
-				// Restoring cursor position
-				viewCursor.gotoRange(dupRange, false);
-				viewCursor.collapseToEnd();
+				if (!isNote) {
+					// Restoring cursor position from crash-prevention jiggle
+					viewCursor.gotoRange(dupRange, false);
+					viewCursor.collapseToEnd();
+				}
 
 				dupRange = text.createTextCursorByRange(range);
 				dupRange.collapseToStart();
