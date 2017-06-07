@@ -291,17 +291,17 @@ function openofficeInstallationsPageShown() {
 }
 
 /**
- * Called to add an OpenOffice.org installation directory
+ * Called to add an LibreOffice installation directory
  */
 function openofficeInstallationsAddDirectory() {
 	var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(Components.interfaces.nsIFilePicker);
 	
 	// show dialog to select directory
 	if(Zotero.isMac) {
-		fp.init(window, "Select the OpenOffice.org application", Components.interfaces.nsIFilePicker.modeOpen);
+		fp.init(window, "Select the LibreOffice application", Components.interfaces.nsIFilePicker.modeOpen);
 		fp.appendFilter("Mac OS X Application Bundle", "*.app");
 	} else {
-		fp.init(window, "Select the OpenOffice.org installation directory", Components.interfaces.nsIFilePicker.modeGetFolder);
+		fp.init(window, "Select the LibreOffice installation directory", Components.interfaces.nsIFilePicker.modeGetFolder);
 	}
 	
 	if(fp.show() === Components.interfaces.nsIFilePicker.returnOK) {
@@ -320,7 +320,7 @@ function openofficeInstallationsAddDirectory() {
 			var promptService = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
 					.getService(Components.interfaces.nsIPromptService);
 			promptService.alert(window, "unopkg Not Found", "The unopkg executable could not be "+
-				"found in the selected OpenOffice.org installation directory. Please ensure that "+
+				"found in the selected LibreOffice installation directory. Please ensure that "+
 				"you have selected the correct directory and try again.");
 		}
 		
@@ -343,7 +343,7 @@ function openofficeInstallationsAddDirectory() {
 }
 
 /**
- * Called to reveal OpenOffice.org extension for manual installation
+ * Called to reveal LibreOffice extension for manual installation
  */
 function openofficeInstallationsManualInstallation() {
 	// clear saved unopkg paths so we force manual install on upgrade
@@ -365,7 +365,7 @@ function openofficeInstallationsManualInstallation() {
 }
 
 /**
- * Called when an OpenOffice.org installation is checked or unchecked
+ * Called when an LibreOffice installation is checked or unchecked
  */
 function openofficeInstallationsListboxSelectionChanged() {
 	var listbox = document.getElementById("installations-listbox");
@@ -446,8 +446,8 @@ function wizardCancelled() {
 	if(wizard.currentPage.pageid != "installation-complete") {
 		var promptService = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
 				.getService(Components.interfaces.nsIPromptService);
-		var cancel = promptService.confirm(window, "Zotero OpenOffice.org Integration", "Are you sure you want "+
-			"to cancel Zotero OpenOffice.org/NeoOffice/LibreOffice Integration installation? To "+
+		var cancel = promptService.confirm(window, "Zotero LibreOffice Integration", "Are you sure you want "+
+			"to cancel Zotero LibreOffice Integration installation? To "+
 			"install later, visit the Cite pane of the Zotero preferences.");
 		if(cancel) {
 			ZoteroPluginInstaller.cancelled();

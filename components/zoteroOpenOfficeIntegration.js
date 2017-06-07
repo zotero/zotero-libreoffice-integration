@@ -340,14 +340,14 @@ var Comm = new function() {
 			.getService(Components.interfaces.nsIPromptService);
 		var shouldReinstall = ps.confirm(null, "Zotero LibreOffice Integration Error",
 			'The version of the Zotero LibreOffice Integration component installed within '+
-			'LibreOffice, OpenOffice.org, or NeoOffice does not appear to match '+
+			'LibreOffice does not appear to match '+
 			'this Zotero Standalone version. '+
 			'Would you like to attempt to reinstall it?\n\n'+
 			'Please ensure your LibreOffice installation is properly detected. If you '+
 			'continue to experience this error, click the "Manual Installation" button '+
 			'within the wizard to show the directory containing the LibreOffice component. '+
-			'Double-click this component or add it from within LibreOffice, OpenOffice.org, or '+
-			'NeoOffice to complete the installation procedure.');
+			'Double-click this component or add it from within LibreOffice '+
+			'to complete the installation procedure.');
 		
 		if(shouldReinstall) {
 			var ZoteroOpenOfficeInstaller = Components.utils.import("resource://zotero-openoffice-integration/installer.jsm").Installer;
@@ -355,7 +355,7 @@ var Comm = new function() {
 		}
 		
 		// We throw this error to avoid displaying another error dialog
-		Zotero.logError("Zotero and OpenOffice.org extension versions are incompatible");
+		Zotero.logError("Zotero and LibreOffice extension versions are incompatible");
 		throw Components.Exception("ExceptionAlreadyDisplayed");
 	}
 };
@@ -367,7 +367,7 @@ var Initializer = function() {
 	Comm.init();
 };
 Initializer.prototype = {
-	classDescription: "Zotero OpenOffice.org Integration Initializer",
+	classDescription: "Zotero LibreOffice Integration Initializer",
 	"classID":Components.ID("{f43193a1-7060-41a3-8e82-481d58b71e6f}"),
 	"contractID":"@zotero.org/Zotero/integration/initializer?agent=OpenOffice;1",
 	"QueryInterface":XPCOMUtils.generateQI([Components.interfaces.nsISupports]),
@@ -381,7 +381,7 @@ var Application = function() {
 	this.wrappedJSObject = this;
 };
 Application.prototype = {
-	classDescription: "Zotero OpenOffice.org Integration Application",
+	classDescription: "Zotero LibreOffice Integration Application",
 	classID:		Components.ID("{8478cd98-5ba0-4848-925a-75adffff2dbf}"),
 	contractID:		"@zotero.org/Zotero/integration/application?agent=OpenOffice;1",
 	QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsISupports]),

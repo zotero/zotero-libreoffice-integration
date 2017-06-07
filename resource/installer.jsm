@@ -149,7 +149,7 @@ var Plugin = new function() {
 	this.EXTENSION_ID = "zoteroOpenOfficeIntegration@zotero.org";
 	this.EXTENSION_PREF_BRANCH = "extensions.zoteroOpenOfficeIntegration.";
 	this.EXTENSION_DIR = "zotero-openoffice-integration";
-	this.APP = 'LibreOffice/OpenOffice.org/NeoOffice';
+	this.APP = 'LibreOffice';
 	
 	this.REQUIRED_ADDONS = [{
 		name: "Zotero",
@@ -241,7 +241,7 @@ var Plugin = new function() {
 	}
 	
 	/**
-	 * Gets a list of potential OpenOffice.org installations by
+	 * Gets a list of potential LibreOffice installations by
 	 * checking paths and checking the preferences.
 	 *
 	 * @return {Object} An object whose keys are paths and whose values
@@ -317,7 +317,7 @@ var Plugin = new function() {
 	}
 	
 	/**
-	 * Gets the path to the OpenOffice.org oxt file
+	 * Gets the path to the LibreOffice oxt file
 	 * @return {nsIFile}
 	 */
 	this.getOxtPath = function() {
@@ -328,7 +328,7 @@ var Plugin = new function() {
 	}
 	
 	/**
-	 * Installs OpenOffice.org components
+	 * Installs LibreOffice components
 	 * @param {String[]} unopkgPaths Paths to unopkg
 	 * @param {Function} callback Function to call when installation is complete. Argument 
 	 *		reflects whether installation was successful.
