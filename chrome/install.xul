@@ -5,7 +5,7 @@
 <!DOCTYPE window SYSTEM "chrome://zotero/locale/zotero.dtd">
 
 <wizard xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-	title="The Zotero LibreOffice Plugin Installation" width="600"
+	title="Zotero LibreOffice Plugin Installation" width="600"
 	height="450" id="installer" onwizardcancel="return wizardCancelled();"
 	onwizardback="wizardBack(); return false;">
 	
