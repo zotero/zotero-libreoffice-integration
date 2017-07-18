@@ -16,28 +16,27 @@
 	next="openoffice-installations">
 		<description>
 			The Zotero LibreOffice Plugin makes it easy to insert Zotero
-			citations and bibliographies into these popular word processors. 
+			citations and bibliographies into LibreOffice documents.
 		</description>
 		<description>
-			This wizard will install the Zotero LibreOffice Plugin for all
-			applicable word processors on this computer. The extension can be reinstalled later from
-			the Cite pane in the Zotero preferences.
+			This wizard will install the plugin into LibreOffice. It can be reinstalled later from the
+			Cite pane of the Zotero preferences.
 		</description>
 	</wizardpage>
 	
 	<wizardpage pageid="java-common" onpageshow="javaCommonPageShown()"
 	label="Install Required Components" next="java-common-install">
 		<vbox id="java-common-progress" flex="1">
-			<label>Searching for Required Components...</label>
+			<label>Searching for Required Components…</label>
 			<progressmeter id="progress-indicator" mode="undetermined"/>
 		</vbox>
 		<vbox id="java-common-required" hidden="true" flex="1">
 			<description>
-				The Zotero LibreOffice Plugin requires following packages:
+				The Zotero LibreOffice Plugin requires the following packages:
 			</description>
 			<description id="java-common-packages" style="margin-left:0.5in"></description>
 			<description>
-				Press the "Next" button below to proceed with installation.
+				Press the “Next” button below to proceed with the installation.
 			</description>
 		</vbox>
 	</wizardpage>
@@ -46,7 +45,7 @@
 	label="Install Required Components" onpageshow="javaCommonInstallPageShown()"
 	next="openoffice-installations">
 		<vbox id="java-common-install-progress" flex="1">
-			<label>Installing required packages...</label>
+			<label>Installing required packages…</label>
 			<progressmeter id="progress-indicator" mode="undetermined"/>
 		</vbox>
 		<description id="java-common-install-error" flex="1" hidden="true">
@@ -61,7 +60,7 @@
 	next="openoffice-installations">
 		<description>
 			The Zotero LibreOffice Plugin requires the Java
-			Runtime Environment. Visit <label class="zotero-text-link" href="http://java.com/inc/BrowserRedirect1.jsp">Java.com</label>
+			Runtime Environment. Visit <label class="zotero-text-link" href="https://java.com/inc/BrowserRedirect1.jsp">Java.com</label>
 			to download it.
 		</description>
 	</wizardpage>
@@ -71,34 +70,34 @@
 	next="openoffice-installations">
 		<description>
 			The Zotero LibreOffice Plugin on macOS requires the Java
-			Development Kit. Visit <label class="zotero-text-link" href="https://www.zotero.org/support/word_processor_plugin_troubleshooting#libreoffice_5_on_macos_1011no_response_from_plugin">Zotero wiki</label>
+			Development Kit. See the <label class="zotero-text-link" href="https://www.zotero.org/support/word_processor_plugin_troubleshooting#libreoffice_5_on_macos_1011no_response_from_plugin">Zotero documentation</label>
 			for more information.
 		</description>
 	</wizardpage>
 	
-	<wizardpage pageid="openoffice-installations" extra1="Add Directory..."
+	<wizardpage pageid="openoffice-installations" extra1="Add Directory…"
 	extra2="Manual Installation" label="Select LibreOffice unopkg executable"
 	next="installing" onpageshow="openofficeInstallationsPageShown()">
 		<description>
 			Select LibreOffice installations from the list
-			below, or click "Add Installation" to locate the path to an LibreOffice installation
-			directory not shown on the list below.
+			below, or click “Add Installation” to locate the path to an LibreOffice installation
+			directory not shown in the list.
 		</description>
 		<description>
-			To open the directory containing the LibreOffice Plugin for manual installation
-			from within LibreOffice, click "Manual Installation."
+			To open the directory containing the LibreOffice extension file for manual installation
+			from within LibreOffice, click “Manual Installation”.
 		</description>
 		<listbox height="150" id="installations-listbox" oncommand="openofficeInstallationsListboxSelectionChanged()"/>
 		<hbox pack="end">
 			<button label="Manual Installation" oncommand="openofficeInstallationsManualInstallation()"/>
-			<button label="Add Directory..." oncommand="openofficeInstallationsAddDirectory()"/>
+			<button label="Add Directory…" oncommand="openofficeInstallationsAddDirectory()"/>
 		</hbox>
 	</wizardpage>
 	
-	<wizardpage pageid="installing" label="Installing..."
+	<wizardpage pageid="installing" label="Installing…"
 	onpageshow="installingPageShown()" next="installation-complete">
 		<vbox id="installation-progress" flex="1">
-			<label>Installing the Zotero LibreOffice Plugin...</label>
+			<label>Installing the Zotero LibreOffice Plugin…</label>
 			<progressmeter id="progress-indicator" mode="undetermined"/>
 		</vbox>
 	</wizardpage>
@@ -107,19 +106,19 @@
 	label="Installation Complete">
 		<description id="installation-successful">
 			The Zotero LibreOffice Plugin was installed successfully.
-			Depending on the way LibreOffice is configured, it may be
+			Depending on how LibreOffice is configured, it may be
 			necessary to restart your computer for changes to take effect.
 		</description>
 		<vbox id="installation-manual" hidden="true" flex="1">
 			<description>
 				You have elected to install the Zotero LibreOffice
 				Plugin manually. The directory containing the extension should now
-				be open. In case it isn't, the full path to the extension is:
+				be open. In case it isn’t, the full path to the extension is:
 			</description>
 			<description id="installation-manual-path"/>
 			<description>
 				You can install the extension by double-clicking it, or by opening LibreOffice, 
-				selecting Tools-&gt;Extension Manager, clicking the Add button, and locating the file.
+				selecting Tools → Extension Manager, clicking the Add button, and locating the file.
 			</description>
 		</vbox>
 		<vbox id="installation-error" hidden="true" flex="1">
@@ -127,21 +126,21 @@
 				An error occurred during the installation of the Zotero LibreOffice Plugin.
 			</description>
 			<description>
-				Click the "Previous" button and verify that the application path is correct. If you
-				continue to experience errors, click the "Manual Installation" button below to
+				Click the “Previous” button and verify that the application path is correct. If you
+				continue to experience errors, click the “Manual Installation” button below to
 				manually install the component. The following screen will provide instructions on
 				how to proceed.
 			</description>
 			<description>
-				If this error persists, please review 
+				If this error persists, please review the
 				<label class="zotero-text-link" href="http://zotero.org/support/word_processor_plugin_installation_for_zotero_2.1#openoffice">troubleshooting instructions</label>.
-				If these do not resolve the issue you are experiencing, click the button below to
-				submit an error report, and post the report ID as well as the text of any errors you
-				experienced during manual installation to <label class="text-link" href="http://forums.zotero.org/3/">the Zotero forums</label>.
+				If these do not resolve the issue you’re experiencing, click the button below to
+				submit an error report, and post the Report ID as well as the text of any errors you
+				experienced during manual installation to the <label class="text-link" href="https://forums.zotero.org/">Zotero Forums</label>.
 			</description>
 			<hbox pack="center">
 				<button label="Manual Installation" onclick="openofficeInstallationsManualInstallation()"/>
-				<button label="Submit Error Report..." onclick="reportErrors()"/>
+				<button label="Submit Error Report…" onclick="reportErrors()"/>
 			</hbox>
 		</vbox>
 	</wizardpage>
