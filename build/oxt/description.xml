@@ -3,7 +3,7 @@
 xmlns:d="http://openoffice.org/extensions/description/2006"
 xmlns:xlink="http://www.w3.org/1999/xlink">
  
-  <version value="5.0.3"/>
+  <version value="5.0.4"/>
  
   <identifier value="org.Zotero.integration.openoffice" />
  
@@ -16,7 +16,7 @@ xmlns:xlink="http://www.w3.org/1999/xlink">
   </update-information>
  
   <publisher>
-    <name xlink:href="https://www.zotero.org/" lang="en">Center for History and New Media</name>
+    <name xlink:href="https://www.zotero.org/" lang="en">Corporation for Digital Scholarship</name>
   </publisher>
  
   <release-notes>
