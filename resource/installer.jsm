@@ -171,6 +171,7 @@ var Plugin = new function() {
 		required: false
 	}];
 	
+	// Bump if you want to trigger auto-update
 	this.LAST_INSTALLED_FILE_UPDATE = "5.0.4pre";
 	this.DISABLE_PROGRESS_WINDOW = true;
 	
