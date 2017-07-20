@@ -176,18 +176,33 @@ function checkJRE() {
 	var isInstalled = false,
 		wrk = Components.classes["@mozilla.org/windows-registry-key;1"]
 			.createInstance(Components.interfaces.nsIWindowsRegKey);
+			
 	try {
 		wrk.open(Components.interfaces.nsIWindowsRegKey.ROOT_KEY_LOCAL_MACHINE,
 			"Software\\JavaSoft\\Java Runtime Environment",
-			Components.interfaces.nsIWindowsRegKey.ACCESS_READ);
+			Components.interfaces.nsIWindowsRegKey.ACCESS_READ | Components.interfaces.nsIWindowsRegKey.WOW64_32);
+		isInstalled = isInstalled || !!wrk.readStringValue("CurrentVersion");
+	} catch (e) {
+		Zotero.debug("32-bit java not found. Checking 64-bit");
+	} finally {
+		wrk.close();
+	}
+	
+	if (!isInstalled) {
 		try {
-			isInstalled = !!wrk.readStringValue("CurrentVersion");
-		} finally {
+			wrk.open(Components.interfaces.nsIWindowsRegKey.ROOT_KEY_LOCAL_MACHINE,
+				"Software\\JavaSoft\\Java Runtime Environment",
+				Components.interfaces.nsIWindowsRegKey.ACCESS_READ | Components.interfaces.nsIWindowsRegKey.WOW64_64);
+			isInstalled = isInstalled || !!wrk.readStringValue("CurrentVersion");
+		} catch (e) {
+			Zotero.debug("64-bit java not found.");
+		}
+		 finally {
 			wrk.close();
 		}
-	} catch(e) {}
+	}
 	
-	if(isInstalled) {
+	if (isInstalled) {
 		wizard.getPageById("intro").next = "openoffice-installations";
 		
 		if(wizard.currentPage.pageid === "jre-required") {
