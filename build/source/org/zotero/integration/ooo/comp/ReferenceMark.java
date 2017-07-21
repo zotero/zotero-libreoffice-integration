@@ -364,8 +364,9 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 			if(isNote && o.isNote) {
 				try {
 					cmp = textRangeCompare.compareRegionStarts(o.range, range);
-				} catch (com.sun.star.lang.IllegalArgumentException e) {
-					doc.displayAlert(Document.getErrorString(e), 0, 0);
+				} catch (Exception e) {
+					//doc.displayAlert(Document.getErrorString(e), 0, 0);
+					e.printStackTrace();
 					return 0;
 				}
 			} else if(table != null && o.table != null) {
@@ -378,11 +379,9 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 				try {
 					cell1Name = (String) cell1.getPropertyValue("CellName");
 					cell2Name = (String) cell2.getPropertyValue("CellName");
-				} catch (UnknownPropertyException e) {
-					doc.displayAlert(Document.getErrorString(e), 0, 0);
-					return 0;
-				} catch (WrappedTargetException e) {
-					doc.displayAlert(Document.getErrorString(e), 0, 0);
+				} catch (Exception e) {
+					//doc.displayAlert(Document.getErrorString(e), 0, 0);
+					e.printStackTrace();
 					return 0;
 				}
 				
@@ -390,8 +389,9 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 					// should be in the same cell; compare ranges directly
 					try {
 						cmp = textRangeCompare.compareRegionStarts(o.range, range);
-					} catch (com.sun.star.lang.IllegalArgumentException e) {
-						doc.displayAlert(Document.getErrorString(e), 0, 0);
+					} catch (Exception e) {
+						//doc.displayAlert(Document.getErrorString(e), 0, 0);
+						e.printStackTrace();
 						return 0;
 					}
 				} else {

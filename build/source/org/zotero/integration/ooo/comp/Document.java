@@ -24,12 +24,16 @@
 
 package org.zotero.integration.ooo.comp;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
+import java.util.stream.Collectors;
 
+import com.sun.jna.Platform;
 import com.sun.star.awt.MessageBoxButtons;
 import com.sun.star.awt.MessageBoxType;
 import com.sun.star.awt.XMessageBox;
@@ -139,7 +143,8 @@ public class Document {
 		app.documentComplete(ID);
 	}
 	
-	public int displayAlert(String text, int icon, int buttons) {
+	public int displayAlert(String text, int icon, int buttons) throws Exception {
+		if (Platform.isMac()) return displayAlertMacOS(text, icon, buttons);
 		// figure out appropriate buttons
 		int ooButtons = MessageBoxButtons.BUTTONS_OK;
 		if(buttons == 1) {
@@ -174,6 +179,54 @@ public class Document {
 		}
 		return result;
 	}
+	
+	/**
+	 * Solution for https://github.com/zotero/zotero-libreoffice-integration/issues/21
+	 * https://bugs.documentfoundation.org/show_bug.cgi?id=106292
+	 */
+	public int displayAlertMacOS(String text, int icon, int buttons) throws Exception {
+		String script = "osascript -e \"tell app \\\"LibreOffice\\\" to display dialog \\\"" + text + "\\\"";
+		script += " with title \\\"Zotero Integration\\\" with icon " + icon + " buttons ";
+		switch (buttons) {
+		case 3:
+			script += "{\\\"Yes\\\", \\\"No\\\", \\\"Cancel\\\"} default button 1";
+			break;
+		case 2:
+			script += "{\\\"Yes\\\", \\\"No\\\"} default button 1";
+			break;
+		case 1:
+			script += "{\\\"OK\\\", \\\"Cancel\\\"}";
+			break;
+		default:
+			script += "{\\\"OK\\\"}";
+			break;
+		}
+		// prints to stderr on cancel which also returns 1
+		script += "\" 2>&1";
+		Process p = new ProcessBuilder("/bin/bash", "-c", script).start();
+		p.waitFor();
+		String output = new BufferedReader(new InputStreamReader(p.getInputStream()))
+				  .lines().collect(Collectors.joining("\n"));
+		
+		// ofc they spelt it 'canceled'
+		if (p.exitValue() != 0 && !output.contains("User canceled")) {
+			System.out.println(script);
+			System.out.println(output);
+			throw new RuntimeException();
+		}
+
+		if (output.contains("Yes")) {
+			if (buttons == 3) return 2;
+			else return 1;
+		} else if (output.contains("No")) {
+			if (buttons == 3) return 1;
+			else return 0;
+		} else if (output.contains("OK") && buttons == 1) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
 		
 	public void activate() throws Exception {
 		if(System.getProperty("os.name").equals("Mac OS X")) {
@@ -182,7 +235,7 @@ public class Document {
 		}
 	}
 	
-	public boolean canInsertField(String fieldType) {
+	public boolean canInsertField(String fieldType) throws Exception {
 		// first, check if cursor is in the bibliography (no sense offering to replace it)
 		XTextViewCursor selection = getSelection();
 		XTextSection section = (XTextSection) UnoRuntime.queryInterface(XTextSection.class, selection);
