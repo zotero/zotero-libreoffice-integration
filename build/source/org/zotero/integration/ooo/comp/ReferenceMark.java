@@ -155,6 +155,15 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 			prepareMultiline();
 		}
 		
+		boolean viewCursorInField = false;
+		try {
+			if (textRangeCompare.compareRegionStarts(range, viewCursor) >= 0 &&
+					textRangeCompare.compareRegionEnds(range, viewCursor) <= 0) {
+				viewCursorInField = true;
+			}
+		// One of these cursors is not in this text, so we're good
+		} catch (com.sun.star.lang.IllegalArgumentException e) {}
+		
 		XTextCursor cursor = text.createTextCursorByRange(range);
 		if(!isBibliography && range.getString().equals("")) {
 			// One cannot simply overwrite an empty ReferenceMark
@@ -172,7 +181,7 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 				cursor.collapseToStart();
 				
 				// But don't move the cursor to the note
-				if (!isNote) {
+				if (viewCursorInField && !isNote) {
 					// LibreOffice crashes while inserting RTF if we don't move the viewCursor here.
 					// Affects Ubuntu and maybe MacOS.
 					// Don't ask me why it crashes though. 
@@ -260,7 +269,7 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 					dupRange.setString("");
 				}
 				
-				if (!isNote) {
+				if (viewCursorInField && !isNote) {
 					// Restoring cursor position from crash-prevention jiggle
 					viewCursor.gotoRange(dupRange, false);
 					viewCursor.collapseToEnd();
