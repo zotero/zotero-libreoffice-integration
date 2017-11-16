@@ -289,6 +289,16 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		String oldRawCode = rawCode;
 		rawCode = Document.PREFIXES[0] + code + " RND" + Document.getRandomString(Document.REFMARK_ADD_CHARS);
 		doc.mMarkManager.renameMark(oldRawCode, rawCode);
+		// Setting the ReferenceMark name resets the style to the document default, so
+		// we store the previous style.
+		XPropertySet rangeProps = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, range);
+		Object[] oldPropertyValues = new Object[PROPERTIES_CHANGE_TO_DEFAULT.length];
+		for(int i=0; i<PROPERTIES_CHANGE_TO_DEFAULT.length; i++) {
+			Object result = rangeProps.getPropertyValue(PROPERTIES_CHANGE_TO_DEFAULT[i]);
+			oldPropertyValues[i] = result instanceof Any ? ((Any) result).getObject() : result;
+		}
+		
+		// Set the actual referenceMark code.
 		if(isTextSection) {
 			named.setName(rawCode);
 		} else {
@@ -296,6 +306,14 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 			removeCode();
 			reattachMark();
 		}
+		
+		// And restore the style here
+		for(int i=0; i<PROPERTIES_CHANGE_TO_DEFAULT.length; i++) {
+			if(oldPropertyValues[i] != null) {
+				rangeProps.setPropertyValue(PROPERTIES_CHANGE_TO_DEFAULT[i], oldPropertyValues[i]);
+			}
+		}
+		getOutOfField();
 	}
 	
 	public String getCode() throws Exception {
