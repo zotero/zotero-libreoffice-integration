@@ -181,7 +181,8 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 				cursor.collapseToStart();
 				
 				// But don't move the cursor to the note
-				if (viewCursorInField && !isNote) {
+				// Unless the cursor is already in the note
+				if (viewCursorInField) {
 					// LibreOffice crashes while inserting RTF if we don't move the viewCursor here.
 					// Affects Ubuntu and maybe MacOS.
 					// Don't ask me why it crashes though. 
