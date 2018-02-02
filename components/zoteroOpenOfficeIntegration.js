@@ -478,6 +478,7 @@ var Field = function(documentID, index, code, noteIndex) {
 	this._index = index;
 	this._code = code;
 	this._noteIndex = noteIndex;
+	this._formattedText = null;
 };
 Field.prototype = {};
 
@@ -488,6 +489,13 @@ for (let method of ["delete", "select", "removeCode", "setText", "getText"]) {
 			[this._documentID, this._index].concat(Array.prototype.slice.call(arguments)));
 	};
 }
+Field.prototype.setText = function(text, isRich) {
+	if (isRich) {
+		this._formattedText = text;
+	}
+	return Comm.sendCommand("Field_setText",
+		[this._documentID, this._index, text, isRich]);
+}
 Field.prototype.getCode = function() {
 	Zotero.debug(`LibreOfficePlugin: Field(${this._index}).getCode: ${this._code}`);
 	return this._code;
@@ -496,6 +504,12 @@ Field.prototype.setCode = function(code) {
 	this._code = code;
 	Zotero.debug(`LibreOfficePlugin: Field(${this._index}).setCode: ${this._code}`);
 	Comm.sendCommand("Field_setCode", [this._documentID, this._index, code]);
+	// Setting field codes removes formatting, so we have to do reapply the text again
+	// (Doing this within the LO plugin is not viable)
+	if (this._formattedText) {
+		this.setText(this._formattedText, true);
+		this._formattedText = null;
+	}
 }
 Field.prototype.getNoteIndex = function() {
 	Zotero.debug(`LibreOfficePlugin: Field(${this._index}).getNoteIndex: ${this._noteIndex}`);
