@@ -148,7 +148,7 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	}
 	
 	public void setText(String textString, boolean isRich) throws Exception {
-		boolean isBibliography = getCode().startsWith("BIBL");
+		boolean isBibliography = getCode().startsWith(Document.BIBLIOGRAPHY_CODE);
 		XTextCursor viewCursor = doc.getSelection();
 		
 		if(isBibliography) {
@@ -207,6 +207,7 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 				// formatting as the previous citation style
 				textString = "{\\rtf\\\n" + textString.substring(6);*/
 				insertRTF(textString, cursor);
+				rangeProps.setPropertyValue("ParaStyleName", "Bibliography 1");
 				// Remove the new line from the bibliography (added above). Have to remove the
 				// new line before the textSection and then adjust the range so the new line
 				// starting the textSection is outside of the range so that the 
@@ -224,7 +225,6 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 				}
 				cursor.collapseToStart();
 				moveCursorRight(cursor, previousLen-removeLastNewLine);
-				rangeProps.setPropertyValue("ParaStyleName", "Bibliography 1");
 			} else {
 				String oldParaStyle = (String) rangeProps.getPropertyValue("ParaStyleName");
 				
