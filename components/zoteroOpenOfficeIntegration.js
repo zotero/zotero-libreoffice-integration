@@ -506,7 +506,10 @@ Field.prototype.setCode = function(code) {
 		return;
 	}
 	let json = JSON.parse(code.substring(start, code.lastIndexOf('}')+1));
-	let text = json.properties.formattedCitation;
+	let text = json.properties && json.properties.formattedCitation;
+	if (!text) {
+		return;
+	}
 	let isRich = false;
 	if (text.includes("\\")) {
 		if (text.substr(0,5) != "{\\rtf") {
