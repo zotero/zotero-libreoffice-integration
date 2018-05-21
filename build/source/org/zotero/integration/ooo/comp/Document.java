@@ -61,6 +61,7 @@ import com.sun.star.style.TabAlign;
 import com.sun.star.style.TabStop;
 import com.sun.star.style.XStyle;
 import com.sun.star.style.XStyleFamiliesSupplier;
+import com.sun.star.text.ControlCharacter;
 import com.sun.star.text.XBookmarksSupplier;
 import com.sun.star.text.XParagraphCursor;
 import com.sun.star.text.XReferenceMarksSupplier;
@@ -112,6 +113,11 @@ public class Document {
 	
 	static final double MM_PER_100_TWIP = 25.4/1440*100;
 	
+	static final String IMPORT_LINK_URL = "https://www.zotero.org/";
+	static final String IMPORT_ITEM_PREFIX = "ITEM CSL_CITATION ";
+	static final String IMPORT_BIBL_PREFIX = "BIBL ";
+	static final String IMPORT_DOC_PREFS_PREFIX = "DOCUMENT_PREFERENCES ";
+	
 	static String ERROR_STRING = "An error occurred communicating with Zotero:";
 	static String SAVE_WARNING_STRING = "This document contains Zotero ReferenceMarks. Upon reopening the document, Zotero will be unable to edit existing citations or add new references to the bibliography.\n\nTo save Zotero citation information, please select the \"ODF Text Document\" format when saving, or switch to Bookmarks in the Zotero Document Preferences.";
 	TextTableManager textTableManager;
@@ -141,6 +147,43 @@ public class Document {
 	public void complete() throws InvalidStateException {
 		undoManager.leaveUndoContext();
 		app.documentComplete(ID);
+	}
+	
+	public void exportDocument(String fieldType) throws Exception {
+		ArrayList<ReferenceMark> marks = getFields(fieldType);
+		for (ReferenceMark mark : marks) {
+			mark.setText(mark.getCode(), false);
+			XTextRange oldRange = mark.removeCode();
+			XPropertySet props = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, oldRange);
+			props.setPropertyValue("HyperLinkURL", IMPORT_LINK_URL);
+		}
+		
+		String data = IMPORT_DOC_PREFS_PREFIX + getDocumentData();
+		XTextCursor cursor = text.createTextCursor();
+		cursor.gotoEnd(false);
+		text.insertControlCharacter(cursor, ControlCharacter.PARAGRAPH_BREAK, false);
+		cursor.gotoEnd(false);
+		text.insertString(cursor, data, true);
+		XPropertySet props = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, cursor);
+		props.setPropertyValue("HyperLinkURL", IMPORT_LINK_URL);
+	}
+	
+	public boolean importDocument() throws Exception {
+		ArrayList<XTextRange> importLinks = getImportLinks(textDocument.getText());
+		boolean dataImported = false;
+		for (XTextRange xRange : importLinks) {
+			String linkText = xRange.getString();
+			if (linkText.startsWith(IMPORT_ITEM_PREFIX) ||
+					linkText.startsWith(IMPORT_BIBL_PREFIX)) {
+				insertMarkAtRange("ReferenceMark", 0,
+						xRange.getText().createTextCursorByRange(xRange), PREFIXES[0] + linkText, null);
+			} else if (linkText.startsWith(IMPORT_DOC_PREFS_PREFIX)) {
+				dataImported = true;
+				setDocumentData(linkText.substring(IMPORT_DOC_PREFS_PREFIX.length()));
+				xRange.setString("");
+			}
+		}
+		return dataImported;
 	}
 	
 	public int displayAlert(String text, int icon, int buttons) throws Exception {
@@ -542,6 +585,42 @@ public class Document {
 			newMark.setCode(code);
 		}
 		return newMark;
+	}
+	
+	private ArrayList<XTextRange> getImportLinks(XText xText) throws Exception {
+		ArrayList<XTextRange> importLinks = new ArrayList<XTextRange>();
+		XEnumerationAccess xParaAccess = UnoRuntime.queryInterface(
+				XEnumerationAccess.class, xText);
+		XEnumeration xParaEnum = xParaAccess.createEnumeration();
+		while (xParaEnum.hasMoreElements()) {
+			XEnumerationAccess xParaPortionAccess = UnoRuntime.queryInterface(
+					XEnumerationAccess.class, xParaEnum.nextElement());
+			XEnumeration xPortionEnum = xParaPortionAccess.createEnumeration();
+			while (xPortionEnum.hasMoreElements()) {
+				Object textPortion = xPortionEnum.nextElement();
+				XPropertySet propertySet = UnoRuntime.queryInterface(XPropertySet.class, textPortion);
+				XTextRange xRange = UnoRuntime.queryInterface(XTextRange.class, textPortion);
+				String url = "";
+				boolean isNote = false;
+				try {
+					isNote = ((String) propertySet.getPropertyValue(
+							"TextPortionType")).equals("Footnote");
+				} catch (Exception e) {continue;}
+				
+				if (isNote) {
+					importLinks.addAll(getImportLinks((XText) UnoRuntime.queryInterface(
+								XText.class, propertySet.getPropertyValue("Footnote"))));
+				} else {
+					try {
+						url = (String) propertySet.getPropertyValue("HyperLinkURL");
+					} catch (Exception e) {}
+					if (url.contains(IMPORT_LINK_URL)) {
+						importLinks.add(xRange);
+					}
+				}
+			}
+		}
+		return importLinks;
 	}
 	
 	private String getRangePosition(XTextRange selection) {

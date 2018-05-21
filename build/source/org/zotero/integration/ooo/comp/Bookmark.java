@@ -26,6 +26,7 @@ package org.zotero.integration.ooo.comp;
 
 import com.sun.star.container.XNamed;
 import com.sun.star.text.XTextContent;
+import com.sun.star.text.XTextRange;
 import com.sun.star.uno.UnoRuntime;
 
 public class Bookmark extends ReferenceMark {
@@ -39,9 +40,9 @@ public class Bookmark extends ReferenceMark {
 		super.delete();
 	}
 	
-	public void removeCode() throws Exception {
+	public XTextRange removeCode() throws Exception {
 		doc.properties.setProperty(rawCode, "");
-		super.removeCode();
+		return super.removeCode();
 	}
 	
 	public void setCode(String code) throws Exception {

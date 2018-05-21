@@ -118,7 +118,8 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		}
 	}
 	
-	public void removeCode() throws Exception {
+	public XTextRange removeCode() throws Exception {
+		XTextRange originalRange = range;
 		if(isDisposable) {
 			((XComponent) UnoRuntime.queryInterface(XComponent.class, textContent)).dispose();
 		} else {
@@ -133,6 +134,7 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 				range.setString(oldContents);
 			}
 		}
+		return originalRange;
 	}
 	
 	public void select() throws Exception {
