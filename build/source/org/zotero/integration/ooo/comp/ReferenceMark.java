@@ -152,6 +152,7 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	public void setText(String textString, boolean isRich) throws Exception {
 		boolean isBibliography = getCode().startsWith(Document.BIBLIOGRAPHY_CODE);
 		XTextCursor viewCursor = doc.getSelection();
+		XTextRange preNewline, postNewline;
 		
 		if(isBibliography) {
 			prepareMultiline();
@@ -172,15 +173,15 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 			text.removeTextContent(textContent);
 		}
 		range = cursor;
+		preNewline = text.createTextCursorByRange(range).getStart();
+		postNewline = text.createTextCursorByRange(range).getEnd();
 		
 		if(!isBibliography) {
 			// move citation to its own paragraph so its formatting isn't altered automatically
 			// because of the text on either side of it
 			if(isRich) {
-				int previousLen = range.getString().length();
-				text.insertControlCharacter(range, ControlCharacter.PARAGRAPH_BREAK, false);
-				text.insertControlCharacter(range.getEnd(), ControlCharacter.PARAGRAPH_BREAK, false);
-				cursor.collapseToStart();
+				text.insertControlCharacter(preNewline, ControlCharacter.PARAGRAPH_BREAK, true);
+				text.insertControlCharacter(postNewline, ControlCharacter.PARAGRAPH_BREAK, true);
 				
 				// But don't move the cursor to the note
 				// Unless the cursor is already in the note
@@ -191,8 +192,6 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 					viewCursor.gotoRange((XTextRange) cursor, false);
 					viewCursor.goLeft((short)1, false);
 				}
-				
-				moveCursorRight(cursor, previousLen);
 			}
 		}
 
@@ -257,31 +256,14 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		if(!isBibliography) {
 			if(isRich) {
 				// remove previously added paragraphs
-				XTextCursor dupRange;
-				dupRange = text.createTextCursorByRange(range);
-				dupRange.collapseToEnd();
-				dupRange.goRight((short) 1, true);
-				String str = dupRange.getString();
-				// getString() returns different newline characters for different OSes
-				if(str.equals("\n") || str.equals("\r\n")) {
-					dupRange.setString("");
-				}
-				dupRange.goLeft((short) 1, true);
-				str = dupRange.getString();
-				if(str.equals("\n") || str.equals("\r\n")) {
-					dupRange.setString("");
-				}
+				preNewline.setString("");
+				postNewline.setString("");
 				
 				if (viewCursorInField && !isNote) {
 					// Restoring cursor position from crash-prevention jiggle
-					viewCursor.gotoRange(dupRange, false);
+					viewCursor.gotoRange(range, false);
 					viewCursor.collapseToEnd();
 				}
-
-				dupRange = text.createTextCursorByRange(range);
-				dupRange.collapseToStart();
-				dupRange.goLeft((short) 1, true);
-				dupRange.setString("");
 			}
 			
 			getOutOfField();
