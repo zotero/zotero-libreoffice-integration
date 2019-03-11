@@ -460,12 +460,11 @@ function installingPageShown() {
 /*** installation-complete-page ***/
 
 function reportErrors() {
-	var errors = Zotero.getErrors(true);
 	var ww = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
 			   .getService(Components.interfaces.nsIWindowWatcher);
 	var data = {
 		msg: Zotero.getString('errorReport.followingReportWillBeSubmitted'),
-		e: errors.join('\n\n'),
+		errorData: Zotero.getErrors(true),
 		askForSteps: true
 	};
 	var io = { wrappedJSObject: { Zotero: Zotero, data:  data } };
