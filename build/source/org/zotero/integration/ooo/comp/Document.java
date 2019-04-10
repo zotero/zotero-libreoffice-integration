@@ -117,6 +117,7 @@ public class Document {
 	static final String IMPORT_ITEM_PREFIX = "ITEM CSL_CITATION ";
 	static final String IMPORT_BIBL_PREFIX = "BIBL ";
 	static final String IMPORT_DOC_PREFS_PREFIX = "DOCUMENT_PREFERENCES ";
+	static final String EXPORTED_DOCUMENT_MARKER = "ZOTERO_EXPORTED_DOCUMENT";
 	
 	static String ERROR_STRING = "An error occurred communicating with Zotero:";
 	static String SAVE_WARNING_STRING = "This document contains Zotero ReferenceMarks. Upon reopening the document, Zotero will be unable to edit existing citations or add new references to the bibliography.\n\nTo save Zotero citation information, please select the \"ODF Text Document\" format when saving, or switch to Bookmarks in the Zotero Document Preferences.";
@@ -149,7 +150,7 @@ public class Document {
 		app.documentComplete(ID);
 	}
 	
-	public void exportDocument(String fieldType) throws Exception {
+	public void exportDocument(String fieldType, String importInstructions) throws Exception {
 		ArrayList<ReferenceMark> marks = getFields(fieldType);
 		for (ReferenceMark mark : marks) {
 			mark.setText(mark.getCode(), false);
@@ -160,6 +161,18 @@ public class Document {
 		
 		String data = IMPORT_DOC_PREFS_PREFIX + getDocumentData();
 		XTextCursor cursor = text.createTextCursor();
+		// Import instructions
+		cursor.gotoStart(false);
+		text.insertControlCharacter(cursor, ControlCharacter.PARAGRAPH_BREAK, false);
+		cursor.gotoStart(false);
+		text.insertString(cursor, importInstructions, false);
+		text.insertControlCharacter(cursor, ControlCharacter.PARAGRAPH_BREAK, false);
+		// Export marker
+		cursor.gotoStart(false);
+		text.insertString(cursor, EXPORTED_DOCUMENT_MARKER, false);
+		text.insertControlCharacter(cursor, ControlCharacter.PARAGRAPH_BREAK, false);
+		
+		// documentData
 		cursor.gotoEnd(false);
 		text.insertControlCharacter(cursor, ControlCharacter.PARAGRAPH_BREAK, false);
 		cursor.gotoEnd(false);
@@ -169,7 +182,7 @@ public class Document {
 	}
 	
 	public boolean importDocument() throws Exception {
-		ArrayList<XTextRange> importLinks = getImportLinks(textDocument.getText());
+		ArrayList<XTextRange> importLinks = getImportLinks(text);
 		boolean dataImported = false;
 		for (XTextRange xRange : importLinks) {
 			String linkText = xRange.getString();
@@ -182,6 +195,18 @@ public class Document {
 				setDocumentData(linkText.substring(IMPORT_DOC_PREFS_PREFIX.length()));
 				xRange.setString("");
 			}
+		}
+		// Remove export marker, instructions and empty para
+		XEnumerationAccess xParaAccess = UnoRuntime.queryInterface(
+				XEnumerationAccess.class, text);
+		XEnumeration xParaEnum = xParaAccess.createEnumeration();
+		ArrayList<XTextContent> removeParagraphs = new ArrayList<XTextContent>();
+		for (int i = 0 ; i < 3 && xParaEnum.hasMoreElements(); i++) {
+			removeParagraphs.add(UnoRuntime.queryInterface(
+					XTextContent.class, xParaEnum.nextElement()));
+		}
+		for (XTextContent paragraph : removeParagraphs) {
+			text.removeTextContent(paragraph);
 		}
 		return dataImported;
 	}
@@ -380,6 +405,10 @@ public class Document {
 			throw new Exception("ExceptionAlreadyDisplayed");
 		}
 		
+		if (checkForExportMarker()) {
+			return EXPORTED_DOCUMENT_MARKER;
+		}
+		
 		String data;
 		for(String prefsProperty : PREFS_PROPERTIES) {
 			data = properties.getProperty(prefsProperty);
@@ -528,6 +557,35 @@ public class Document {
 	public XTextViewCursor getSelection() {
 		XTextViewCursorSupplier supplier = (XTextViewCursorSupplier) UnoRuntime.queryInterface(XTextViewCursorSupplier.class, controller);
 		return supplier.getViewCursor();
+	}
+	
+	private boolean checkForExportMarker() throws Exception {
+		XEnumerationAccess xParaAccess = UnoRuntime.queryInterface(
+				XEnumerationAccess.class, text);
+		XEnumeration xParaEnum = xParaAccess.createEnumeration();
+		if (xParaEnum.hasMoreElements()) {
+			XEnumerationAccess xParaPortionAccess = UnoRuntime.queryInterface(
+					XEnumerationAccess.class, xParaEnum.nextElement());
+			XEnumeration xPortionEnum = xParaPortionAccess.createEnumeration();
+			if (xPortionEnum.hasMoreElements()) {
+				Object textPortion = xPortionEnum.nextElement();
+				XPropertySet propertySet = UnoRuntime.queryInterface(XPropertySet.class, textPortion);
+				XTextRange xRange = UnoRuntime.queryInterface(XTextRange.class, textPortion);
+				boolean isText = false;
+				try {
+					isText = ((String) propertySet.getPropertyValue(
+							"TextPortionType")).equals("Text");
+				} catch (Exception e) {
+					return false;
+				}
+				
+				if (!isText) {
+					return false;
+				}
+				return xRange.getString().equals(EXPORTED_DOCUMENT_MARKER);
+			}
+		}
+		return false;
 	}
 	
 	private ReferenceMark insertMarkAtRange(String fieldType, int noteType, XTextCursor rangeToInsert, String code, String customBookmarkName) throws Exception {		

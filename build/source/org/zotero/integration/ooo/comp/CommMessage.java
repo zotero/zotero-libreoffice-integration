@@ -126,7 +126,7 @@ class CommMessage implements CommFrame {
 				document.setBibliographyStyle((Integer) args.get(1), (Integer) args.get(2),
 					(Integer) args.get(3), (Integer) args.get(4), arrayList, (Integer) args.get(6));
 			} else if(command.equals("Document_exportDocument")) {
-				document.exportDocument((String) args.get(1));
+				document.exportDocument((String) args.get(1), (String) args.get(2));
 			} else if(command.equals("Document_importDocument")) {
 				return document.importDocument();
 			} else if(command.equals("Document_cleanup")) {
