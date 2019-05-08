@@ -650,6 +650,7 @@ public class Document {
 		XEnumerationAccess xParaAccess = UnoRuntime.queryInterface(
 				XEnumerationAccess.class, xText);
 		XEnumeration xParaEnum = xParaAccess.createEnumeration();
+		String prevUrl = "";
 		while (xParaEnum.hasMoreElements()) {
 			XEnumerationAccess xParaPortionAccess = UnoRuntime.queryInterface(
 					XEnumerationAccess.class, xParaEnum.nextElement());
@@ -673,9 +674,21 @@ public class Document {
 						url = (String) propertySet.getPropertyValue("HyperLinkURL");
 					} catch (Exception e) {}
 					if (url.contains(IMPORT_LINK_URL)) {
-						importLinks.add(xRange);
+						// Links across page breaks are split into separate ones
+						// so we need to merge them if the immediately previous paragraph portion
+						// has the import URL
+						if (url.equals(prevUrl)) {
+							int lastElem = importLinks.size()-1;
+							XTextRange lastRange = importLinks.get(lastElem);
+							XTextCursor cursor = text.createTextCursorByRange(lastRange);
+							cursor.gotoRange(xRange.getEnd(), true);
+							importLinks.set(lastElem, cursor);
+                        } else {
+                            importLinks.add(xRange);
+						}
 					}
 				}
+				prevUrl = url;
 			}
 		}
 		return importLinks;
