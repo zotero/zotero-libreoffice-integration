@@ -182,7 +182,7 @@ public class Document {
 	}
 	
 	public boolean importDocument() throws Exception {
-		ArrayList<XTextRange> importLinks = getImportLinks(text);
+		ArrayList<XTextRange> importLinks = getImportLinks(text, false);
 		boolean dataImported = false;
 		for (XTextRange xRange : importLinks) {
 			String linkText = xRange.getString();
@@ -647,7 +647,7 @@ public class Document {
 		return newMark;
 	}
 	
-	private ArrayList<XTextRange> getImportLinks(XText xText) throws Exception {
+	private ArrayList<XTextRange> getImportLinks(XText xText, boolean inNote) throws Exception {
 		ArrayList<XTextRange> importLinks = new ArrayList<XTextRange>();
 		XEnumerationAccess xParaAccess = UnoRuntime.queryInterface(
 				XEnumerationAccess.class, xText);
@@ -670,7 +670,7 @@ public class Document {
 				
 				if (isNote) {
 					importLinks.addAll(getImportLinks((XText) UnoRuntime.queryInterface(
-								XText.class, propertySet.getPropertyValue("Footnote"))));
+								XText.class, propertySet.getPropertyValue("Footnote")), true));
 				} else {
 					try {
 						url = (String) propertySet.getPropertyValue("HyperLinkURL");
@@ -687,6 +687,11 @@ public class Document {
 							importLinks.set(lastElem, cursor);
                         } else {
                             importLinks.add(xRange);
+						}
+						if (inNote) {
+							XTextRange lastRange = importLinks.get(importLinks.size()-1);
+							propertySet = UnoRuntime.queryInterface(XPropertySet.class, lastRange);
+							propertySet.setPropertyValue("ParaStyleName", "Footnote");
 						}
 					}
 				}
