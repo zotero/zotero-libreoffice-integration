@@ -196,12 +196,14 @@ public class Document {
 				xRange.setString("");
 			}
 		}
-		// Remove export marker, instructions and empty para
+		// Remove export marker and instructions
+		// We leave the empty paragraph in place because if the first element in the
+		// exported document is a footnote libreoffice removes it.
 		XEnumerationAccess xParaAccess = UnoRuntime.queryInterface(
 				XEnumerationAccess.class, text);
 		XEnumeration xParaEnum = xParaAccess.createEnumeration();
 		ArrayList<XTextContent> removeParagraphs = new ArrayList<XTextContent>();
-		for (int i = 0 ; i < 3 && xParaEnum.hasMoreElements(); i++) {
+		for (int i = 0 ; i < 2 && xParaEnum.hasMoreElements(); i++) {
 			removeParagraphs.add(UnoRuntime.queryInterface(
 					XTextContent.class, xParaEnum.nextElement()));
 		}
