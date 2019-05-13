@@ -188,8 +188,16 @@ public class Document {
 			String linkText = xRange.getString();
 			if (linkText.startsWith(IMPORT_ITEM_PREFIX) ||
 					linkText.startsWith(IMPORT_BIBL_PREFIX)) {
-				insertMarkAtRange("ReferenceMark", 0,
+				ReferenceMark field = insertMarkAtRange("ReferenceMark", 0,
 						xRange.getText().createTextCursorByRange(xRange), PREFIXES[0] + linkText, null);
+				XPropertySet propertySet = UnoRuntime.queryInterface(XPropertySet.class, field.range);
+				if (field.isNote) {
+					propertySet.setPropertyValue("ParaStyleName", "Footnote");
+					propertySet.setPropertyValue("CharStyleName", "Footnote Characters");
+				} else {
+					propertySet.setPropertyValue("ParaStyleName", "Default Style");
+					propertySet.setPropertyValue("CharStyleName", "Default Style");
+				}
 			} else if (linkText.startsWith(IMPORT_DOC_PREFS_PREFIX)) {
 				dataImported = true;
 				setDocumentData(linkText.substring(IMPORT_DOC_PREFS_PREFIX.length()));
@@ -652,7 +660,7 @@ public class Document {
 		XEnumerationAccess xParaAccess = UnoRuntime.queryInterface(
 				XEnumerationAccess.class, xText);
 		XEnumeration xParaEnum = xParaAccess.createEnumeration();
-		String prevUrl = "";
+		boolean mergeIntoLast = false;
 		while (xParaEnum.hasMoreElements()) {
 			XEnumerationAccess xParaPortionAccess = UnoRuntime.queryInterface(
 					XEnumerationAccess.class, xParaEnum.nextElement());
@@ -660,6 +668,11 @@ public class Document {
 			while (xPortionEnum.hasMoreElements()) {
 				Object textPortion = xPortionEnum.nextElement();
 				XPropertySet propertySet = UnoRuntime.queryInterface(XPropertySet.class, textPortion);
+				String portionType = (String) propertySet.getPropertyValue("TextPortionType");
+				if (portionType.equals("SoftPageBreak")) {
+					mergeIntoLast = true;
+					continue;
+				}
 				XTextRange xRange = UnoRuntime.queryInterface(XTextRange.class, textPortion);
 				String url = "";
 				boolean isNote = false;
@@ -676,10 +689,8 @@ public class Document {
 						url = (String) propertySet.getPropertyValue("HyperLinkURL");
 					} catch (Exception e) {}
 					if (url.contains(IMPORT_LINK_URL)) {
-						// Links across page breaks are split into separate ones
-						// so we need to merge them if the immediately previous paragraph portion
-						// has the import URL
-						if (url.equals(prevUrl)) {
+						// Links across page breaks are split into separate text portions
+						if (mergeIntoLast) {
 							int lastElem = importLinks.size()-1;
 							XTextRange lastRange = importLinks.get(lastElem);
 							XTextCursor cursor = text.createTextCursorByRange(lastRange);
@@ -688,14 +699,9 @@ public class Document {
                         } else {
                             importLinks.add(xRange);
 						}
-						if (inNote) {
-							XTextRange lastRange = importLinks.get(importLinks.size()-1);
-							propertySet = UnoRuntime.queryInterface(XPropertySet.class, lastRange);
-							propertySet.setPropertyValue("ParaStyleName", "Footnote");
-						}
 					}
 				}
-				prevUrl = url;
+				mergeIntoLast = false;
 			}
 		}
 		return importLinks;
