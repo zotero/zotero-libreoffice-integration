@@ -167,6 +167,8 @@ public class Document {
 		cursor.gotoStart(false);
 		text.insertString(cursor, importInstructions, false);
 		text.insertControlCharacter(cursor, ControlCharacter.PARAGRAPH_BREAK, false);
+		cursor.gotoStart(false);
+		text.insertControlCharacter(cursor, ControlCharacter.PARAGRAPH_BREAK, false);
 		// Export marker
 		cursor.gotoStart(false);
 		text.insertString(cursor, EXPORTED_DOCUMENT_MARKER, false);
@@ -204,14 +206,14 @@ public class Document {
 				xRange.setString("");
 			}
 		}
-		// Remove export marker and instructions
-		// We leave the empty paragraph in place because if the first element in the
-		// exported document is a footnote libreoffice removes it.
+		// Remove export marker, empty paragraph and instructions
+		// We leave the final empty paragraph in place because if the first element in the
+		// exported document is a footnote libreoffice removes it along with the previous paragraph.
 		XEnumerationAccess xParaAccess = UnoRuntime.queryInterface(
 				XEnumerationAccess.class, text);
 		XEnumeration xParaEnum = xParaAccess.createEnumeration();
 		ArrayList<XTextContent> removeParagraphs = new ArrayList<XTextContent>();
-		for (int i = 0 ; i < 2 && xParaEnum.hasMoreElements(); i++) {
+		for (int i = 0 ; i < 3 && xParaEnum.hasMoreElements(); i++) {
 			removeParagraphs.add(UnoRuntime.queryInterface(
 					XTextContent.class, xParaEnum.nextElement()));
 		}
