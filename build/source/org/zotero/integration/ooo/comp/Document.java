@@ -578,6 +578,11 @@ public class Document {
 		if (xParaEnum.hasMoreElements()) {
 			XEnumerationAccess xParaPortionAccess = UnoRuntime.queryInterface(
 					XEnumerationAccess.class, xParaEnum.nextElement());
+			// Text enumerator also returns TextTables which do not support XEnumerationAccess
+			// Either way, this means we will not be finding an export marker
+			if (xParaPortionAccess == null) {
+				return false;
+			}
 			XEnumeration xPortionEnum = xParaPortionAccess.createEnumeration();
 			if (xPortionEnum.hasMoreElements()) {
 				Object textPortion = xPortionEnum.nextElement();
