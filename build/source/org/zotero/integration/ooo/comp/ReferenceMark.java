@@ -79,11 +79,22 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		
 		XServiceInfo serviceInfo = (XServiceInfo) UnoRuntime.queryInterface(XServiceInfo.class, text);
 		isNote = serviceInfo.supportsService("com.sun.star.text.Footnote");
-		if(serviceInfo.supportsService("com.sun.star.text.CellProperties")) {
+		XTextRange rangeInDocument;
+		XServiceInfo serviceInfoInDocument;
+		if (isNote) {
+			rangeInDocument = ((XTextContent) UnoRuntime.queryInterface(XTextContent.class, text)).getAnchor();
+			serviceInfoInDocument = (XServiceInfo) UnoRuntime.queryInterface(XServiceInfo.class,
+					rangeInDocument.getText());
+		} else {
+			rangeInDocument = range;
+			serviceInfoInDocument = serviceInfo;
+		}
+		
+		if(serviceInfoInDocument.supportsService("com.sun.star.text.CellProperties")) {
 			// is in a table
 			try {
 				table = (XTextContent) UnoRuntime.queryInterface(XTextContent.class,
-						((XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, range)).getPropertyValue("TextTable"));
+						((XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, rangeInDocument)).getPropertyValue("TextTable"));
 			} catch (UnknownPropertyException e) {
 				throw new IllegalArgumentException("TextTable property unknown on an apparent TextTable");
 			} catch (WrappedTargetException e) {
@@ -324,12 +335,12 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	}
 	
 	XTextRange getDocumentRange() {
-		if(isNote) {
-			return ((XTextContent) UnoRuntime.queryInterface(XTextContent.class, text)).getAnchor();
-		} else if(table != null) {
+		if(table != null) {
 			String tableName = ((XNamed) UnoRuntime.queryInterface(XNamed.class, table)).getName();
 			if(doc.textTableManager == null) doc.textTableManager = new TextTableManager(doc.textDocument);
 			return doc.textTableManager.getRangeForTable(tableName);
+		} else if(isNote) {
+			return ((XTextContent) UnoRuntime.queryInterface(XTextContent.class, text)).getAnchor();
 		} else {
 			return range;
 		}
