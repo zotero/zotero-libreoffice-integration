@@ -60,6 +60,7 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	protected XTextContent textContent;
 	XTextRange range;
 	protected XText text;
+	protected XText textInTable;
 	protected XNamed named;
 	protected boolean isNote;
 	XTextContent table;
@@ -95,6 +96,8 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 			try {
 				table = (XTextContent) UnoRuntime.queryInterface(XTextContent.class,
 						((XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, rangeInDocument)).getPropertyValue("TextTable"));
+				// Same as `text` if the citation in the table is not a footnote
+				textInTable = rangeInDocument.getText();
 			} catch (UnknownPropertyException e) {
 				throw new IllegalArgumentException("TextTable property unknown on an apparent TextTable");
 			} catch (WrappedTargetException e) {
@@ -370,20 +373,12 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 		}
 		
 		if(cmp == 0) {
-			if(isNote && o.isNote) {
-				try {
-					cmp = textRangeCompare.compareRegionStarts(o.range, range);
-				} catch (Exception e) {
-					//doc.displayAlert(Document.getErrorString(e), 0, 0);
-					e.printStackTrace();
-					return 0;
-				}
-			} else if(table != null && o.table != null) {
+			if(table != null && o.table != null) {
 				// This ought to mean they are both in the same table
 				
 				// First, get cell names
-				XPropertySet cell1 = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, text);
-				XPropertySet cell2 = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, o.text);
+				XPropertySet cell1 = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, textInTable);
+				XPropertySet cell2 = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, o.textInTable);
 				String cell1Name, cell2Name;
 				try {
 					cell1Name = (String) cell1.getPropertyValue("CellName");
@@ -421,6 +416,14 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 						// compare row numbers
 						return int1.compareTo(int2);
 					}
+				}
+			} else if (isNote && o.isNote) {
+				try {
+					cmp = textRangeCompare.compareRegionStarts(o.range, range);
+				} catch (Exception e) {
+					//doc.displayAlert(Document.getErrorString(e), 0, 0);
+					e.printStackTrace();
+					return 0;
 				}
 			}
 		}
