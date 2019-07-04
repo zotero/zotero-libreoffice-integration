@@ -61,6 +61,7 @@ import com.sun.star.style.TabAlign;
 import com.sun.star.style.TabStop;
 import com.sun.star.style.XStyle;
 import com.sun.star.style.XStyleFamiliesSupplier;
+import com.sun.star.table.XCell;
 import com.sun.star.text.ControlCharacter;
 import com.sun.star.text.XBookmarksSupplier;
 import com.sun.star.text.XParagraphCursor;
@@ -73,6 +74,7 @@ import com.sun.star.text.XTextRange;
 import com.sun.star.text.XTextRangeCompare;
 import com.sun.star.text.XTextSection;
 import com.sun.star.text.XTextSectionsSupplier;
+import com.sun.star.text.XTextTable;
 import com.sun.star.text.XTextViewCursor;
 import com.sun.star.text.XTextViewCursorSupplier;
 import com.sun.star.uno.UnoRuntime;
@@ -184,7 +186,7 @@ public class Document {
 	}
 	
 	public boolean importDocument() throws Exception {
-		ArrayList<XTextRange> importLinks = getImportLinks(text, false);
+		ArrayList<XTextRange> importLinks = getImportLinks(text);
 		boolean dataImported = false;
 		for (XTextRange xRange : importLinks) {
 			String linkText = xRange.getString();
@@ -662,15 +664,23 @@ public class Document {
 		return newMark;
 	}
 	
-	private ArrayList<XTextRange> getImportLinks(XText xText, boolean inNote) throws Exception {
+	private ArrayList<XTextRange> getImportLinks(XText xText) throws Exception {
 		ArrayList<XTextRange> importLinks = new ArrayList<XTextRange>();
 		XEnumerationAccess xParaAccess = UnoRuntime.queryInterface(
 				XEnumerationAccess.class, xText);
 		XEnumeration xParaEnum = xParaAccess.createEnumeration();
 		boolean mergeIntoLast = false;
 		while (xParaEnum.hasMoreElements()) {
+			Object paragraph = xParaEnum.nextElement();
 			XEnumerationAccess xParaPortionAccess = UnoRuntime.queryInterface(
-					XEnumerationAccess.class, xParaEnum.nextElement());
+					XEnumerationAccess.class, paragraph);
+			if (xParaPortionAccess == null) {
+				XServiceInfo xInfo = UnoRuntime.queryInterface(XServiceInfo.class, paragraph);
+				if (xInfo.supportsService("com.sun.star.text.TextTable")) {
+					importLinks.addAll(getImportLinksFromTable(paragraph));
+				}
+				continue;
+			}
 			XEnumeration xPortionEnum = xParaPortionAccess.createEnumeration();
 			while (xPortionEnum.hasMoreElements()) {
 				Object textPortion = xPortionEnum.nextElement();
@@ -690,7 +700,7 @@ public class Document {
 				
 				if (isNote) {
 					importLinks.addAll(getImportLinks((XText) UnoRuntime.queryInterface(
-								XText.class, propertySet.getPropertyValue("Footnote")), true));
+								XText.class, propertySet.getPropertyValue("Footnote"))));
 				} else {
 					try {
 						url = (String) propertySet.getPropertyValue("HyperLinkURL");
@@ -700,7 +710,7 @@ public class Document {
 						if (mergeIntoLast) {
 							int lastElem = importLinks.size()-1;
 							XTextRange lastRange = importLinks.get(lastElem);
-							XTextCursor cursor = text.createTextCursorByRange(lastRange);
+							XTextCursor cursor = xText.createTextCursorByRange(lastRange);
 							cursor.gotoRange(xRange.getEnd(), true);
 							importLinks.set(lastElem, cursor);
                         } else {
@@ -710,6 +720,17 @@ public class Document {
 				}
 				mergeIntoLast = false;
 			}
+		}
+		return importLinks;
+	}
+	
+	private ArrayList<XTextRange> getImportLinksFromTable(Object paragraph) throws Exception {
+		ArrayList<XTextRange> importLinks = new ArrayList<XTextRange>();
+		XTextTable xTable = UnoRuntime.queryInterface(XTextTable.class, paragraph);
+		for (String name : xTable.getCellNames()) {
+			XCell xCell = xTable.getCellByName(name);
+			XTextRange range = UnoRuntime.queryInterface(XTextRange.class, xCell);
+			importLinks.addAll(getImportLinks(range.getText()));
 		}
 		return importLinks;
 	}
