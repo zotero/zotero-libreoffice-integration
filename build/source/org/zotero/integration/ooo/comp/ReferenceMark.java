@@ -319,11 +319,9 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	}
 	
 	public Integer getNoteIndex() throws Exception {
-		if(isNote) {
-			// Only works for numbered notes; won't work if a note is referenced by a letter
-			try {
-				return Integer.parseInt(((XFootnote) UnoRuntime.queryInterface(XFootnote.class, text)).getAnchor().getString());
-			} catch(NumberFormatException e) {}
+		if (isNote) {
+			XPropertySet propertySet = UnoRuntime.queryInterface(XPropertySet.class, text);
+			return (int) (Short) propertySet.getPropertyValue("ReferenceId");
 		}
 		return 0;
 	}
