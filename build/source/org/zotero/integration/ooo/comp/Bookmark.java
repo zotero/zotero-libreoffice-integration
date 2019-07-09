@@ -25,7 +25,9 @@
 package org.zotero.integration.ooo.comp;
 
 import com.sun.star.container.XNamed;
+import com.sun.star.lang.XComponent;
 import com.sun.star.text.XTextContent;
+import com.sun.star.text.XTextCursor;
 import com.sun.star.text.XTextRange;
 import com.sun.star.uno.UnoRuntime;
 
@@ -37,7 +39,15 @@ public class Bookmark extends ReferenceMark {
 	
 	public void delete() throws Exception {
 		doc.properties.setProperty(rawCode, "");
-		super.delete();
+		XTextCursor dupRange = text.createTextCursorByRange(range);
+		text.removeTextContent(textContent);
+		range = dupRange;
+		
+		((XComponent) UnoRuntime.queryInterface(XComponent.class, textContent)).dispose();
+		
+		// text.removeTextContent(textContent) does not work (or has stopped working)
+		// for removing bookmarks. Some sort of libreoffice bug.
+		range.setString("");
 	}
 	
 	public XTextRange removeCode() throws Exception {
