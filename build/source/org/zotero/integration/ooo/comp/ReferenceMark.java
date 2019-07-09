@@ -32,6 +32,7 @@ import com.sun.star.beans.PropertyValue;
 import com.sun.star.beans.UnknownPropertyException;
 import com.sun.star.beans.XMultiPropertyStates;
 import com.sun.star.beans.XPropertySet;
+import com.sun.star.container.XIndexAccess;
 import com.sun.star.container.XNamed;
 import com.sun.star.document.XDocumentInsertable;
 import com.sun.star.frame.XDispatchHelper;
@@ -40,7 +41,9 @@ import com.sun.star.lang.WrappedTargetException;
 import com.sun.star.lang.XComponent;
 import com.sun.star.lang.XServiceInfo;
 import com.sun.star.text.ControlCharacter;
+import com.sun.star.text.XEndnotesSupplier;
 import com.sun.star.text.XFootnote;
+import com.sun.star.text.XFootnotesSupplier;
 import com.sun.star.text.XSimpleText;
 import com.sun.star.text.XText;
 import com.sun.star.text.XTextContent;
@@ -321,7 +324,24 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	public Integer getNoteIndex() throws Exception {
 		if (isNote) {
 			XPropertySet propertySet = UnoRuntime.queryInterface(XPropertySet.class, text);
-			return (int) (Short) propertySet.getPropertyValue("ReferenceId");
+			Short referenceId = (Short) propertySet.getPropertyValue("ReferenceId");
+			
+			XServiceInfo serviceInfo = UnoRuntime.queryInterface(XServiceInfo.class, text);
+			XIndexAccess notes;
+			if (serviceInfo.supportsService("com.sun.star.text.Endnote")) {
+				notes = ((XEndnotesSupplier) UnoRuntime.queryInterface(
+						XEndnotesSupplier.class, doc.textDocument)).getEndnotes();
+			} else {
+				notes = ((XFootnotesSupplier) UnoRuntime.queryInterface(
+						XFootnotesSupplier.class, doc.textDocument)).getFootnotes();
+			}
+			for (int i = 0, count = notes.getCount(); i < count; i++) {
+				XFootnote note = UnoRuntime.queryInterface(XFootnote.class, notes.getByIndex(i));
+				propertySet = UnoRuntime.queryInterface(XPropertySet.class, note);
+				if (referenceId.equals(propertySet.getPropertyValue("ReferenceId"))) {
+					return i+1;
+				}
+			}
 		}
 		return 0;
 	}
