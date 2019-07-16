@@ -119,7 +119,9 @@ public class Document {
 	static final String IMPORT_ITEM_PREFIX = "ITEM CSL_CITATION ";
 	static final String IMPORT_BIBL_PREFIX = "BIBL ";
 	static final String IMPORT_DOC_PREFS_PREFIX = "DOCUMENT_PREFERENCES ";
-	static final String EXPORTED_DOCUMENT_MARKER = "ZOTERO_EXPORTED_DOCUMENT";
+	// ZOTERO_EXPORTED_DOCUMENT is legacy/beta support that can be removed later
+	static final String[] EXPORTED_DOCUMENT_MARKER = 
+		{"ZOTERO_TRANSFER_DOCUMENT", "ZOTERO_EXPORTED_DOCUMENT"};
 	
 	static String ERROR_STRING = "An error occurred communicating with Zotero:";
 	static String SAVE_WARNING_STRING = "This document contains Zotero ReferenceMarks. Upon reopening the document, Zotero will be unable to edit existing citations or add new references to the bibliography.\n\nTo save Zotero citation information, please select the \"ODF Text Document\" format when saving, or switch to Bookmarks in the Zotero Document Preferences.";
@@ -173,7 +175,7 @@ public class Document {
 		text.insertControlCharacter(cursor, ControlCharacter.PARAGRAPH_BREAK, false);
 		// Export marker
 		cursor.gotoStart(false);
-		text.insertString(cursor, EXPORTED_DOCUMENT_MARKER, false);
+		text.insertString(cursor, EXPORTED_DOCUMENT_MARKER[0], false);
 		text.insertControlCharacter(cursor, ControlCharacter.PARAGRAPH_BREAK, false);
 		
 		// documentData
@@ -420,7 +422,7 @@ public class Document {
 		}
 		
 		if (checkForExportMarker()) {
-			return EXPORTED_DOCUMENT_MARKER;
+			return EXPORTED_DOCUMENT_MARKER[0];
 		}
 		
 		String data;
@@ -601,7 +603,11 @@ public class Document {
 				if (!isText) {
 					return false;
 				}
-				return xRange.getString().equals(EXPORTED_DOCUMENT_MARKER);
+				for (String exportMarker : EXPORTED_DOCUMENT_MARKER) {
+					if (xRange.getString().equals(exportMarker)) {
+						return true;
+					}
+				}
 			}
 		}
 		return false;
