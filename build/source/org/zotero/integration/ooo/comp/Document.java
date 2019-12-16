@@ -142,19 +142,19 @@ public class Document {
 		properties = new Properties(component);
 		runtimeUID = (String) ((XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, component)).getPropertyValue("RuntimeUID");
 		mMarkManager = new MarkManager(this);
-		XUndoManagerSupplier ums = (XUndoManagerSupplier) UnoRuntime.queryInterface(XUndoManagerSupplier.class, component); 
-		undoManager = ums.getUndoManager();
-		undoManager.enterUndoContext(UNDO_RECORD_NAME);
 	}
-	
+
 	public void cleanup() {}
 
 	public void complete() throws InvalidStateException {
-		undoManager.leaveUndoContext();
+		if (undoManager != null) {
+			undoManager.leaveUndoContext();
+		}
 		app.documentComplete(ID);
 	}
 	
 	public void exportDocument(String fieldType, String importInstructions) throws Exception {
+		ensureUndoContext();
 		ArrayList<ReferenceMark> marks = getFields(fieldType);
 		for (ReferenceMark mark : marks) {
 			mark.setText(mark.getCode(), false);
@@ -188,6 +188,7 @@ public class Document {
 	}
 	
 	public boolean importDocument() throws Exception {
+		ensureUndoContext();
 		ArrayList<XTextRange> importLinks = getImportLinks(text);
 		boolean dataImported = false;
 		for (XTextRange xRange : importLinks) {
@@ -346,6 +347,9 @@ public class Document {
 	}
 
 	public ReferenceMark cursorInField(String fieldType) throws Exception {
+		// While this does not modify the doc the returned field might
+		// so we have to ensure the undo context
+		ensureUndoContext();
 		// create two text cursors containing the selection
 		XTextViewCursor selectionCursor = getSelection();
 		XText text = selectionCursor.getText();
@@ -434,10 +438,15 @@ public class Document {
 	}
 	
 	public void setDocumentData(String data) throws Exception {
+		ensureUndoContext();
 		properties.setProperty(PREFS_PROPERTIES[0], data);
 	}
 	
 	public ArrayList<ReferenceMark> getFields(String fieldType) throws Exception {
+		// While this does not modify the doc the returned fields might
+		// so we have to ensure the undo context
+		ensureUndoContext();
+		
 		ArrayList<ReferenceMark> marks = new ArrayList<ReferenceMark>();
 		
 		// get all ReferenceMarks/Bookmarks
@@ -520,7 +529,9 @@ public class Document {
 	}
 	
 	public void setBibliographyStyle(int firstLineIndent, int bodyIndent, int lineSpacing,
-			int entrySpacing, ArrayList<Number> arrayList, int tabStopCount) throws Exception { 
+			int entrySpacing, ArrayList<Number> arrayList, int tabStopCount) throws Exception {
+		ensureUndoContext();
+		
 		XStyleFamiliesSupplier styleFamilies = (XStyleFamiliesSupplier) UnoRuntime.queryInterface(
 				XStyleFamiliesSupplier.class, component);
 		XNameAccess styleFamilyNames = styleFamilies.getStyleFamilies();
@@ -613,7 +624,9 @@ public class Document {
 		return false;
 	}
 	
-	private ReferenceMark insertMarkAtRange(String fieldType, int noteType, XTextCursor rangeToInsert, String code, String customBookmarkName) throws Exception {		
+	private ReferenceMark insertMarkAtRange(String fieldType, int noteType, XTextCursor rangeToInsert, String code, String customBookmarkName) throws Exception {
+		ensureUndoContext();
+		
 		XNamed mark;
 		String rawCode;
 
@@ -744,6 +757,14 @@ public class Document {
 	private String getRangePosition(XTextRange selection) {
 		XServiceInfo serviceInfo = (XServiceInfo) UnoRuntime.queryInterface(XServiceInfo.class, selection.getText());
 		return serviceInfo.getImplementationName();
+	}
+	
+	private void ensureUndoContext() {
+		if (undoManager == null) {
+			XUndoManagerSupplier ums = (XUndoManagerSupplier) UnoRuntime.queryInterface(XUndoManagerSupplier.class, component);
+			undoManager = ums.getUndoManager();
+			undoManager.enterUndoContext(UNDO_RECORD_NAME);
+		}
 	}
 
 	private static final String randomCharacterSet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
