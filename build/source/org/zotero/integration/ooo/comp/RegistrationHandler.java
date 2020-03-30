@@ -68,18 +68,17 @@ public class RegistrationHandler {
 	 *  
 	 * @return the factory which can create the implementation.
 	 */
-	@SuppressWarnings("unchecked")
 	public static XSingleComponentFactory __getComponentFactory(String sImplementationName ) {
 		XSingleComponentFactory xFactory = null;
 	
-		Class[] classes = findServicesImplementationClasses();
+		Class<?>[] classes = findServicesImplementationClasses();
 		
 		int i = 0;
 		while (i < classes.length && xFactory == null) {
-			Class clazz = classes[i];
+			Class<?> clazz = classes[i];
 			if ( sImplementationName.equals( clazz.getCanonicalName() ) ) {
 				try {
-					Class[] getTypes = new Class[]{String.class};
+					Class<?>[] getTypes = new Class[]{String.class};
 					Method getFactoryMethod = clazz.getMethod("__getComponentFactory", getTypes);
 					Object o = getFactoryMethod.invoke(null, sImplementationName);
 					xFactory = (XSingleComponentFactory)o;
@@ -106,16 +105,15 @@ public class RegistrationHandler {
 	 * @return <code>true</code> if the informations have been successfully written
 	 *	  to the registry key, <code>false</code> otherwise.
 	 */
-	@SuppressWarnings("unchecked")
 	public static boolean __writeRegistryServiceInfo(XRegistryKey xRegistryKey ) {
-		Class[] classes = findServicesImplementationClasses();
+		Class<?>[] classes = findServicesImplementationClasses();
 		
 		boolean success = true;
 		int i = 0;
 		while (i < classes.length && success) {
-			Class clazz = classes[i];
+			Class<?> clazz = classes[i];
 			try {
-				Class[] writeTypes = new Class[]{XRegistryKey.class};
+				Class<?>[] writeTypes = new Class[]{XRegistryKey.class};
 				Method getFactoryMethod = clazz.getMethod("__writeRegistryServiceInfo", writeTypes);
 				Object o = getFactoryMethod.invoke(null, xRegistryKey);
 				success = success && ((Boolean)o).booleanValue();
@@ -131,9 +129,8 @@ public class RegistrationHandler {
 	/**
 	 * @return all the UNO implementation classes. 
 	 */
-	@SuppressWarnings("unchecked")
-	private static Class[] findServicesImplementationClasses() {
-		ArrayList<Class> classes = new ArrayList<Class>();
+	private static Class<?>[] findServicesImplementationClasses() {
+		ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
 		
 		InputStream in = RegistrationHandler.class.getResourceAsStream("RegistrationHandler.classes");
 		LineNumberReader reader = new LineNumberReader(new InputStreamReader(in));
@@ -144,10 +141,10 @@ public class RegistrationHandler {
 				if (!line.equals("")) {
 					line = line.trim();
 					try {
-						Class clazz = Class.forName(line);
+						Class<?> clazz = Class.forName(line);
 						
-						Class[] writeTypes = new Class[]{XRegistryKey.class};
-						Class[] getTypes = new Class[]{String.class};
+						Class<?>[] writeTypes = new Class[]{XRegistryKey.class};
+						Class<?>[] getTypes = new Class[]{String.class};
 						
 						Method writeRegMethod = clazz.getMethod("__writeRegistryServiceInfo", writeTypes);
 						Method getFactoryMethod = clazz.getMethod("__getComponentFactory", getTypes);
