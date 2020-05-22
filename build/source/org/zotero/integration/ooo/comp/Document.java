@@ -199,11 +199,16 @@ public class Document {
 						xRange.getText().createTextCursorByRange(xRange), PREFIXES[0] + linkText, null);
 				XPropertySet propertySet = UnoRuntime.queryInterface(XPropertySet.class, field.range);
 				if (field.isNote) {
-					propertySet.setPropertyValue("ParaStyleName", "Footnote");
-					propertySet.setPropertyValue("CharStyleName", "Footnote Characters");
+					try {
+						propertySet.setPropertyValue("ParaStyleName", "Footnote");
+						propertySet.setPropertyValue("CharStyleName", "Footnote Characters");
+					} catch (IllegalArgumentException e) {
+						propertySet.setPropertyValue("ParaStyleName", "Standard");
+						propertySet.setPropertyValue("CharStyleName", "Standard");
+					}
 				} else {
-					propertySet.setPropertyValue("ParaStyleName", "Default Style");
-					propertySet.setPropertyValue("CharStyleName", "Default Style");
+					propertySet.setPropertyValue("ParaStyleName", "Standard");
+					propertySet.setPropertyValue("CharStyleName", "Standard");
 				}
 			} else if (linkText.startsWith(IMPORT_DOC_PREFS_PREFIX)) {
 				dataImported = true;
