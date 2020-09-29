@@ -65,16 +65,6 @@
 		</description>
 	</wizardpage>
 	
-    <wizardpage pageid="jdk-required" onpageshow="jreRequiredPageShown()"
-	label="Install Required Components"
-	next="openoffice-installations">
-		<description>
-			The Zotero LibreOffice Plugin on macOS requires the Java
-			Development Kit. See the <label class="zotero-text-link" href="https://www.zotero.org/support/word_processor_plugin_troubleshooting#libreoffice_5_on_macos_1011no_response_from_plugin">Zotero documentation</label>
-			for more information.
-		</description>
-	</wizardpage>
-	
 	<wizardpage pageid="openoffice-installations" extra1="Add Directory…"
 	extra2="Manual Installation" label="Select LibreOffice unopkg executable"
 	next="installing" onpageshow="openofficeInstallationsPageShown()">

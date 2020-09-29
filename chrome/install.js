@@ -77,12 +77,6 @@ function onLoad() {
 				if(success) wizard.advance();
 			}
 		});
-	} else {
-		checkMacJDK().then(function(success) {
-			if (!success) {
-				wizard.getPageById("intro").next = "jdk-required";
-			}
-		});
 	}
 }
 
@@ -123,16 +117,6 @@ function checkJavaCommon(callback) {
 		});
 	});
 }
-
-var checkMacJDK = Zotero.Promise.coroutine(function* () {
-	var success = false;
-	try {
-		success = yield Zotero.Utilities.Internal.exec('/bin/bash/', ['-c', '/usr/libexec/java_home | grep -e "jdk"']);
-	} catch (e) {
-		Zotero.logError(e);
-	}
-	return success;
-});
 
 function checkJavaCommonPkg(pkgMain, pkgRequired, callback) {
 	// check for openoffice.org-writer with openoffice.org-java-common available but not installed
