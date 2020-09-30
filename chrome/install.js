@@ -46,7 +46,7 @@ var breadcrumbs = [];
 /**
  * Called on initial wizard load
  */
-function onLoad() {
+async function onLoad() {
 	wizard = document.documentElement;
 	javaCommonCheckRun = false;
 	
@@ -78,6 +78,12 @@ function onLoad() {
 			}
 		});
 	}
+	else {
+		let jdkFound = await checkMacJDK();
+		if (!jdkFound) {
+			wizard.getPageById("intro").next = "jdk-required";
+		}
+	}	
 }
 
 /**
@@ -154,6 +160,16 @@ function checkJavaCommonPkg(pkgMain, pkgRequired, callback) {
 			callback(true);
 		}
 	}});
+}
+
+async function checkMacJDK() {
+	var success = false;
+	try {
+		success = await Zotero.Utilities.Internal.exec('/bin/bash/', ['-c', '/usr/libexec/java_home | grep -e "jdk"']);
+	} catch (e) {
+		Zotero.logError(e);
+	}
+	return success;
 }
 
 /**
