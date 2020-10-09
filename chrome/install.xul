@@ -70,7 +70,7 @@
 	next="openoffice-installations">
 		<description>
 			The Zotero LibreOffice Plugin requires the Java Development Kit to work
-			on macOS. Visit <label class="zotero-text-link" href="https://​​www.oracle.com/​​technetwork/​​java/​​javase/​​downloads/​​index.html">Oracle.com</label>
+			on macOS. Visit <label class="zotero-text-link" href="https://www.oracle.com/java/technologies/javase-downloads.html">Oracle.com</label>
 			to download it.
 		</description>
 	</wizardpage>
