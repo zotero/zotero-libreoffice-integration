@@ -372,6 +372,7 @@ Application.prototype = {
 	secondaryFieldType: "Bookmark",
 	supportedNotes: ["footnote", "endnote"],
 	supportsImportExport: true,
+	supportsTextInsertion: true,
 	outputFormat: "rtf",
 	processorName: "LibreOffice"
 };
@@ -384,7 +385,8 @@ var Document = function(documentID) {
 };
 Document.prototype = {};
 for (let method of ["displayAlert", "activate", "canInsertField", "getDocumentData",
-	"setDocumentData", "setBibliographyStyle", "complete", "exportDocument", "importDocument"]) {
+	"setDocumentData", "setBibliographyStyle", "complete", "exportDocument", "importDocument",
+	"insertText"]) {
 	let methodStable = method;
 	Document.prototype[method] = function() {
 		return Comm.sendCommand("Document_"+methodStable,
@@ -405,6 +407,21 @@ Document.prototype.getFields = function(fieldType) {
 	var documentID = this._documentID;
 	return new Zotero.Promise(function(resolve, reject) {
 		Comm.sendCommandAsync("Document_getFields", [this._documentID, fieldType],
+			function(result) {
+				var fields = [];
+				for (let i = 0; i < result[0].length; i++) {
+					fields.push(new Field(documentID, result[0][i], result[1][i], result[2][i]));
+				}
+				resolve(fields);
+			},
+			reject
+		);
+	}.bind(this));
+};
+Document.prototype.convertPlaceholdersToFields = function(placeholderIDs, noteType, fieldType) {
+	var documentID = this._documentID;
+	return new Zotero.Promise(function(resolve, reject) {
+		Comm.sendCommandAsync("Document_convertPlaceholdersToFields", [this._documentID, placeholderIDs, noteType, fieldType],
 			function(result) {
 				var fields = [];
 				for (let i = 0; i < result[0].length; i++) {

@@ -122,6 +122,17 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	
 	public void delete() throws Exception {
 		if(isWholeRange()) {
+			if (isNote) {
+				// If cursor is in a note we need to set a flag in case insertText is being called next and
+				// the note ought to be reinserted
+				try {
+					XTextCursor cursor = doc.getSelection();
+					// Will throw an exception if cursor not in this note
+					textRangeCompare.compareRegionEnds(cursor, range);
+					XServiceInfo serviceInfo = UnoRuntime.queryInterface(XServiceInfo.class, text);
+					doc.insertTextIntoNote = serviceInfo.supportsService("com.sun.star.text.Endnote") ? Document.NOTE_ENDNOTE : Document.NOTE_FOOTNOTE;
+				} catch(Exception e) {}
+			}
 			((XComponent) UnoRuntime.queryInterface(XComponent.class, text)).dispose();
 		} else {
 			XTextCursor dupRange = text.createTextCursorByRange(range);
