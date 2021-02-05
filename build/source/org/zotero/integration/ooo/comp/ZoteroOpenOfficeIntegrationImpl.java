@@ -43,8 +43,8 @@ public final class ZoteroOpenOfficeIntegrationImpl extends WeakBase
 		"org.zotero.integration.ooo.ZoteroOpenOfficeIntegration" };
 	private static final String[] WINDOW_NAMES = { "ZoteroMessageWindow", "FirefoxMessageWindow",
 		"MinefieldMessageWindow", "BrowserMessageWindow" };
-	private static final String[] ACTIVATE_FOR_COMMANDS = { "addCitation", "editCitation",
-		"editBibliography", "setDocPrefs" };
+	private static final String[] ACTIVATE_FOR_COMMANDS = { "addEditCitation", "addNote",
+		"addEditBibliography", "setDocPrefs", "refresh" };
 	
 	public interface CLibrary extends Library {
 		CLibrary INSTANCE = (Platform.isWindows() ?
