@@ -138,7 +138,12 @@ var Comm = new function() {
 		"_transactionCallbacks":{
 			0:[
 				function(payload) {
-					Zotero.Integration.execCommand("OpenOffice", payload, null)
+					if (typeof payload != 'object') {
+						Zotero.Integration.execCommand("OpenOffice", payload, null)
+					}
+					else {
+						Zotero.Integration.execCommand("OpenOffice", payload.command, null, payload.templateVersion);
+					}
 				},
 				function(errString) {
 					Zotero.logError(e);

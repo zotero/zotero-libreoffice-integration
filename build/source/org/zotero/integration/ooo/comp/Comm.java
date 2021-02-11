@@ -29,6 +29,7 @@ import java.util.concurrent.SynchronousQueue;
 
 class Comm {
 	static final int API_VERSION = 3;
+	static final int PLUGIN_VERSION = 1;
 	static final String COMMUNICATION_ERROR_STRING = "LibreOffice could not communicate with Zotero. "+
 			"Please ensure Zotero is open and set to an online state and try again.";
 	static final String OLD_VERSION_STRING = "The version of the Zotero LibreOffice "+
