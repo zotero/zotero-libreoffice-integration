@@ -31,7 +31,7 @@ public class CommCommand implements CommFrame {
 	private String mCommand;
 	
 	CommCommand(String aCommand) {
-		mCommand = "\""+aCommand+"\"";
+		mCommand = "{\"command\": \""+aCommand+"\", \"templateVersion\": "+Comm.PLUGIN_VERSION+"}";
 	}
 	
 	public int getTransactionID() {

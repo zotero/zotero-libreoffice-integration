@@ -28,8 +28,10 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -40,6 +42,7 @@ import com.sun.star.awt.XMessageBox;
 import com.sun.star.awt.XMessageBoxFactory;
 import com.sun.star.awt.XWindowPeer;
 import com.sun.star.beans.PropertyValue;
+import com.sun.star.beans.XMultiPropertyStates;
 import com.sun.star.beans.XPropertySet;
 import com.sun.star.container.XEnumeration;
 import com.sun.star.container.XEnumerationAccess;
@@ -47,6 +50,7 @@ import com.sun.star.container.XIndexAccess;
 import com.sun.star.container.XNameAccess;
 import com.sun.star.container.XNameContainer;
 import com.sun.star.container.XNamed;
+import com.sun.star.document.XDocumentInsertable;
 import com.sun.star.document.XUndoManager;
 import com.sun.star.document.XUndoManagerSupplier;
 import com.sun.star.frame.XController;
@@ -77,6 +81,7 @@ import com.sun.star.text.XTextSectionsSupplier;
 import com.sun.star.text.XTextTable;
 import com.sun.star.text.XTextViewCursor;
 import com.sun.star.text.XTextViewCursorSupplier;
+import com.sun.star.uno.Any;
 import com.sun.star.uno.UnoRuntime;
 import com.sun.star.util.InvalidStateException;
 
@@ -99,10 +104,14 @@ public class Document {
 	Properties properties;
 	MarkManager mMarkManager;
 	XUndoManager undoManager;
+	int insertTextIntoNote = 0;
 	
 	private static boolean checkExperimentalMode = true;
 	private static boolean statusExperimentalMode = false;
 	
+	// NOTE: This list must be sorted. See the API docs for XMultiPropertySet for more details.
+	static final String[] PROPERTIES_CHANGE_TO_DEFAULT =
+		{"CharCaseMap", "CharEscapement", "CharEscapementHeight", "CharPosture", "CharUnderline", "CharWeight"};
 	static final String[] PREFIXES = {"ZOTERO_", " CSL_", " ADDIN ZOTERO_"};
 	static final String[] PREFS_PROPERTIES = {"ZOTERO_PREF", "CSL_PREF"};
 	static final String FIELD_PLACEHOLDER = "{Citation}";
@@ -231,6 +240,122 @@ public class Document {
 			text.removeTextContent(paragraph);
 		}
 		return dataImported;
+	}
+	
+	public void insertText(String textString) throws Exception {
+		ensureUndoContext();
+		
+		XTextCursor viewCursor = getSelection();
+		if (insertTextIntoNote > 0 && getRangePosition(viewCursor).equals("SwXBodyText")) {
+			// make footnote or endnote if cursor is in body text and a note style is selected
+			Object note;
+			if(insertTextIntoNote == NOTE_FOOTNOTE) {
+				note = docFactory.createInstance("com.sun.star.text.Footnote");
+			} else {
+				note = docFactory.createInstance("com.sun.star.text.Endnote");
+			}
+			XTextContent noteTextContent = (XTextContent) UnoRuntime.queryInterface(XTextContent.class, note);
+			XTextCursor rangeToInsert = viewCursor.getText().createTextCursorByRange(viewCursor);
+			rangeToInsert.getText().insertTextContent(rangeToInsert, noteTextContent, true);
+			XTextRange noteTextRange = (XTextRange) UnoRuntime.queryInterface(XTextRange.class, note);
+			rangeToInsert = noteTextRange.getText().createTextCursorByRange(noteTextRange);
+			viewCursor.gotoRange(rangeToInsert, false);
+		}
+		
+		XText text = viewCursor.getText();
+		XTextCursor cursor = text.createTextCursorByRange(viewCursor);
+		XTextRange preNewline, postNewline;
+		
+		preNewline = text.createTextCursorByRange(viewCursor).getStart();
+		postNewline = text.createTextCursorByRange(viewCursor).getEnd();
+		
+		// move citation to its own paragraph so its formatting isn't altered automatically
+		// because of the text on either side of it
+		text.insertControlCharacter(preNewline, ControlCharacter.PARAGRAPH_BREAK, true);
+		text.insertControlCharacter(postNewline, ControlCharacter.PARAGRAPH_BREAK, true);
+		
+		XMultiPropertyStates rangePropStates = (XMultiPropertyStates) UnoRuntime.queryInterface(XMultiPropertyStates.class, cursor);
+		rangePropStates.setPropertiesToDefault(PROPERTIES_CHANGE_TO_DEFAULT);
+		XPropertySet rangeProps = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, cursor);
+		
+		String oldParaStyle = (String) rangeProps.getPropertyValue("ParaStyleName");
+		
+		insertHTML(textString, cursor);
+		
+		// Inserting RTF in LibreOffice 4 resets the style to the document default, so
+		// we set it back to whatever it was before we inserted the RTF. However,
+		// setting the paragraph style will reset superscript and other character
+		// properties specified by the style, so we need to explicitly preserve these.
+		Object[] oldPropertyValues = new Object[PROPERTIES_CHANGE_TO_DEFAULT.length];
+		for(int i=0; i<PROPERTIES_CHANGE_TO_DEFAULT.length; i++) {
+			Object result = rangeProps.getPropertyValue(PROPERTIES_CHANGE_TO_DEFAULT[i]);
+			oldPropertyValues[i] = result instanceof Any ? ((Any) result).getObject() : result;
+		}
+		rangeProps.setPropertyValue("ParaStyleName", oldParaStyle);
+		for(int i=0; i<PROPERTIES_CHANGE_TO_DEFAULT.length; i++) {
+			if(oldPropertyValues[i] != null) {
+				rangeProps.setPropertyValue(PROPERTIES_CHANGE_TO_DEFAULT[i], oldPropertyValues[i]);
+			}
+		}
+		
+		// remove previously added paragraphs
+		preNewline.setString("");
+		postNewline.setString("");
+	}
+
+	public void insertHTML(String text, XTextCursor cursor) throws Exception {
+		PropertyValue filterName = new PropertyValue();
+		filterName.Name = "FilterName";
+		filterName.Value = "HTML Document";
+		PropertyValue inputStream = new PropertyValue();
+		inputStream.Name = "InputStream";
+		try {
+			inputStream.Value = new StringInputStream(text.getBytes("ISO-8859-1"));
+		} catch (UnsupportedEncodingException e) {
+			return;
+		}
+		
+		((XDocumentInsertable) UnoRuntime.queryInterface(XDocumentInsertable.class, cursor)).
+			insertDocumentFromURL("private:stream", new PropertyValue[] {filterName, inputStream});
+	}
+	
+	public ArrayList<ReferenceMark> convertPlaceholdersToFields(final ArrayList<String> placeholderIDs, int noteType, String fieldType) throws Exception {
+		ensureUndoContext();
+		
+		ArrayList<ReferenceMark> marks = new ArrayList<ReferenceMark>();
+		ArrayList<XTextRange> importLinks = getImportLinks(text);
+		
+		if (placeholderIDs.size() != importLinks.size()) {
+			throw new Exception("convertPlaceholdersToFields: number of placeholders (" + importLinks.size() + ") do not match the number of provided placeholder IDs (" + placeholderIDs.size() + ")");
+		}
+		
+		// Sort import links by placeholderIDs order (which is just reverse order at the time of development, but
+		// who knows what will happen in the future).
+		Collections.sort(importLinks, new Comparator<XTextRange>() {
+			public int compare(XTextRange a, XTextRange b) {
+				try {
+					XPropertySet propertySetA = UnoRuntime.queryInterface(XPropertySet.class, a);
+					XPropertySet propertySetB = UnoRuntime.queryInterface(XPropertySet.class, b);
+					String urlA = (String) propertySetA.getPropertyValue("HyperLinkURL");
+					String urlB = (String) propertySetB.getPropertyValue("HyperLinkURL");
+					String idA = urlA.substring(IMPORT_LINK_URL.length()+1);
+					String idB = urlB.substring(IMPORT_LINK_URL.length()+1);
+					return placeholderIDs.indexOf(idA) - placeholderIDs.indexOf(idB);
+				} catch (Exception e) {
+					return -1;
+				}
+			}
+		});
+		
+		// Replacing placeholders with fields
+		int i = 0;
+		for (XTextRange xRange : importLinks) {
+			XTextCursor cursor = xRange.getText().createTextCursorByRange(xRange);
+			marks.add(insertMarkAtRange(fieldType, noteType, cursor, null, null));
+			i++;
+		}
+
+		return marks;
 	}
 	
 	public int displayAlert(String text, int icon, int buttons) throws Exception {

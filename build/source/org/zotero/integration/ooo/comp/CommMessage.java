@@ -104,27 +104,16 @@ class CommMessage implements CommFrame {
 				Object[] out = {document.mMarkManager.getIDForMark(field), field.getCode(), field.getNoteIndex()};
 				return out;
 			} else if(command.equals("Document_getFields")) {
-				ArrayList<ReferenceMark> fields = document.getFields((String) args.get(1));
-				
-				// get codes and rawCodes
-				int numFields = fields.size();
-				int[] fieldIndices = new int[numFields];
-				String[] fieldCodes = new String[numFields];
-				int[] noteIndices = new int[numFields];
-				
-				for(int i=0; i<numFields; i++) {
-					ReferenceMark field = fields.get(i);
-					fieldIndices[i] = document.mMarkManager.getIDForMark(field);
-					fieldCodes[i] = field.getCode();
-					noteIndices[i] = field.getNoteIndex();
-				}
-				
-				Object[] out = {fieldIndices, fieldCodes, noteIndices};
-				return out;
+				return respondWithFields(document.getFields((String) args.get(1)), document);
 			} else if(command.equals("Document_setBibliographyStyle")) {
 				ArrayList<Number> arrayList = (ArrayList<Number>) args.get(5);
 				document.setBibliographyStyle((Integer) args.get(1), (Integer) args.get(2),
 					(Integer) args.get(3), (Integer) args.get(4), arrayList, (Integer) args.get(6));
+			} else if(command.equals("Document_insertText")) {
+				document.insertText((String) args.get(1));
+			} else if(command.equals("Document_convertPlaceholdersToFields")) {
+				ArrayList<String> placeholderIDs = (ArrayList<String>) args.get(1);
+				return respondWithFields(document.convertPlaceholdersToFields(placeholderIDs, (Integer) args.get(2), (String) args.get(3)), document);
 			} else if(command.equals("Document_exportDocument")) {
 				document.exportDocument((String) args.get(1), (String) args.get(2));
 			} else if(command.equals("Document_importDocument")) {
@@ -157,5 +146,23 @@ class CommMessage implements CommFrame {
 			}
 		}
 		return null;
+	}
+	
+	private Object[] respondWithFields(ArrayList<ReferenceMark> fields, Document document) throws Exception {
+		// get codes and rawCodes
+		int numFields = fields.size();
+		int[] fieldIndices = new int[numFields];
+		String[] fieldCodes = new String[numFields];
+		int[] noteIndices = new int[numFields];
+		
+		for(int i=0; i<numFields; i++) {
+			ReferenceMark field = fields.get(i);
+			fieldIndices[i] = document.mMarkManager.getIDForMark(field);
+			fieldCodes[i] = field.getCode();
+			noteIndices[i] = field.getNoteIndex();
+		}
+		
+		Object[] out = {fieldIndices, fieldCodes, noteIndices};
+		return out;
 	}
 }

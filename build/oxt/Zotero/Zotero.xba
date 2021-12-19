@@ -9,6 +9,10 @@ Sub ZoteroAddEditCitation()
 	createUnoService(&quot;org.zotero.integration.ooo.ZoteroOpenOfficeIntegration&quot;).trigger(&quot;addEditCitation&quot;)
 End Sub
 
+Sub ZoteroAddNote()
+	createUnoService(&quot;org.zotero.integration.ooo.ZoteroOpenOfficeIntegration&quot;).trigger(&quot;addNote&quot;)
+End Sub
+
 Sub ZoteroRefresh()
 	createUnoService(&quot;org.zotero.integration.ooo.ZoteroOpenOfficeIntegration&quot;).trigger(&quot;refresh&quot;)
 End Sub

@@ -21,6 +21,20 @@
 						<value>_self</value>
 					</prop>
 				</node>
+				<node oor:name="m2" oor:op="replace">
+					<prop oor:name="Context" oor:type="xs:string">
+						<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
+					</prop>
+					<prop oor:name="URL" oor:type="xs:string">
+						<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addNote</value>
+					</prop>
+					<prop oor:name="Title" oor:type="xs:string">
+						<value>Add Note</value>
+					</prop>
+					<prop oor:name="Target" oor:type="xs:string">
+						<value>_self</value>
+					</prop>
+				</node>
 				<node oor:name="m3" oor:op="replace">
 					<prop oor:name="Context" oor:type="xs:string">
 						<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
@@ -99,6 +113,19 @@
 					</prop>
 					<prop oor:name="ImageBigURL">
 						<value>%origin%/icons/addEditCitation_26.png</value>
+					</prop>
+				</node>
+			</node>
+			<node oor:name="Zotero.Images.addNote" oor:op="replace">
+				<prop oor:name="URL" oor:type="xs:string">
+					<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addNote</value>
+				</prop>
+				<node oor:name="UserDefinedImages">
+					<prop oor:name="ImageSmallURL">
+						<value>%origin%/icons/addNote_16.png</value>
+					</prop>
+					<prop oor:name="ImageBigURL">
+						<value>%origin%/icons/addNote_26.png</value>
 					</prop>
 				</node>
 			</node>
