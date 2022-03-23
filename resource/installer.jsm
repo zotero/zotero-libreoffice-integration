@@ -87,6 +87,11 @@ const UNOPKG_LOCATIONS = {
 		"/opt/libreoffice6.2/program/unopkg",
 		"/opt/libreoffice6.3/program/unopkg",
 		"/opt/libreoffice6.4/program/unopkg",
+		"/opt/libreoffice7.0/program/unopkg",
+		"/opt/libreoffice7.1/program/unopkg",
+		"/opt/libreoffice7.2/program/unopkg",
+		"/opt/libreoffice7.3/program/unopkg",
+		"/opt/libreoffice7.4/program/unopkg"
 	]
 };
 
