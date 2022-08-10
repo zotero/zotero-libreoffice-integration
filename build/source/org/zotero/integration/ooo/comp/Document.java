@@ -42,6 +42,8 @@ import com.sun.star.awt.XMessageBox;
 import com.sun.star.awt.XMessageBoxFactory;
 import com.sun.star.awt.XWindowPeer;
 import com.sun.star.beans.PropertyValue;
+import com.sun.star.beans.PropertyVetoException;
+import com.sun.star.beans.UnknownPropertyException;
 import com.sun.star.beans.XMultiPropertyStates;
 import com.sun.star.beans.XPropertySet;
 import com.sun.star.container.XEnumeration;
@@ -56,6 +58,8 @@ import com.sun.star.document.XUndoManagerSupplier;
 import com.sun.star.frame.XController;
 import com.sun.star.frame.XDesktop;
 import com.sun.star.frame.XFrame;
+import com.sun.star.lang.WrappedTargetException;
+import com.sun.star.lang.IllegalArgumentException;
 import com.sun.star.lang.XComponent;
 import com.sun.star.lang.XMultiServiceFactory;
 import com.sun.star.lang.XServiceInfo;
@@ -105,6 +109,7 @@ public class Document {
 	MarkManager mMarkManager;
 	XUndoManager undoManager;
 	int insertTextIntoNote = 0;
+	private Boolean recordChanges = null;
 	
 	private static boolean checkExperimentalMode = true;
 	private static boolean statusExperimentalMode = false;
@@ -155,15 +160,26 @@ public class Document {
 
 	public void cleanup() {}
 
-	public void complete() throws InvalidStateException {
+	public void complete() throws InvalidStateException, IllegalArgumentException, UnknownPropertyException, PropertyVetoException, WrappedTargetException {
 		if (undoManager != null) {
 			undoManager.leaveUndoContext();
 		}
+		// restore track changes
+		if (recordChanges != null) {
+			try {
+				XPropertySet docPropSet = UnoRuntime.queryInterface(XPropertySet.class, textDocument);
+				docPropSet.setPropertyValue("RecordChanges", (boolean) recordChanges);
+				recordChanges = null;
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
+		}
+		// complete document
 		app.documentComplete(ID);
 	}
 	
 	public void exportDocument(String fieldType, String importInstructions) throws Exception {
-		ensureUndoContext();
+		prepareDocumentForEditing();
 		ArrayList<ReferenceMark> marks = getFields(fieldType);
 		for (ReferenceMark mark : marks) {
 			mark.setText(mark.getCode(), false);
@@ -197,7 +213,7 @@ public class Document {
 	}
 	
 	public boolean importDocument() throws Exception {
-		ensureUndoContext();
+		prepareDocumentForEditing();
 		ArrayList<XTextRange> importLinks = getImportLinks(text);
 		boolean dataImported = false;
 		for (XTextRange xRange : importLinks) {
@@ -243,7 +259,7 @@ public class Document {
 	}
 	
 	public void insertText(String textString) throws Exception {
-		ensureUndoContext();
+		prepareDocumentForEditing();
 		
 		XTextCursor viewCursor = getSelection();
 		if (insertTextIntoNote > 0 && getRangePosition(viewCursor).equals("SwXBodyText")) {
@@ -320,7 +336,7 @@ public class Document {
 	}
 	
 	public ArrayList<ReferenceMark> convertPlaceholdersToFields(final ArrayList<String> placeholderIDs, int noteType, String fieldType) throws Exception {
-		ensureUndoContext();
+		prepareDocumentForEditing();
 		
 		ArrayList<ReferenceMark> marks = new ArrayList<ReferenceMark>();
 		ArrayList<XTextRange> importLinks = getImportLinks(text);
@@ -479,7 +495,7 @@ public class Document {
 	public ReferenceMark cursorInField(String fieldType) throws Exception {
 		// While this does not modify the doc the returned field might
 		// so we have to ensure the undo context
-		ensureUndoContext();
+		prepareDocumentForEditing();
 		// create two text cursors containing the selection
 		XTextViewCursor selectionCursor = getSelection();
 		XText text = selectionCursor.getText();
@@ -568,14 +584,14 @@ public class Document {
 	}
 	
 	public void setDocumentData(String data) throws Exception {
-		ensureUndoContext();
+		prepareDocumentForEditing();
 		properties.setProperty(PREFS_PROPERTIES[0], data);
 	}
 	
 	public ArrayList<ReferenceMark> getFields(String fieldType) throws Exception {
 		// While this does not modify the doc the returned fields might
 		// so we have to ensure the undo context
-		ensureUndoContext();
+		prepareDocumentForEditing();
 		
 		ArrayList<ReferenceMark> marks = new ArrayList<ReferenceMark>();
 		
@@ -660,7 +676,7 @@ public class Document {
 	
 	public void setBibliographyStyle(int firstLineIndent, int bodyIndent, int lineSpacing,
 			int entrySpacing, ArrayList<Number> arrayList, int tabStopCount) throws Exception {
-		ensureUndoContext();
+		prepareDocumentForEditing();
 		
 		XStyleFamiliesSupplier styleFamilies = (XStyleFamiliesSupplier) UnoRuntime.queryInterface(
 				XStyleFamiliesSupplier.class, component);
@@ -755,7 +771,7 @@ public class Document {
 	}
 	
 	private ReferenceMark insertMarkAtRange(String fieldType, int noteType, XTextCursor rangeToInsert, String code, String customBookmarkName) throws Exception {
-		ensureUndoContext();
+		prepareDocumentForEditing();
 		
 		XNamed mark;
 		String rawCode;
@@ -889,11 +905,21 @@ public class Document {
 		return serviceInfo.getImplementationName();
 	}
 	
-	private void ensureUndoContext() {
+	private void prepareDocumentForEditing() {
 		if (undoManager == null) {
 			XUndoManagerSupplier ums = (XUndoManagerSupplier) UnoRuntime.queryInterface(XUndoManagerSupplier.class, component);
 			undoManager = ums.getUndoManager();
 			undoManager.enterUndoContext(UNDO_RECORD_NAME);
+		}
+		// backup track changes
+		if (recordChanges == null) {
+			try {
+				XPropertySet docPropSet = UnoRuntime.queryInterface(XPropertySet.class, textDocument);
+				recordChanges = (Boolean) docPropSet.getPropertyValue("RecordChanges");
+				docPropSet.setPropertyValue("RecordChanges", false);
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
 		}
 	}
 
