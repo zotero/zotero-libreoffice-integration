@@ -248,7 +248,7 @@ public class Document {
 				XEnumerationAccess.class, text);
 		XEnumeration xParaEnum = xParaAccess.createEnumeration();
 		ArrayList<XTextContent> removeParagraphs = new ArrayList<XTextContent>();
-		for (int i = 0 ; i < 3 && xParaEnum.hasMoreElements(); i++) {
+		for (int i = 0 ; i < 4 && xParaEnum.hasMoreElements(); i++) {
 			removeParagraphs.add(UnoRuntime.queryInterface(
 					XTextContent.class, xParaEnum.nextElement()));
 		}
@@ -731,38 +731,48 @@ public class Document {
 	}
 	
 	private boolean checkForExportMarker() throws Exception {
+		// get paragraphs
 		XEnumerationAccess xParaAccess = UnoRuntime.queryInterface(
 				XEnumerationAccess.class, text);
 		XEnumeration xParaEnum = xParaAccess.createEnumeration();
-		if (xParaEnum.hasMoreElements()) {
-			XEnumerationAccess xParaPortionAccess = UnoRuntime.queryInterface(
-					XEnumerationAccess.class, xParaEnum.nextElement());
-			// Text enumerator also returns TextTables which do not support XEnumerationAccess
-			// Either way, this means we will not be finding an export marker
-			if (xParaPortionAccess == null) {
-				return false;
+		if (!xParaEnum.hasMoreElements()) {
+			return false;
+		}
+		// get first paragraph
+		XEnumerationAccess xParaPortionAccess = UnoRuntime.queryInterface(
+				XEnumerationAccess.class, xParaEnum.nextElement());
+		// Text enumerator also returns TextTables which do not support XEnumerationAccess
+		// Either way, this means we will not be finding an export marker
+		if (xParaPortionAccess == null) {
+			return false;
+		}
+		// get text of the first paragraph
+		XEnumeration xPortionEnum = xParaPortionAccess.createEnumeration();
+		String firstParagraphText = "";
+		while (xPortionEnum.hasMoreElements()) {
+			Object textPortion = xPortionEnum.nextElement();
+			if (textPortion == null) {
+				continue;
 			}
-			XEnumeration xPortionEnum = xParaPortionAccess.createEnumeration();
-			if (xPortionEnum.hasMoreElements()) {
-				Object textPortion = xPortionEnum.nextElement();
-				XPropertySet propertySet = UnoRuntime.queryInterface(XPropertySet.class, textPortion);
-				XTextRange xRange = UnoRuntime.queryInterface(XTextRange.class, textPortion);
-				boolean isText = false;
-				try {
-					isText = ((String) propertySet.getPropertyValue(
-							"TextPortionType")).equals("Text");
-				} catch (Exception e) {
-					return false;
-				}
-				
-				if (!isText) {
-					return false;
-				}
-				for (String exportMarker : EXPORTED_DOCUMENT_MARKER) {
-					if (xRange.getString().equals(exportMarker)) {
-						return true;
-					}
-				}
+			XPropertySet propertySet = UnoRuntime.queryInterface(XPropertySet.class, textPortion);
+			XTextRange xRange = UnoRuntime.queryInterface(XTextRange.class, textPortion);
+			boolean isText = false;
+			try {
+				String portionType = (String) propertySet.getPropertyValue("TextPortionType");
+				isText = portionType.equals("Text");
+			} catch (Exception e) {
+				continue;
+			}
+			// only concatenate text elements
+			if (!isText) {
+				continue;
+			}
+			firstParagraphText += xRange.getString().replace("\n", "");
+		}
+		// compare text of first paragraph with export marker
+		for (String exportMarker : EXPORTED_DOCUMENT_MARKER) {
+			if (firstParagraphText.equals(exportMarker)) {
+				return true;
 			}
 		}
 		return false;
