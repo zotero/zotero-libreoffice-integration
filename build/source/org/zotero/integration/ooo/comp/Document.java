@@ -160,7 +160,7 @@ public class Document {
 
 	public void cleanup() {}
 
-	public void complete() throws InvalidStateException, IllegalArgumentException, UnknownPropertyException, PropertyVetoException, WrappedTargetException {
+	public void complete() throws InvalidStateException {
 		if (undoManager != null) {
 			undoManager.leaveUndoContext();
 		}
@@ -364,11 +364,9 @@ public class Document {
 		});
 		
 		// Replacing placeholders with fields
-		int i = 0;
 		for (XTextRange xRange : importLinks) {
 			XTextCursor cursor = xRange.getText().createTextCursorByRange(xRange);
 			marks.add(insertMarkAtRange(fieldType, noteType, cursor, null, null));
-			i++;
 		}
 
 		return marks;
