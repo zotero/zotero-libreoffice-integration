@@ -12,12 +12,15 @@ LibreOffice SDK is not required.
 
 To build:
 
-1.  Run `scripts/symlink_sdk`
+1.  Run `scripts/symlink_sdk`.
 1.  Open Eclipse and import this project into your workspace.
-1.  Right-click the project in the Eclipse Package Explorer, click "Properties", and then select "Java Build Path." Click the libraries tab and ensure that all referenced files exist, or else correct the paths.
+1.  Right-click the project in the Eclipse Package Explorer, click "Properties", select "Java Build Path", then select the "Libraries" tab. Click on "Add JARs" and expand the "Zotero OpenOffice Integration" folder. Make sure there is no "lib" subfolder underneath it. If there is:
+	1. Expand "Zotero OpenOffice Integration" -> "lib" -> "libreoffice-sdk" and select all the JARs underneath it.
+	1. Click "Ok" and then "Apply and Close".
 1.  Double-click Zotero.jardesc. Click "Finish" to build Zotero.jar.
-1.  Run `buildoxt.sh` from within the `build` directory to build `install/Zotero_OpenOffice_Integration.oxt`
+1.  Run `buildoxt.sh` from within the `build` directory to build `install/Zotero_OpenOffice_Integration.oxt`.
 1.  Install `Zotero_OpenOffice_Integration.oxt` into LibreOffice, either by choosing "Reinstall Extension" from within the Zotero preferences, by installing it manually from within LibreOffice, or by using `unopkg` from the command line.
+	1. If, when you try to install the extension in LibreOffice, you get an error like "Could not create Java implementation loader", it means that LibreOffice is not configured to use Java. Follow [these](https://help.libreoffice.org/Common/Java) instructions to set up a Java VM in LibreOffice. 
 
 ## Development Starter's Guide
 
