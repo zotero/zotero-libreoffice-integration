@@ -42,7 +42,6 @@ import com.sun.star.awt.XMessageBox;
 import com.sun.star.awt.XMessageBoxFactory;
 import com.sun.star.awt.XWindowPeer;
 import com.sun.star.beans.PropertyValue;
-import com.sun.star.beans.XMultiPropertyStates;
 import com.sun.star.beans.XPropertySet;
 import com.sun.star.container.XEnumeration;
 import com.sun.star.container.XEnumerationAccess;
@@ -82,7 +81,6 @@ import com.sun.star.text.XTextSectionsSupplier;
 import com.sun.star.text.XTextTable;
 import com.sun.star.text.XTextViewCursor;
 import com.sun.star.text.XTextViewCursorSupplier;
-import com.sun.star.uno.Any;
 import com.sun.star.uno.UnoRuntime;
 import com.sun.star.util.InvalidStateException;
 
@@ -286,31 +284,9 @@ public class Document {
 		// because of the text on either side of it
 		text.insertControlCharacter(preNewline, ControlCharacter.PARAGRAPH_BREAK, true);
 		text.insertControlCharacter(postNewline, ControlCharacter.PARAGRAPH_BREAK, true);
-		
-		XMultiPropertyStates rangePropStates = (XMultiPropertyStates) UnoRuntime.queryInterface(XMultiPropertyStates.class, cursor);
-		rangePropStates.setPropertiesToDefault(PROPERTIES_CHANGE_TO_DEFAULT);
-		XPropertySet rangeProps = (XPropertySet) UnoRuntime.queryInterface(XPropertySet.class, cursor);
-		
-		String oldParaStyle = (String) rangeProps.getPropertyValue("ParaStyleName");
-		
+
 		insertHTML(textString, cursor);
-		
-		// Inserting RTF in LibreOffice 4 resets the style to the document default, so
-		// we set it back to whatever it was before we inserted the RTF. However,
-		// setting the paragraph style will reset superscript and other character
-		// properties specified by the style, so we need to explicitly preserve these.
-		Object[] oldPropertyValues = new Object[PROPERTIES_CHANGE_TO_DEFAULT.length];
-		for(int i=0; i<PROPERTIES_CHANGE_TO_DEFAULT.length; i++) {
-			Object result = rangeProps.getPropertyValue(PROPERTIES_CHANGE_TO_DEFAULT[i]);
-			oldPropertyValues[i] = result instanceof Any ? ((Any) result).getObject() : result;
-		}
-		rangeProps.setPropertyValue("ParaStyleName", oldParaStyle);
-		for(int i=0; i<PROPERTIES_CHANGE_TO_DEFAULT.length; i++) {
-			if(oldPropertyValues[i] != null) {
-				rangeProps.setPropertyValue(PROPERTIES_CHANGE_TO_DEFAULT[i], oldPropertyValues[i]);
-			}
-		}
-		
+
 		// remove previously added paragraphs
 		preNewline.setString("");
 		postNewline.setString("");
