@@ -47,9 +47,18 @@ var breadcrumbs = [];
  * Called on initial wizard load
  */
 async function onLoad() {
-	wizard = document.documentElement;
+	wizard = document.querySelector('wizard');
 	javaCommonCheckRun = false;
-	
+	wizard.addEventListener('wizardcancel', wizardCancelled)
+	wizard.addEventListener('wizardback', wizardBack)
+	wizard.getPageById("intro").addEventListener('pageshow', introPageShown);
+	wizard.getPageById("java-common").addEventListener('pageshow', javaCommonPageShown);
+	wizard.getPageById("java-common-install").addEventListener('pageshow', javaCommonInstallPageShown);
+	wizard.getPageById("jre-required").addEventListener('pageshow', jreRequiredPageShown);
+	wizard.getPageById("jdk-required").addEventListener('pageshow', jreRequiredPageShown);
+	wizard.getPageById("libreoffice-installations").addEventListener('pageshow', libreofficeInstallationsPageShown);
+	wizard.getPageById("installing").addEventListener('pageshow', installingPageShown);
+
 	for(var param in window.arguments[0].wrappedJSObject) window[param] = window.arguments[0].wrappedJSObject[param];
 	
 	if(Zotero.isWin) {
@@ -58,12 +67,12 @@ async function onLoad() {
 		wizard.getPageById("intro").next = "java-common";
 		
 		checkJavaCommon(function(success) {
-			// if openoffice.org-java-common check succeeds, we don't need to show the page for it
+			// if libreoffice.org-java-common check succeeds, we don't need to show the page for it
 			javaCommonCheckComplete = true;
 			
 			if(success) {
-				wizard.getPageById("intro").next = "openoffice-installations";
-				wizard.getPageById("java-common").next = "openoffice-installations";
+				wizard.getPageById("intro").next = "libreoffice-installations";
+				wizard.getPageById("java-common").next = "libreoffice-installations";
 			} else {
 				wizard.getPageById("intro").next = "java-common";
 				wizard.getPageById("java-common").next = "java-common-install";
@@ -87,28 +96,28 @@ async function onLoad() {
 }
 
 /**
- * Check for openoffice.org-java-common and prompt user to install if necessary, or else hide
+ * Check for libreoffice.org-java-common and prompt user to install if necessary, or else hide
  * java-common-page
  */
 function checkJavaCommon(callback) {
 	neededPackages = [];
 	
 	// check for dpkg
-	var dpkg = ZoteroOpenOfficeIntegration.getFile("/usr/bin/dpkg");
+	var dpkg = ZoteroLibreOfficeIntegration.getFile("/usr/bin/dpkg");
 	if(!dpkg.exists()) {
 		callback(true);
 		return;
 	}
 	
 	// check for bash
-	var bash = ZoteroOpenOfficeIntegration.getFile("/bin/bash");
+	var bash = ZoteroLibreOfficeIntegration.getFile("/bin/bash");
 	if(!bash.exists()) {
 		callback(true);
 		return;
 	}
 	
 	// check for java
-	var java = ZoteroOpenOfficeIntegration.getFile("/usr/bin/java");
+	var java = ZoteroLibreOfficeIntegration.getFile("/usr/bin/java");
 	var success1 = java.exists();
 	if(!success1) neededPackages.push("default-jre");
 	
@@ -128,7 +137,7 @@ function checkJavaCommonPkg(pkgMain, pkgRequired, callback) {
 	// check for openoffice.org-writer with openoffice.org-java-common available but not installed
 	bashProc.runAsync(["-c", "dpkg -l '"+pkgMain.replace(".", "\\.")+"' | grep '^ii '"], 2, {"observe":function(subject1, topic1) {
 		if(topic1 === "process-finished" && !bashProc.exitValue) {
-			Zotero.debug("ZoteroOpenOfficeIntegration: "+pkgMain+" is installed");
+			Zotero.debug("ZoteroLibreOfficeIntegration: "+pkgMain+" is installed");
 			// only care if openoffice.org-writer is installed; otherwise, we are probably not using
 			// default packages and probably have Java
 			bashProc.runAsync(
@@ -137,26 +146,26 @@ function checkJavaCommonPkg(pkgMain, pkgRequired, callback) {
 				// only care if openoffice.org-java-common is available for install; otherwise, we
 				// are probably using packages that include Java
 				if(topic2 === "process-finished" && !bashProc.exitValue) {
-					Zotero.debug("ZoteroOpenOfficeIntegration: "+pkgRequired+" is available");
+					Zotero.debug("ZoteroLibreOfficeIntegration: "+pkgRequired+" is available");
 					bashProc.runAsync(["-c", "dpkg -l | grep '"+pkgRequired.replace(".", "\\.")+"'"], 2,
 							{"observe":function(subject3, topic3) {
 						wizard.canAdvance = true;
 						if(topic3 === "process-failed" || bashProc.exitValue) {
-							Zotero.debug("ZoteroOpenOfficeIntegration: "+pkgRequired+" is not installed");
+							Zotero.debug("ZoteroLibreOfficeIntegration: "+pkgRequired+" is not installed");
 							neededPackages.push(pkgRequired);
 							callback(false);
 						} else {
-							Zotero.debug("ZoteroOpenOfficeIntegration: "+pkgRequired+" is installed");
+							Zotero.debug("ZoteroLibreOfficeIntegration: "+pkgRequired+" is installed");
 							callback(true);
 						}
 					}});
 				} else {
-					Zotero.debug("ZoteroOpenOfficeIntegration: "+pkgRequired+" is unavailable");
+					Zotero.debug("ZoteroLibreOfficeIntegration: "+pkgRequired+" is unavailable");
 					callback(true);
 				}
 			}});
 		} else {
-			Zotero.debug("ZoteroOpenOfficeIntegration: "+pkgMain+" is not installed");
+			Zotero.debug("ZoteroLibreOfficeIntegration: "+pkgMain+" is not installed");
 			callback(true);
 		}
 	}});
@@ -208,7 +217,7 @@ function checkJRE() {
 	}
 	
 	if (isInstalled) {
-		wizard.getPageById("intro").next = "openoffice-installations";
+		wizard.getPageById("intro").next = "libreoffice-installations";
 		
 		if(wizard.currentPage.pageid === "jre-required") {
 			wizard.canAdvance = true;
@@ -252,7 +261,7 @@ function javaCommonInstallPageShown() {
 			createInstance(Components.interfaces.nsIProcess);
 	
 	// first try to install via apturl
-	var apturl = ZoteroOpenOfficeIntegration.getFile("/usr/bin/apturl");
+	var apturl = ZoteroLibreOfficeIntegration.getFile("/usr/bin/apturl");
 	if(apturl.exists()) {
 		proc.init(apturl);
 		proc.runAsync(["apt:"+neededPackages.join(",")], 1, {"observe":function(subject, topic) {
@@ -262,7 +271,7 @@ function javaCommonInstallPageShown() {
 		}});
 	} else {
 		// if no apturl, try to install via xterm
-		var xterm = ZoteroOpenOfficeIntegration.getFile("/usr/bin/xterm");
+		var xterm = ZoteroLibreOfficeIntegration.getFile("/usr/bin/xterm");
 		if(xterm.exists()) {
 			proc.init(xterm);
 			proc.runAsync(["-e", "sudo apt-get install "+neededPackages.join(" ")+"; sleep 2;"], 2,
@@ -283,7 +292,7 @@ function javaCommonInstallPageShown() {
 function javaCommonVerifyInstallationCallback(success) {
 	if(success) {
 		// if install appears to have succeeded
-		wizard.getPageById("intro").next = "openoffice-installations";
+		wizard.getPageById("intro").next = "libreoffice-installations";
 		wizard.advance();
 	} else {
 		// if install appears to have failed
@@ -301,22 +310,21 @@ function jreRequiredPageShown() {
 	wizard.canAdvance = false;
 }
 
-/*** openoffice-installations-page ***/
+/*** libreoffice-installations-page ***/
 
 /**
- * Called when openoffice-installations wizardpage is shown
+ * Called when libreoffice-installations wizardpage is shown
  */
-function openofficeInstallationsPageShown() {
+function libreofficeInstallationsPageShown() {
 	wizard.canAdvance = false;
 	
-	var installations = ZoteroOpenOfficeIntegration.getInstallations();
+	var installations = ZoteroLibreOfficeIntegration.getInstallations();
 	
 	// add installations to listbox
 	var listbox = document.getElementById("installations-listbox");
 	while(listbox.hasChildNodes()) listbox.removeChild(listbox.firstChild);
 	for(var installation in installations) {
-		var itemNode = document.createElement("listitem");
-		itemNode.setAttribute("type", "checkbox");
+		var itemNode = document.createXULElement("richlistcheckbox");
 		itemNode.setAttribute("label", installation);
 		if(installations[installation] !== false) {
 			itemNode.setAttribute("checked", "true");
@@ -329,7 +337,7 @@ function openofficeInstallationsPageShown() {
 /**
  * Called to add an LibreOffice installation directory
  */
-async function openofficeInstallationsAddDirectory() {
+async function libreofficeInstallationsAddDirectory() {
 	var fp = new FilePicker();
 	
 	// show dialog to select directory
@@ -345,10 +353,10 @@ async function openofficeInstallationsAddDirectory() {
 	}
 	
 	// find unopkg executable
-	var unopkg = OS.Path.join(fp.file, UNOPKG_RELPATHS[ZoteroOpenOfficeIntegration.platform]);
+	var unopkg = OS.Path.join(fp.file, UNOPKG_RELPATHS[ZoteroLibreOfficeIntegration.platform]);
 	
 	if (!await OS.File.exists(unopkg)) {
-		unopkg = OS.Path.join(fp.file, UNOPKG_RELPATHS[ZoteroOpenOfficeIntegration.platform]);
+		unopkg = OS.Path.join(fp.file, UNOPKG_RELPATHS[ZoteroLibreOfficeIntegration.platform]);
 	}
 	
 	if (!await OS.File.exists(unopkg)) {
@@ -364,12 +372,11 @@ async function openofficeInstallationsAddDirectory() {
 	var listbox = document.getElementById("installations-listbox");
 	var nodes = listbox.childNodes;
 	for (let i = 0; i < nodes.length; i++) {
-		if (nodes[i].label === unopkg) return;
+		if (nodes[i].textContent === unopkg) return;
 	}
 	
 	// add unopkg to list
-	var itemNode = document.createElement("listitem");
-	itemNode.setAttribute("type", "checkbox");
+	var itemNode = document.createXULElement("richlistcheckbox");
 	itemNode.setAttribute("label", unopkg);
 	itemNode.setAttribute("checked", "true");
 	listbox.appendChild(itemNode);
@@ -380,13 +387,13 @@ async function openofficeInstallationsAddDirectory() {
 /**
  * Called to reveal LibreOffice extension for manual installation
  */
-function openofficeInstallationsManualInstallation() {
+function libreofficeInstallationsManualInstallation() {
 	// clear saved unopkg paths so we force manual install on upgrade
 	ZoteroPluginInstaller.prefBranch.setCharPref(
-		ZoteroOpenOfficeIntegration.UNOPKG_PATHS_PREF, "{}");
+		ZoteroLibreOfficeIntegration.UNOPKG_PATHS_PREF, "{}");
 	
 	// get oxt path and set it in the dialog
-	var oxtPath = ZoteroOpenOfficeIntegration.getOxtPath();
+	var oxtPath = ZoteroLibreOfficeIntegration.getOxtPath();
 	document.getElementById("installation-manual-path").textContent = oxtPath.path;
 	try {
 		oxtPath.QueryInterface(Components.interfaces.nsIFile).reveal();
@@ -402,7 +409,7 @@ function openofficeInstallationsManualInstallation() {
 /**
  * Called when an LibreOffice installation is checked or unchecked
  */
-function openofficeInstallationsListboxSelectionChanged() {
+function libreofficeInstallationsListboxSelectionChanged() {
 	var listbox = document.getElementById("installations-listbox");
 	for (let node of listbox.childNodes) {
 		if(node.checked) {
@@ -452,7 +459,7 @@ function installingPageShown() {
 	for (let node of listbox.childNodes) {
 		paths[node.label] = !!node.checked;
 	}
-	ZoteroOpenOfficeIntegration.installComponents(paths,
+	ZoteroLibreOfficeIntegration.installComponents(paths,
 			function(success) {
 		showInstallationComplete(success ? "successful" : "error");
 		ZoteroPluginInstaller[success ? "success" : "error"]();
@@ -470,7 +477,7 @@ function reportErrors() {
 		askForSteps: true
 	};
 	var io = { wrappedJSObject: { Zotero: Zotero, data:  data } };
-	var win = ww.openWindow(null, "chrome://zotero/content/errorReport.xul",
+	var win = ww.openWindow(null, "chrome://zotero/content/errorReport.xhtml",
 				"zotero-error-report", "chrome,centerscreen,modal", io);
 }
 
@@ -498,10 +505,10 @@ function wizardBack() {
 		wizard.goTo("intro");
 	} else if(pageid === "java-common-install") {
 		wizard.goTo("java-common");
-	} else if(pageid === "openoffice-installations") {
-		wizard.goTo(wizard.getPageById("intro").next === "openoffice-installations" ? "intro" : wizard.getPageById("intro").next);
+	} else if(pageid === "libreoffice-installations") {
+		wizard.goTo(wizard.getPageById("intro").next === "libreoffice-installations" ? "intro" : wizard.getPageById("intro").next);
 	} else if(pageid === "installing" || pageid === "installation-complete") {
-		wizard.goTo("openoffice-installations");
+		wizard.goTo("libreoffice-installations");
 	} else {
 		throw "Don't know how to go back from "+pageid;
 	}

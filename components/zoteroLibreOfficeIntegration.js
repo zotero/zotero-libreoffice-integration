@@ -24,7 +24,7 @@
 
 "use strict";
 
-Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+Components.utils.import("resource://gre/modules/ComponentUtils.jsm");
 
 var Zotero;
 const API_VERSION = 3;
@@ -35,7 +35,7 @@ var Comm = new function() {
 		mainThread;
 	
 	/**
-	 * Observes browser startup to initialize ZoteroOpenOfficeIntegration HTTP server
+	 * Observes browser startup to initialize ZoteroLibreOfficeIntegration HTTP server
 	 */
 	this.init = async function() {
 		Zotero = Components.classes["@zotero.org/Zotero;1"]
@@ -139,10 +139,10 @@ var Comm = new function() {
 			0:[
 				function(payload) {
 					if (typeof payload != 'object') {
-						Zotero.Integration.execCommand("OpenOffice", payload, null)
+						Zotero.Integration.execCommand("LibreOffice", payload, null)
 					}
 					else {
-						Zotero.Integration.execCommand("OpenOffice", payload.command, null, payload.templateVersion);
+						Zotero.Integration.execCommand("LibreOffice", payload.command, null, payload.templateVersion);
 					}
 				},
 				function(errString) {
@@ -160,13 +160,13 @@ var Comm = new function() {
 		 * Called when a request begins (although the request should have begun before
 		 * the DataListener was generated)
 		 */
-		"onStartRequest":function(request, context) {
+		"onStartRequest":function(request) {
 		},
 		
 		/**
 		 * Called when a request stops
 		 */
-		"onStopRequest":function(request, context, status) {
+		"onStopRequest":function(request, status) {
 			this.iStream.close();
 			this.oStream.close();
 		},
@@ -174,7 +174,7 @@ var Comm = new function() {
 		/**
 		 * Called when new data is available
 		 */
-		"onDataAvailable":function(request, context, inputStream, offset, count) {
+		"onDataAvailable":function(request, inputStream, offset, count) {
 			// Zotero.debug("LibreOfficePlugin: "+count+" bytes available");
 			
 			// Keep track of the last connection we read on
@@ -328,8 +328,8 @@ var Comm = new function() {
 			'to complete the installation procedure.');
 		
 		if(shouldReinstall) {
-			var ZoteroOpenOfficeInstaller = Components.utils.import("resource://zotero-openoffice-integration/installer.jsm").Installer;
-			var zpi = new ZoteroOpenOfficeInstaller(false, true);
+			var ZoteroLibreOfficeInstaller = Components.utils.import("resource://zotero-libreoffice-integration/installer.jsm").Installer;
+			var zpi = new ZoteroLibreOfficeInstaller(false, true);
 		}
 		
 		// We throw this error to avoid displaying another error dialog
@@ -343,12 +343,14 @@ var Comm = new function() {
  */
 var Initializer = function() {
 	Comm.init();
+	var Integration = Components.utils.import("resource://zotero-libreoffice-integration/integration.js").LibreOfficeIntegration;
+	Integration.init();
 };
 Initializer.prototype = {
 	classDescription: "Zotero LibreOffice Integration Initializer",
 	"classID":Components.ID("{f43193a1-7060-41a3-8e82-481d58b71e6f}"),
-	"contractID":"@zotero.org/Zotero/integration/initializer?agent=OpenOffice;1",
-	"QueryInterface":XPCOMUtils.generateQI([Components.interfaces.nsISupports]),
+	"contractID":"@zotero.org/Zotero/integration/initializer?agent=LibreOffice;1",
+	"QueryInterface":ChromeUtils.generateQI([Components.interfaces.nsISupports]),
 	"service":true
 };
 
@@ -361,8 +363,8 @@ var Application = function() {
 Application.prototype = {
 	classDescription: "Zotero LibreOffice Integration Application",
 	classID:		Components.ID("{8478cd98-5ba0-4848-925a-75adffff2dbf}"),
-	contractID:		"@zotero.org/Zotero/integration/application?agent=OpenOffice;1",
-	QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsISupports]),
+	contractID:		"@zotero.org/Zotero/integration/application?agent=LibreOffice;1",
+	QueryInterface: ChromeUtils.generateQI([Components.interfaces.nsISupports]),
 	_xpcom_categories: [{
 		category: "profile-after-change",
 		service: true
@@ -521,5 +523,4 @@ var classes = [
 	Application,
 ];
 
-var NSGetFactory = XPCOMUtils.generateNSGetFactory(classes);
-
+var NSGetFactory = ComponentUtils.generateNSGetFactory(classes);

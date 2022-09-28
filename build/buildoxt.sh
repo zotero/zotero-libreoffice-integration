@@ -11,8 +11,8 @@ zip $CWD/oxt/Zotero.jar $CWD/META-INF/MANIFEST.MF
 
 # Zip up oxt
 cd $CWD/oxt
-rm -f ../../install/Zotero_OpenOffice_Integration.oxt
-zip -r ../../install/Zotero_OpenOffice_Integration.oxt * -x \*/.svn/\* -x \*/.DS_Store
+rm -f ../../install/Zotero_LibreOffice_Integration.oxt
+zip -r ../../install/Zotero_LibreOffice_Integration.oxt * -x \*/.svn/\* -x \*/.DS_Store
 
 # Clean up
 rm -rf Zotero.jar external_jars

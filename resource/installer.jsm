@@ -23,6 +23,7 @@
 */
 
 var EXPORTED_SYMBOLS = ["Installer"];
+Components.utils.import("resource://gre/modules/FileUtils.jsm");
 var Zotero = Components.classes["@zotero.org/Zotero;1"].getService(Components.interfaces.nsISupports).wrappedJSObject;
 var ZoteroPluginInstaller = Components.utils.import("resource://zotero/word-processor-plugin-installer.js").ZoteroPluginInstaller;
 var Installer = function(failSilently=true, force) {
@@ -111,20 +112,17 @@ var Plugin = new function() {
 	this.UNOPKG_PATHS_PREF = "unopkgPaths";
 	
 	this.EXTENSION_STRING = "Zotero LibreOffice Integration";
-	this.EXTENSION_ID = "zoteroOpenOfficeIntegration@zotero.org";
+	this.EXTENSION_ID = "zoteroLibreOfficeIntegration@zotero.org";
 	this.EXTENSION_PREF_BRANCH = "extensions.zoteroOpenOfficeIntegration.";
-	this.EXTENSION_DIR = "zotero-openoffice-integration";
+	this.EXTENSION_DIR = "zotero-libreoffice-integration";
 	this.APP = 'LibreOffice';
-	
-	this.REQUIRED_ADDONS = [];
+	this.VERSION_FILE = 'resource://zotero-libreoffice-integration/version.txt';
 	
 	// Bump if you want to trigger auto-update
 	this.LAST_INSTALLED_FILE_UPDATE = "6.0.2pre";
 	this.DISABLE_PROGRESS_WINDOW = true;
 	
 	var zoteroPluginInstaller, pathToAddon, installing, prefBranch, wizardWindow;
-	
-	this.verifyNotCorrupt = function() {}
 	
 	this.__defineGetter__("platform", function() {
 		if(Zotero.isMac) {
@@ -143,7 +141,16 @@ var Plugin = new function() {
 		if(installing) return;
 		
 		zoteroPluginInstaller = zpi;
-		this.pathToAddon = zoteroPluginInstaller.getAddonPath(this.EXTENSION_ID);
+		if (Zotero.isMac) {
+			this.pathToAddon = FileUtils.getDir('ARes', []).parent.parent;
+			this.pathToAddon.append('integration');
+			this.pathToAddon.append('libreoffice');
+		}
+		else {
+			this.pathToAddon = FileUtils.getDir('AChrom', []).parent.parent;
+			this.pathToAddon.append('integration');
+			this.pathToAddon.append('libreoffice');
+		}
 		
 		// look for installations
 		var installations = this.getInstallations(),
@@ -181,11 +188,7 @@ var Plugin = new function() {
 	 * Creates a new nsIFile corresponding to a given path
 	 */
 	this.getFile = function(path) {
-		var file = Components.classes["@mozilla.org/file/local;1"].
-			createInstance(Components.interfaces.nsIFile);
-		file.followLinks = true;
-		file.initWithPath(path);
-		return file;
+		return Zotero.File.pathToFile(path);
 	}
 	
 	/**
@@ -226,7 +229,7 @@ var Plugin = new function() {
 		}
 		
 		// Start looking for paths from the list above, in case new
-		// copies/versions of LibreOffice/OpenOffice have been
+		// copies/versions of LibreOffice/LibreOffice have been
 		// installed
 		var potentialLocations = UNOPKG_LOCATIONS[Plugin.platform];
 
@@ -270,8 +273,7 @@ var Plugin = new function() {
 	 */
 	this.getOxtPath = function() {
 		var oxt = this.pathToAddon.clone();
-		oxt.append("install");
-		oxt.append("Zotero_OpenOffice_Integration.oxt");
+		oxt.append("Zotero_LibreOffice_Integration.oxt");
 		return oxt;
 	}
 	
@@ -302,9 +304,9 @@ var Plugin = new function() {
 	function openInstallationWizard() {
 		var ww = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
 				   .getService(Components.interfaces.nsIWindowWatcher);
-		wizardWindow = ww.openWindow(null, "chrome://zotero-openoffice-integration/content/install.xul",
-					"openoffice-install-wizard", "chrome,centerscreen", {"wrappedJSObject":{
-						"ZoteroOpenOfficeIntegration":Plugin,
+		wizardWindow = ww.openWindow(null, "chrome://zotero-libreoffice-integration/content/install.xhtml",
+					"libreoffice-install-wizard", "chrome,centerscreen", {"wrappedJSObject":{
+						"ZoteroLibreOfficeIntegration":Plugin,
 						"ZoteroPluginInstaller":zoteroPluginInstaller
 					}});
 	}
@@ -326,7 +328,7 @@ var Plugin = new function() {
 		var proc = Components.classes["@mozilla.org/process/util;1"].
 				createInstance(Components.interfaces.nsIProcess);
 		var path = unopkgPaths.shift();
-		Zotero.debug("ZoteroOpenOfficeIntegration: Installing with unopkg at "+path);
+		Zotero.debug("ZoteroLibreOfficeIntegration: Installing with unopkg at "+path);
 		proc.init(Plugin.getFile(path));
 		
 		proc.runAsync(["remove", "org.Zotero.integration.openoffice"], 2, {"observe":function() {

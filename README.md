@@ -1,6 +1,6 @@
 # Zotero LibreOffice Integration
 
-Zotero LibreOffice Integration comprises extensions for LibreOffice/OpenOffice.org/NeoOffice and Zotero that communicate using local web servers.
+Zotero LibreOffice Integration comprises extensions for LibreOffice and Zotero that communicate using local web servers.
 
 ## Build Requirements
 
@@ -18,8 +18,8 @@ To build:
 	1. Expand "Zotero OpenOffice Integration" -> "lib" -> "libreoffice-sdk" and select all the JARs underneath it.
 	1. Click "Ok" and then "Apply and Close".
 1.  Double-click Zotero.jardesc. Click "Finish" to build Zotero.jar.
-1.  Run `buildoxt.sh` from within the `build` directory to build `install/Zotero_OpenOffice_Integration.oxt`.
-1.  Install `Zotero_OpenOffice_Integration.oxt` into LibreOffice, either by choosing "Reinstall Extension" from within the Zotero preferences, by installing it manually from within LibreOffice, or by using `unopkg` from the command line.
+1.  Run `buildoxt.sh` from within the `build` directory to build `install/Zotero_LibreOffice_Integration.oxt`.
+1.  Install `Zotero_LibreOffice_Integration.oxt` into LibreOffice, either by choosing "Reinstall Extension" from within the Zotero preferences, by installing it manually from within LibreOffice, or by using `unopkg` from the command line.
 	1. If, when you try to install the extension in LibreOffice, you get an error like "Could not create Java implementation loader", it means that LibreOffice is not configured to use Java. Follow [these](https://help.libreoffice.org/Common/Java) instructions to set up a Java VM in LibreOffice. 
 
 ## Development Starter's Guide
@@ -29,7 +29,7 @@ The [UNO runtime](https://wiki.openoffice.org/wiki/Documentation/DevGuide/OpenOf
 programming languages to interface with a running LibreOffice process. The extension code is initialized by LibreOffice
 and starts execution in [ZoteroOpenOfficeIntegrationImpl.java](https://github.com/zotero/zotero-libreoffice-integration/blob/2183efa/build/source/org/zotero/integration/ooo/comp/ZoteroOpenOfficeIntegrationImpl.java#L40-L40).
 
-Communication between Zotero and LibreOffice is mediated in [zoteroOpenOfficeIntegration.js](https://github.com/zotero/zotero-libreoffice-integration/blob/2183efa/components/zoteroOpenOfficeIntegration.js#L38)
+Communication between Zotero and LibreOffice is mediated in [zoteroLibreOfficeIntegration.js](https://github.com/zotero/zotero-libreoffice-integration/blob/2183efa/components/zoteroLibreOfficeIntegration.js#L38)
 where a TCP socket is initialized and used for both sending and receiving messages. The complimentary socket connection on the 
 LibreOffice extension end is found in [CommServer.java](https://github.com/zotero/zotero-libreoffice-integration/blob/2183efa/build/source/org/zotero/integration/ooo/comp/CommServer.java#L14).
 

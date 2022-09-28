@@ -1,19 +1,27 @@
 <?xml version="1.0" ?>
 <?xml-stylesheet href="chrome://global/skin/" type="text/css"?>
 <?xml-stylesheet href="chrome://zotero/skin/zotero.css" type="text/css"?>
+<?xml-stylesheet href="chrome://zotero-platform/content/zotero-react-client.css"?>
 <?xml-stylesheet href="chrome://zotero/skin/upgrade.css" type="text/css"?>
 <!DOCTYPE window SYSTEM "chrome://zotero/locale/zotero.dtd">
 
-<wizard xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+	xmlns:html="http://www.w3.org/1999/xhtml"
 	title="Zotero LibreOffice Plugin Installation" width="600"
 	height="450" id="installer" onwizardcancel="return wizardCancelled();"
 	onwizardback="wizardBack(); return false;">
 	
 	<script src="chrome://zotero/content/include.js"/>
+	<script src="chrome://global/content/customElements.js"/>
+	<script src="chrome://zotero/content/elements/richlistCheckbox.js"/>
 	<script src="install.js"/>
 	
-	<wizardpage pageid="intro" label="Introduction" onpageshow="introPageShown()"
-	next="openoffice-installations">
+<wizard>
+	<linkset>
+		<html:link rel="localization" href="toolkit/global/wizard.ftl"/>
+	</linkset>
+	
+	<wizardpage pageid="intro" label="Introduction" next="libreoffice-installations">
 		<description>
 			The Zotero LibreOffice Plugin makes it easy to insert Zotero
 			citations and bibliographies into LibreOffice documents.
@@ -24,8 +32,7 @@
 		</description>
 	</wizardpage>
 	
-	<wizardpage pageid="java-common" onpageshow="javaCommonPageShown()"
-	label="Install Required Components" next="java-common-install">
+	<wizardpage pageid="java-common" label="Install Required Components" next="java-common-install">
 		<vbox id="java-common-progress" flex="1">
 			<label>Searching for Required Components…</label>
 			<progressmeter id="progress-indicator" mode="undetermined"/>
@@ -41,9 +48,7 @@
 		</vbox>
 	</wizardpage>
 	
-	<wizardpage pageid="java-common-install"
-	label="Install Required Components" onpageshow="javaCommonInstallPageShown()"
-	next="openoffice-installations">
+	<wizardpage pageid="java-common-install" label="Install Required Components" next="libreoffice-installations">
 		<vbox id="java-common-install-progress" flex="1">
 			<label>Installing required packages…</label>
 			<progressmeter id="progress-indicator" mode="undetermined"/>
@@ -55,9 +60,7 @@
 		</description>
 	</wizardpage>
 	
-	<wizardpage pageid="jre-required" onpageshow="jreRequiredPageShown()"
-	label="Install Required Components"
-	next="openoffice-installations">
+	<wizardpage pageid="jre-required" label="Install Required Components" next="libreoffice-installations">
 		<description>
 			The Zotero LibreOffice Plugin requires the Java
 			Runtime Environment. Visit <label class="zotero-text-link" href="https://java.com/inc/BrowserRedirect1.jsp">Java.com</label>
@@ -65,9 +68,7 @@
 		</description>
 	</wizardpage>
 	
-	<wizardpage pageid="jdk-required" onpageshow="jreRequiredPageShown()"
-	label="Install Required Components"
-	next="openoffice-installations">
+	<wizardpage pageid="jdk-required" label="Install Required Components" next="libreoffice-installations">
 		<description>
 			The Zotero LibreOffice Plugin requires the Java Development Kit to work
 			on macOS. Visit <label class="zotero-text-link" href="https://www.oracle.com/java/technologies/javase-downloads.html">Oracle.com</label>
@@ -75,9 +76,8 @@
 		</description>
 	</wizardpage>
 	
-	<wizardpage pageid="openoffice-installations" extra1="Add Directory…"
-	extra2="Manual Installation" label="Select LibreOffice unopkg executable"
-	next="installing" onpageshow="openofficeInstallationsPageShown()">
+	<wizardpage pageid="libreoffice-installations" extra1="Add Directory…"
+	extra2="Manual Installation" label="Select LibreOffice unopkg executable" next="installing">
 		<description>
 			Select LibreOffice installations from the list
 			below, or click “Add Installation” to locate the path to an LibreOffice installation
@@ -87,15 +87,14 @@
 			To open the directory containing the LibreOffice extension file for manual installation
 			from within LibreOffice, click “Manual Installation”.
 		</description>
-		<listbox height="150" id="installations-listbox" oncommand="openofficeInstallationsListboxSelectionChanged()"/>
+		<richlistbox height="150" id="installations-listbox" oncommand="libreofficeInstallationsListboxSelectionChanged()"/>
 		<hbox pack="end">
-			<button label="Manual Installation" oncommand="openofficeInstallationsManualInstallation()"/>
-			<button label="Add Directory…" oncommand="openofficeInstallationsAddDirectory()"/>
+			<button label="Manual Installation" oncommand="libreofficeInstallationsManualInstallation()"/>
+			<button label="Add Directory…" oncommand="libreofficeInstallationsAddDirectory()"/>
 		</hbox>
 	</wizardpage>
 	
-	<wizardpage pageid="installing" label="Installing…"
-	onpageshow="installingPageShown()" next="installation-complete">
+	<wizardpage pageid="installing" label="Installing…" next="installation-complete">
 		<vbox id="installation-progress" flex="1">
 			<label>Installing the Zotero LibreOffice Plugin…</label>
 			<progressmeter id="progress-indicator" mode="undetermined"/>
@@ -133,15 +132,16 @@
 			</description>
 			<description>
 				If this error persists, please review the
-				<label class="zotero-text-link" href="http://zotero.org/support/word_processor_plugin_installation_for_zotero_2.1#openoffice">troubleshooting instructions</label>.
+				<label class="zotero-text-link" href="https://www.zotero.org/support/word_processor_plugin_troubleshooting#installation_error">troubleshooting instructions</label>.
 				If these do not resolve the issue you’re experiencing, click the button below to
 				submit an error report, and post the Report ID as well as the text of any errors you
 				experienced during manual installation to the <label class="text-link" href="https://forums.zotero.org/">Zotero Forums</label>.
 			</description>
 			<hbox pack="center">
-				<button label="Manual Installation" onclick="openofficeInstallationsManualInstallation()"/>
+				<button label="Manual Installation" onclick="libreofficeInstallationsManualInstallation()"/>
 				<button label="Submit Error Report…" onclick="reportErrors()"/>
 			</hbox>
 		</vbox>
 	</wizardpage>
 </wizard>
+</window>
