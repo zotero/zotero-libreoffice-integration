@@ -135,9 +135,7 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 			}
 			((XComponent) UnoRuntime.queryInterface(XComponent.class, text)).dispose();
 		} else {
-			XTextCursor dupRange = text.createTextCursorByRange(range);
-			text.removeTextContent(textContent);
-			range = dupRange;
+			range.setString("");
 			
 			// dispose of a Bookmark or TextSection
 			if(isDisposable) {
@@ -379,9 +377,22 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 	}
 	
 	public int compareTo(ReferenceMark o) {
+		return compareTo(o, false);
+	}
+
+	public int isAdjacentTo(ReferenceMark o) {
+		return compareTo(o, true);
+	}
+	
+	public int compareTo(ReferenceMark o, boolean adjacent) {
 		XTextRange range1, range2;
 		range1 = getDocumentRange();
 		range2 = o.getDocumentRange();
+		
+		// If we're checking for adjacent reference marks, compare 1st end to 2nd start
+		if (adjacent) {
+			range1 = range1.getEnd();
+		}
 		
 		int cmp = 0;
 		try {
