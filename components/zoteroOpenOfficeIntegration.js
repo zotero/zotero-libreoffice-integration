@@ -415,7 +415,7 @@ Document.prototype.getFields = function(fieldType) {
 			function(result) {
 				var fields = [];
 				for (let i = 0; i < result[0].length; i++) {
-					fields.push(new Field(documentID, result[0][i], result[1][i], result[2][i]));
+					fields.push(new Field(documentID, result[0][i], result[1][i], result[2][i], result[3][i] === 0));
 				}
 				resolve(fields);
 			},
@@ -449,11 +449,12 @@ Document.prototype.convert = function(fields, fieldType, noteTypes) {
 /**
  * See integrationTests.js
  */
-var Field = function(documentID, index, code, noteIndex) {
+var Field = function(documentID, index, code, noteIndex, adjacent) {
 	this._documentID = documentID; 
 	this._index = index;
 	this._code = code;
 	this._noteIndex = noteIndex;
+	this._adjacent = adjacent;
 };
 Field.prototype = {};
 
@@ -500,6 +501,10 @@ Field.prototype.setCode = function(code) {
 Field.prototype.getNoteIndex = function() {
 	Zotero.debug(`LibreOfficePlugin: Field(${this._index}).getNoteIndex: ${this._noteIndex}`);
 	return this._noteIndex;
+}
+Field.prototype.isAdjacentToNextField = function() {
+	Zotero.debug(`LibreOfficePlugin: Field(${this._index}).isAdjacentToNextField: ${this._adjacent}`);
+	return this._adjacent;
 }
 Field.prototype.equals = function(arg) {
 	return this._index === arg._index;

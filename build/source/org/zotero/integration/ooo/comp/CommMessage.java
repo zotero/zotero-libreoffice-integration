@@ -154,15 +154,22 @@ class CommMessage implements CommFrame {
 		int[] fieldIndices = new int[numFields];
 		String[] fieldCodes = new String[numFields];
 		int[] noteIndices = new int[numFields];
+		int[] adjacency = new int[numFields];
 		
 		for(int i=0; i<numFields; i++) {
 			ReferenceMark field = fields.get(i);
 			fieldIndices[i] = document.mMarkManager.getIDForMark(field);
 			fieldCodes[i] = field.getCode();
 			noteIndices[i] = field.getNoteIndex();
+			if (i+1 < numFields) {
+				adjacency[i] = field.isAdjacentTo(fields.get(i+1));
+			}
+			else {
+				adjacency[i] = -1;
+			}
 		}
 		
-		Object[] out = {fieldIndices, fieldCodes, noteIndices};
+		Object[] out = {fieldIndices, fieldCodes, noteIndices, adjacency};
 		return out;
 	}
 }
