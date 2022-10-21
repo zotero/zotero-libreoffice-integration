@@ -415,7 +415,8 @@ Document.prototype.getFields = function(fieldType) {
 			function(result) {
 				var fields = [];
 				for (let i = 0; i < result[0].length; i++) {
-					fields.push(new Field(documentID, result[0][i], result[1][i], result[2][i], result[3][i] === 0));
+					let adjacent = result.length > 3 && result[3][i] === 0;
+					fields.push(new Field(documentID, result[0][i], result[1][i], result[2][i], adjacent));
 				}
 				resolve(fields);
 			},
