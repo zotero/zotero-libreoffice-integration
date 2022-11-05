@@ -1,2 +1,8 @@
-build/bin
-build/lib/libreoffice-sdk
+/build/bin
+/build/lib/libreoffice-sdk
+/build/oxt/icons
+/build/oxt/Zotero.jar
+/build/oxt/external_jars/
+/build/oxt/Addons.xcu
+/build/oxt/Addons_AOO4.xcu
+build/oxt/icon-theme.txt
