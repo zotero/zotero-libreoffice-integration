@@ -26,6 +26,13 @@
 
 Components.utils.import("resource://gre/modules/ComponentUtils.jsm");
 
+const { XPCOMUtils } = ChromeUtils.import(
+	"resource://gre/modules/XPCOMUtils.jsm"
+);
+XPCOMUtils.defineLazyModuleGetters(this, {
+	setTimeout: "resource://gre/modules/Timer.jsm",
+});
+
 var Zotero;
 const API_VERSION = 3;
 const SERVER_PORT = 23116;
@@ -244,7 +251,7 @@ var Comm = new function() {
 				}
 				
 				// Transmit to callback
-				Zotero.setTimeout(function() {
+				setTimeout(function() {
 					if(err) {
 						callbacks[1](err);
 					} else {
