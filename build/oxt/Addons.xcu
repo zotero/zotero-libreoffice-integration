@@ -112,7 +112,7 @@
 						<value>%origin%/icons/addEditCitation_16.png</value>
 					</prop>
 					<prop oor:name="ImageBigURL">
-						<value>%origin%/icons/addEditCitation_26.png</value>
+						<value>%origin%/icons/addEditCitation_24.png</value>
 					</prop>
 				</node>
 			</node>
@@ -125,7 +125,7 @@
 						<value>%origin%/icons/addNote_16.png</value>
 					</prop>
 					<prop oor:name="ImageBigURL">
-						<value>%origin%/icons/addNote_26.png</value>
+						<value>%origin%/icons/addNote_24.png</value>
 					</prop>
 				</node>
 			</node>
@@ -138,7 +138,7 @@
 						<value>%origin%/icons/addEditBibliography_16.png</value>
 					</prop>
 					<prop oor:name="ImageBigURL">
-						<value>%origin%/icons/addEditBibliography_26.png</value>
+						<value>%origin%/icons/addEditBibliography_24.png</value>
 					</prop>
 				</node>
 			</node>
@@ -151,7 +151,7 @@
 						<value>%origin%/icons/setDocPrefs_16.png</value>
 					</prop>
 					<prop oor:name="ImageBigURL">
-						<value>%origin%/icons/setDocPrefs_26.png</value>
+						<value>%origin%/icons/setDocPrefs_24.png</value>
 					</prop>
 				</node>
 			</node>
@@ -164,7 +164,7 @@
 						<value>%origin%/icons/refresh_16.png</value>
 					</prop>
 					<prop oor:name="ImageBigURL">
-						<value>%origin%/icons/refresh_26.png</value>
+						<value>%origin%/icons/refresh_24.png</value>
 					</prop>
 				</node>
 			</node>
@@ -177,7 +177,7 @@
 						<value>%origin%/icons/removeCodes_16.png</value>
 					</prop>
 					<prop oor:name="ImageBigURL">
-						<value>%origin%/icons/removeCodes_26.png</value>
+						<value>%origin%/icons/removeCodes_24.png</value>
 					</prop>
 				</node>
 			</node>
