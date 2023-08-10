@@ -27,20 +27,6 @@
                             <value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
                         </prop>
                         <prop oor:name="URL" oor:type="xs:string">
-                            <value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addNote</value>
-                        </prop>
-                        <prop oor:name="Title" oor:type="xs:string">
-                            <value>Add Note</value>
-                        </prop>
-                        <prop oor:name="Target" oor:type="xs:string">
-                            <value>_self</value>
-                        </prop>
-                    </node>
-                    <node oor:name="m3" oor:op="replace">
-                        <prop oor:name="Context" oor:type="xs:string">
-                            <value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
-                        </prop>
-                        <prop oor:name="URL" oor:type="xs:string">
                             <value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addEditBibliography</value>
                         </prop>
                         <prop oor:name="Title" oor:type="xs:string">
@@ -50,15 +36,45 @@
                             <value>_self</value>
                         </prop>
                     </node>
-                    <node oor:name="m5" oor:op="replace">
-                        <prop oor:name="Context" oor:type="xs:string">
-                            <value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
-                        </prop>
+                    <node oor:name="m3" oor:op="replace">
                         <prop oor:name="URL" oor:type="xs:string">
                             <value>private:separator</value>
                         </prop>
                     </node>
-                    <node oor:name="m6" oor:op="replace">
+                    <node oor:name="m4" oor:op="replace">
+                        <prop oor:name="Context" oor:type="xs:string">
+                            <value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addNote</value>
+                        </prop>
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value>Add Note</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="m5" oor:op="replace">
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>private:separator</value>
+                        </prop>
+                    </node>
+                   <node oor:name="m6" oor:op="replace">
+                        <prop oor:name="Context" oor:type="xs:string">
+                            <value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?citationExplorer</value>
+                        </prop>
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value>Citation Explorer</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node> 
+                    <node oor:name="m7" oor:op="replace">
                         <prop oor:name="Context" oor:type="xs:string">
                             <value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
                         </prop>
@@ -72,7 +88,7 @@
                             <value>_self</value>
                         </prop>
                     </node>
-                    <node oor:name="m7" oor:op="replace">
+                    <node oor:name="m8" oor:op="replace">
                         <prop oor:name="Context" oor:type="xs:string">
                             <value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
                         </prop>
@@ -86,7 +102,7 @@
                             <value>_self</value>
                         </prop>
                     </node>
-                    <node oor:name="m8" oor:op="replace">
+                    <node oor:name="m9" oor:op="replace">
                         <prop oor:name="Context" oor:type="xs:string">
                             <value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
                         </prop>
@@ -141,6 +157,16 @@
                     </prop>
                     <prop oor:name="ImageBigURL">
                         <value>%origin%/icons/addEditBibliography_26.png</value>
+                    </prop>
+                </node>
+            </node>
+            <node oor:name="Zotero.Images.citationExplorer" oor:op="replace">
+                <prop oor:name="URL" oor:type="xs:string">
+                    <value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?citationExplorer</value>
+                </prop>
+                <node oor:name="UserDefinedImages">
+                    <prop oor:name="ImageBigURL">
+                        <value>%origin%/icons/citationExplorer.png</value>
                     </prop>
                 </node>
             </node>

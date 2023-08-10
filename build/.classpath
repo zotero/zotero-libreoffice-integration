@@ -10,8 +10,6 @@
 	<classpathentry kind="lib" path="lib/jackson-databind-2.0.2.jar"/>
 	<classpathentry kind="lib" path="lib/jna.jar"/>
 	<classpathentry kind="lib" path="lib/jackson-annotations-2.0.2.jar"/>
-	<classpathentry kind="lib" path="lib/libreoffice-sdk/commonwizards.jar"/>
-	<classpathentry kind="lib" path="lib/libreoffice-sdk/form.jar"/>
 	<classpathentry kind="lib" path="lib/libreoffice-sdk/query.jar"/>
 	<classpathentry kind="lib" path="lib/libreoffice-sdk/report.jar"/>
 	<classpathentry kind="lib" path="lib/libreoffice-sdk/ScriptFramework.jar"/>
@@ -25,10 +23,6 @@
 	<classpathentry kind="lib" path="lib/libreoffice-sdk/jurt.jar"/>
 	<classpathentry kind="lib" path="lib/libreoffice-sdk/ridl.jar"/>
 	<classpathentry kind="lib" path="lib/libreoffice-sdk/unoloader.jar"/>
-	<classpathentry kind="lib" path="lib/libreoffice-sdk/bsh.jar"/>
-	<classpathentry kind="lib" path="lib/libreoffice-sdk/flow-engine.jar"/>
-	<classpathentry kind="lib" path="lib/libreoffice-sdk/flute-1.1.6.jar"/>
-	<classpathentry kind="lib" path="lib/libreoffice-sdk/hsqldb.jar"/>
 	<classpathentry kind="lib" path="lib/libreoffice-sdk/js.jar"/>
 	<classpathentry kind="lib" path="lib/libreoffice-sdk/libbase-1.1.6.jar"/>
 	<classpathentry kind="lib" path="lib/libreoffice-sdk/libfonts-1.1.6.jar"/>
@@ -47,5 +41,11 @@
 	<classpathentry kind="lib" path="lib/libreoffice-sdk/ScriptProviderForJavaScript.jar"/>
 	<classpathentry kind="lib" path="lib/libreoffice-sdk/sdbc_hsqldb.jar"/>
 	<classpathentry kind="lib" path="lib/libreoffice-sdk/smoketest.jar"/>
+	<classpathentry kind="lib" path="lib/libreoffice-sdk/bsh.jar"/>
+	<classpathentry kind="lib" path="lib/libreoffice-sdk/commonwizards.jar"/>
+	<classpathentry kind="lib" path="lib/libreoffice-sdk/flow-engine.jar"/>
+	<classpathentry kind="lib" path="lib/libreoffice-sdk/flute-1.1.6.jar"/>
+	<classpathentry kind="lib" path="lib/libreoffice-sdk/form.jar"/>
+	<classpathentry kind="lib" path="lib/libreoffice-sdk/hsqldb.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
