@@ -476,7 +476,6 @@ public class Document {
 				text.createTextCursorByRange(selectionCursor));
 		
 		// extend one cursor to the beginning of the paragraph and one to the end
-		paragraphCursor1.goLeft((short) 1, false);
 		paragraphCursor1.gotoStartOfParagraph(true);
 		paragraphCursor2.gotoEndOfParagraph(true);
 		
