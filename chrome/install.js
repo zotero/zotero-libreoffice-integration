@@ -315,10 +315,10 @@ function jreRequiredPageShown() {
 /**
  * Called when libreoffice-installations wizardpage is shown
  */
-function libreofficeInstallationsPageShown() {
+async function libreofficeInstallationsPageShown() {
 	wizard.canAdvance = false;
 	
-	var installations = ZoteroLibreOfficeIntegration.getInstallations();
+	var installations = await ZoteroLibreOfficeIntegration.getInstallations();
 	
 	// add installations to listbox
 	var listbox = document.getElementById("installations-listbox");
