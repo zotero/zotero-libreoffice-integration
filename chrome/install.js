@@ -309,7 +309,7 @@ function jreRequiredPageShown() {
 async function openofficeInstallationsPageShown() {
 	wizard.canAdvance = false;
 	
-	var installations = await ZoteroLibreOfficeIntegration.getInstallations();
+	var installations = await ZoteroOpenOfficeIntegration.getInstallations();
 	
 	// add installations to listbox
 	var listbox = document.getElementById("installations-listbox");
