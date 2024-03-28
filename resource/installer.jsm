@@ -24,7 +24,7 @@
 
 var EXPORTED_SYMBOLS = ["Installer"];
 Components.utils.import("resource://gre/modules/FileUtils.jsm");
-var Zotero = Components.classes["@zotero.org/Zotero;1"].getService(Components.interfaces.nsISupports).wrappedJSObject;
+var { Zotero } = ChromeUtils.importESModule("chrome://zotero/content/zotero.mjs");
 var ZoteroPluginInstaller = Components.utils.import("resource://zotero/word-processor-plugin-installer.js").ZoteroPluginInstaller;
 var Installer = function(failSilently=true, force) {
 	return new ZoteroPluginInstaller(Plugin, failSilently, force);

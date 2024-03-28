@@ -22,8 +22,8 @@
     ***** END LICENSE BLOCK *****
 */
 
-Components.utils.import("resource://gre/modules/osfile.jsm");
-var FilePicker = require('zotero/modules/filePicker').default;
+const { OS } = ChromeUtils.importESModule("chrome://zotero/content/osfile.mjs");
+var { FilePicker } = ChromeUtils.importESModule('chrome://zotero/content/modules/filePicker.mjs');
 
 const UNOPKG_RELPATHS = {
 	Mac:[

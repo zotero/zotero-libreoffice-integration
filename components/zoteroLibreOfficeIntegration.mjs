@@ -24,16 +24,7 @@
 
 "use strict";
 
-Components.utils.import("resource://gre/modules/ComponentUtils.jsm");
-
-const { XPCOMUtils } = ChromeUtils.import(
-	"resource://gre/modules/XPCOMUtils.jsm"
-);
-XPCOMUtils.defineLazyModuleGetters(this, {
-	setTimeout: "resource://gre/modules/Timer.jsm",
-});
-
-var Zotero;
+const { Zotero } = ChromeUtils.importESModule("chrome://zotero/content/zotero.mjs");
 const API_VERSION = 3;
 const SERVER_PORT = 23116;
 
@@ -45,9 +36,6 @@ var Comm = new function() {
 	 * Observes browser startup to initialize ZoteroLibreOfficeIntegration HTTP server
 	 */
 	this.init = async function() {
-		Zotero = Components.classes["@zotero.org/Zotero;1"]
-			.getService(Components.interfaces.nsISupports)
-			.wrappedJSObject;
 		await Zotero.initializationPromise;
 		mainThread = Zotero.mainThread;
 		
@@ -223,7 +211,7 @@ var Comm = new function() {
 		/**
 		 * Processes a completed frame
 		 */
-		"_processFrame":function() {
+		_processFrame: async function() {
 			this._frameHeader = "";
 			this._frameRemaining = null;
 			var input = _converter.ConvertToUnicode(this._frameContent);
@@ -249,15 +237,15 @@ var Comm = new function() {
 						err = e;
 					}
 				}
-				
+
 				// Transmit to callback
-				setTimeout(function() {
-					if(err) {
-						callbacks[1](err);
-					} else {
-						callbacks[0](payload);
-					}
-				}, 0);
+				await Zotero.Promise.delay();
+				if (err) {
+					callbacks[1](err);
+				}
+				else {
+					callbacks[0](payload);
+				}
 			}
 		},
 		
@@ -346,37 +334,11 @@ var Comm = new function() {
 };
 
 /**
- * A service to initialize the integration server on startup
- */
-var Initializer = function() {
-	Comm.init();
-	var Integration = Components.utils.import("resource://zotero-libreoffice-integration/integration.js").LibreOfficeIntegration;
-	Integration.init();
-};
-Initializer.prototype = {
-	classDescription: "Zotero LibreOffice Integration Initializer",
-	"classID":Components.ID("{f43193a1-7060-41a3-8e82-481d58b71e6f}"),
-	"contractID":"@zotero.org/Zotero/integration/initializer?agent=LibreOffice;1",
-	"QueryInterface":ChromeUtils.generateQI([Components.interfaces.nsISupports]),
-	"service":true
-};
-
-/**
  * See integrationTests.js
  */
-var Application = function() {
-	this.wrappedJSObject = this;
-};
+var Application = function() {};
 Application.prototype = {
 	classDescription: "Zotero LibreOffice Integration Application",
-	classID:		Components.ID("{8478cd98-5ba0-4848-925a-75adffff2dbf}"),
-	contractID:		"@zotero.org/Zotero/integration/application?agent=LibreOffice;1",
-	QueryInterface: ChromeUtils.generateQI([Components.interfaces.nsISupports]),
-	_xpcom_categories: [{
-		category: "profile-after-change",
-		service: true
-	}],
-	service:		true,
 	getActiveDocument: async function() {
 		var retVal = Comm.sendCommand("Application_getActiveDocument", [API_VERSION]);
 		if(typeof retVal !== "object" || retVal[0] !== API_VERSION) Comm.incompatibleVersion();
@@ -531,9 +493,12 @@ for (let cls of [Document, Field]) {
 	}
 }
 
-var classes = [
-	Initializer,
-	Application,
-];
+function initIntegration() {
+	Comm.init();
+	// start plug-in installer
+	var Installer = Components.utils.import("resource://zotero-libreoffice-integration/installer.jsm").Installer;
+	new Installer();
+}
 
-var NSGetFactory = ComponentUtils.generateNSGetFactory(classes);
+
+export { Application, initIntegration as init };

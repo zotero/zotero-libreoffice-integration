@@ -1,7 +1,3 @@
 content		zotero-libreoffice-integration chrome/
+content		zotero-libreoffice-integration-components components/
 resource	zotero-libreoffice-integration resource/
-
-component	{f43193a1-7060-41a3-8e82-481d58b71e6f}							components/zoteroLibreOfficeIntegration.js
-contract	@zotero.org/Zotero/integration/initializer?agent=LibreOffice;1 	{f43193a1-7060-41a3-8e82-481d58b71e6f}
-component	{8478cd98-5ba0-4848-925a-75adffff2dbf}							components/zoteroLibreOfficeIntegration.js
-contract	@zotero.org/Zotero/integration/application?agent=LibreOffice;1 	{8478cd98-5ba0-4848-925a-75adffff2dbf}
