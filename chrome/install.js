@@ -485,8 +485,7 @@ function reportErrors() {
 
 function wizardCancelled() {
 	if(wizard.currentPage.pageid != "installation-complete") {
-		var promptService = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
-				.getService(Components.interfaces.nsIPromptService);
+		var promptService = Services.prompt;
 		var cancel = promptService.confirm(window, "Zotero LibreOffice Integration", "Are you sure you want "+
 			"to cancel Zotero LibreOffice Integration installation? To "+
 			"install later, visit the Cite pane of the Zotero preferences.");

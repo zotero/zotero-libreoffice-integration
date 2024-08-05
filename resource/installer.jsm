@@ -134,7 +134,7 @@ var Plugin = new function() {
 			this.installComponents(installations, function(success) {
 				if(success) {
 					zpi.success();
-				} else {
+				} else if (!zpi.failSilently) {
 					openInstallationWizard();
 				}
 			});
