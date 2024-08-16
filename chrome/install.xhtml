@@ -108,38 +108,15 @@
 			Depending on how LibreOffice is configured, it may be
 			necessary to restart your computer for changes to take effect.
 		</description>
-		<vbox id="installation-manual" hidden="true" flex="1">
-			<description>
-				You have elected to install the Zotero LibreOffice
-				Plugin manually. The directory containing the extension should now
-				be open. In case it isn’t, the full path to the extension is:
-			</description>
-			<description id="installation-manual-path"/>
-			<description>
-				You can install the extension by double-clicking it, or by opening LibreOffice, 
-				selecting Tools → Extension Manager, clicking the Add button, and locating the file.
-			</description>
-		</vbox>
 		<vbox id="installation-error" hidden="true" flex="1">
 			<description>
-				An error occurred during the installation of the Zotero LibreOffice Plugin.
+				Installation could not be completed because an error occurred.
 			</description>
 			<description>
-				Click the “Previous” button and verify that the application path is correct. If you
-				continue to experience errors, click the “Manual Installation” button below to
-				manually install the component. The following screen will provide instructions on
-				how to proceed.
-			</description>
-			<description>
-				If this error persists, please review the
-				<label class="zotero-text-link" href="https://www.zotero.org/support/word_processor_plugin_troubleshooting#installation_error">troubleshooting instructions</label>.
-				If these do not resolve the issue you’re experiencing, click the button below to
-				submit an error report, and post the Report ID as well as the text of any errors you
-				experienced during manual installation to the <label class="text-link" href="https://forums.zotero.org/">Zotero Forums</label>.
+				Would you like to view troubleshooting instructions?
 			</description>
 			<hbox pack="center">
-				<button label="Manual Installation" onclick="libreofficeInstallationsManualInstallation()"/>
-				<button label="Submit Error Report…" onclick="reportErrors()"/>
+				<button label="View Troubleshooting Instructions" onclick="viewTroubleshootingInstructions()"/>
 			</hbox>
 		</vbox>
 	</wizardpage>

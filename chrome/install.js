@@ -385,28 +385,6 @@ async function libreofficeInstallationsAddDirectory() {
 }
 
 /**
- * Called to reveal LibreOffice extension for manual installation
- */
-function libreofficeInstallationsManualInstallation() {
-	// clear saved unopkg paths so we force manual install on upgrade
-	ZoteroPluginInstaller.prefBranch.setCharPref(
-		ZoteroLibreOfficeIntegration.UNOPKG_PATHS_PREF, "{}");
-	
-	// get oxt path and set it in the dialog
-	var oxtPath = ZoteroLibreOfficeIntegration.getOxtPath();
-	document.getElementById("installation-manual-path").textContent = oxtPath.path;
-	try {
-		oxtPath.QueryInterface(Components.interfaces.nsIFile).reveal();
-	} catch(e) {
-		Zotero.logError(e);
-	}
-	
-	// we were successful and installation was complete
-	ZoteroPluginInstaller.success();
-	showInstallationComplete("manual");
-}
-
-/**
  * Called when an LibreOffice installation is checked or unchecked
  */
 function libreofficeInstallationsListboxSelectionChanged() {
@@ -426,7 +404,7 @@ function libreofficeInstallationsListboxSelectionChanged() {
  */
 function showInstallationComplete(vboxToShow) {
 	// show correct description
-	for (let vbox of ["manual", "error", "successful"]) {
+	for (let vbox of ["error", "successful"]) {
 		var vboxElem = document.getElementById("installation-"+vbox);
 		vboxElem.hidden = vbox != vboxToShow;
 	}
@@ -434,7 +412,6 @@ function showInstallationComplete(vboxToShow) {
 	// show correct label
 	const msgs = {
 		"error":"Installation Failed",
-		"manual":"Manual Installation",
 		"successful":"Installation Successful"
 	};
 	wizard.getPageById("installation-complete").setAttribute("label", msgs[vboxToShow]);
@@ -468,17 +445,8 @@ function installingPageShown() {
 
 /*** installation-complete-page ***/
 
-function reportErrors() {
-	var ww = Components.classes["@mozilla.org/embedcomp/window-watcher;1"]
-			   .getService(Components.interfaces.nsIWindowWatcher);
-	var data = {
-		msg: Zotero.getString('errorReport.followingReportWillBeSubmitted'),
-		errorData: Zotero.getErrors(true),
-		askForSteps: true
-	};
-	var io = { wrappedJSObject: { Zotero: Zotero, data:  data } };
-	var win = ww.openWindow(null, "chrome://zotero/content/errorReport.xhtml",
-				"zotero-error-report", "chrome,centerscreen,modal", io);
+function viewTroubleshootingInstructions() {
+	Zotero.launchURL("https://www.zotero.org/support/word_processor_plugin_installation_error#libreoffice");
 }
 
 /*** WIZARD BUTTON HANDLERS ***/
