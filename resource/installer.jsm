@@ -114,34 +114,29 @@ var Plugin = new function() {
 		}
 		
 		// look for installations
-		var installations = await this.getInstallations(),
-			haveSelectedPaths = false,
-			havePaths = false;
-		for(var i in installations) {
-			haveSelectedPaths |= (installations[i] === true);
-			havePaths = true;
+		var installations = await this.getInstallations();
+		
+		if (zpi.force) {
+			// Just use the wizard if installing from prefs window
+			openInstallationWizard();
 		}
-
-		if(haveSelectedPaths && !zpi.force) {
-			// If there are installations already selected from a previous install and we are not
-			// being forced to show wizard, do silent install
-
-			// Automatically select new installations
-			for(var i in installations) {
-				if(installations[i] === null) installations[i] = true;
+		else if (Object.keys(installations).length) {
+			// Otherwise install silently if there are available paths
+			
+			// Automatically select newly found installations
+			for (var i in installations) {
+				if (installations[i] === null) installations[i] = true;
 			}
 
-			this.installComponents(installations, function(success) {
-				if(success) {
+			this.installComponents(installations, (success) => {
+				if (success) {
 					zpi.success();
-				} else if (!zpi.failSilently) {
+				}
+				else if (!zpi.failSilently) {
+					// If not failing silently and installation failed - show wizard
 					openInstallationWizard();
 				}
 			});
-		} else if(!zpi.failSilently || havePaths) {
-			// Otherwise, if there are installations and we are not failing silently, open the
-			// wizard
-			openInstallationWizard();
 		}
 	}
 	
@@ -163,39 +158,29 @@ var Plugin = new function() {
 	 * previously known, respectively.
 	 */
 	this.getInstallations = async function() {
-		// First try getting unopkg paths pref
+		// First try getting previously added locations (manually)
 		var previousPaths, paths = {};
 		try {
 			previousPaths = JSON.parse(zoteroPluginInstaller.prefBranch.getCharPref(this.UNOPKG_PATHS_PREF));
 		} catch(e) {
 			previousPaths = {};
 		}
-
-		if(previousPaths instanceof Array) {
-			// Convert old-format unopkg path array to object
-			var convertPaths = previousPaths;
-			previousPaths = {};
-			for(var i=0; i<convertPaths.length; i++) {
-				previousPaths[convertPaths[i]] = true;
-			}
-		}
 		
-		// Add previousPaths that exist to paths array
-		for(var path in previousPaths) {
+		// Add previously found locations that still exist to paths object
+		for (let path in previousPaths) {
 			try {
-				if(Plugin.getFile(path).exists()) {
+				if (Plugin.getFile(path).exists()) {
 					paths[path] = previousPaths[path];
 				}
-			} catch(e) {};
+			} catch(e) {}
 		}
 		
-		// Start looking for paths from the list above, in case new
-		// copies/versions of LibreOffice/LibreOffice have been
-		// installed
+		// Look for LibreOffice installations at default locations based on
+		// the platform
 		var potentialLocations = UNOPKG_LOCATIONS[Plugin.platform];
 
 		if(Zotero.isWin) {
-			var wrk = Components.classes["@mozilla.org/windows-registry-key;1"]
+			let wrk = Components.classes["@mozilla.org/windows-registry-key;1"]
 				.createInstance(Components.interfaces.nsIWindowsRegKey), path;
 			try {
 				wrk.open(Components.interfaces.nsIWindowsRegKey.ROOT_KEY_LOCAL_MACHINE,
