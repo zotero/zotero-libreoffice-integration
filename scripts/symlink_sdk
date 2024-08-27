@@ -12,15 +12,22 @@ if [[ -e $SYMLINK_LOCATION ]]; then
 	fi
 fi
 
+. "$CWD/config.sh"
+
 SDK_LOCATION=""
-if [[ "`uname`" = "Darwin" ]]; then
-	SDK_LOCATION="/Applications/LibreOffice.app/Contents/Resources/java"
-elif [[ "`uname -a | cut -d ' ' -f3 | grep Microsoft`" ]]; then
-	SDK_LOCATION="/mnt/c/Program Files/LibreOffice/program/classes"
-	WINDOWS=1
-elif [[ "`uname`" = "Linux" ]]; then
-	SDK_LOCATION="$(echo /opt/libreoffice*/program/classes)"
+if [ -z $LIBREOFFICE_INSTALL_PATH ]; then
+	if [[ "`uname`" = "Darwin" ]]; then
+		SDK_LOCATION="/Applications/LibreOffice.app/Contents/Resources/java"
+	elif [[ "`uname -a | cut -d ' ' -f3 | grep Microsoft`" ]]; then
+		SDK_LOCATION="/mnt/c/Program Files/LibreOffice/program/classes"
+		WINDOWS=1
+	elif [[ "`uname`" = "Linux" ]]; then
+		SDK_LOCATION="$(echo /opt/libreoffice*/program/classes)"
+	fi
+else
+	SDK_LOCATION="$LIBREOFFICE_INSTALL_PATH/program/classes"
 fi
+
 
 SEARCH=""
 if [[ ! -e "$SDK_LOCATION/java_uno.jar" ]]; then
