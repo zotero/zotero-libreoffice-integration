@@ -176,6 +176,7 @@ public class Document {
 	public void exportDocument(String fieldType, String importInstructions) throws Exception {
 		prepareDocumentForEditing();
 		ArrayList<ReferenceMark> marks = getFields(fieldType);
+		Collections.reverse(marks);
 		for (ReferenceMark mark : marks) {
 			mark.setText(mark.getCode(), false);
 			XTextRange oldRange = mark.removeCode();
@@ -243,7 +244,9 @@ public class Document {
 				XEnumerationAccess.class, text);
 		XEnumeration xParaEnum = xParaAccess.createEnumeration();
 		ArrayList<XTextContent> removeParagraphs = new ArrayList<XTextContent>();
-		for (int i = 0 ; i < 4 && xParaEnum.hasMoreElements(); i++) {
+		// We should remove 4 paragraphs here, but we're only doing 3, leaving an empty
+		// paragraph at the start. Otherwise the final footnote of the document is removed.
+		for (int i = 0 ; i < 3 && xParaEnum.hasMoreElements(); i++) {
 			removeParagraphs.add(UnoRuntime.queryInterface(
 					XTextContent.class, xParaEnum.nextElement()));
 		}
@@ -831,17 +834,20 @@ public class Document {
 			while (xPortionEnum.hasMoreElements()) {
 				Object textPortion = xPortionEnum.nextElement();
 				XPropertySet propertySet = UnoRuntime.queryInterface(XPropertySet.class, textPortion);
+				XTextRange range = UnoRuntime.queryInterface(XTextRange.class, textPortion);
+				
+				// Handle soft page-breaks
 				String portionType = (String) propertySet.getPropertyValue("TextPortionType");
 				if (portionType.equals("SoftPageBreak")) {
 					mergeIntoLast = true;
 					continue;
 				}
-				XTextRange xRange = UnoRuntime.queryInterface(XTextRange.class, textPortion);
+				
 				String url = "";
-				boolean isNote = false;
+				boolean isNote;
 				try {
 					isNote = ((String) propertySet.getPropertyValue(
-							"TextPortionType")).equals("Footnote");
+							"TextPortionType")).equals("Footnote");;
 				} catch (Exception e) {continue;}
 				
 				if (isNote) {
@@ -852,15 +858,30 @@ public class Document {
 						url = (String) propertySet.getPropertyValue("HyperLinkURL");
 					} catch (Exception e) {}
 					if (url.contains(IMPORT_LINK_URL)) {
-						// Links across page breaks are split into separate text portions
-						if (mergeIntoLast) {
-							int lastElem = importLinks.size()-1;
-							XTextRange lastRange = importLinks.get(lastElem);
-							XTextCursor cursor = xText.createTextCursorByRange(lastRange);
-							cursor.gotoRange(xRange.getEnd(), true);
+						// Handle portions separated by text styling, weird chars, etc.
+						XTextRange lastRange = null;
+						XText rangeText = range.getText();
+						XTextRangeCompare rangeCompare = (XTextRangeCompare) UnoRuntime.queryInterface(XTextRangeCompare.class, rangeText);
+						int lastElem = importLinks.size() - 1;
+						if (lastElem != -1) {
+							lastRange = importLinks.get(lastElem);
+						}
+						boolean isAdjacentToLast = false;
+						if (lastRange != null) {
+							try {
+								isAdjacentToLast = rangeCompare.compareRegionEnds(lastRange, range.getStart()) == 0;
+							} catch (com.sun.star.lang.IllegalArgumentException e) {
+								// Different texts (body/footnote), nothing to do
+							}
+						}
+						
+						// Different styling, soft-breaks, etc. will separate text into separate sections
+						if (mergeIntoLast || isAdjacentToLast) {
+							XTextCursor cursor = rangeText.createTextCursorByRange(lastRange);
+							cursor.gotoRange(range.getEnd(), true);
 							importLinks.set(lastElem, cursor);
                         } else {
-                            importLinks.add(xRange);
+                            importLinks.add(range);
 						}
 					}
 				}
