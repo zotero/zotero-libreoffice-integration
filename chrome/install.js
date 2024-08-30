@@ -436,10 +436,11 @@ function installingPageShown() {
 	for (let node of listbox.childNodes) {
 		paths[node.label] = !!node.checked;
 	}
-	ZoteroLibreOfficeIntegration.installComponents(paths,
-			function(success) {
+	ZoteroLibreOfficeIntegration.installComponents(paths, (success) => {
 		showInstallationComplete(success ? "successful" : "error");
-		ZoteroPluginInstaller[success ? "success" : "error"]();
+		if (success) {
+			ZoteroPluginInstaller.success();
+		}
 	});
 }
 
