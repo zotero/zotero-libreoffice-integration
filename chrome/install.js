@@ -447,7 +447,7 @@ function installingPageShown() {
 /*** installation-complete-page ***/
 
 function viewTroubleshootingInstructions() {
-	Zotero.launchURL("https://www.zotero.org/support/word_processor_plugin_installation_error#libreoffice");
+	Zotero.launchURL("https://www.zotero.org/support/kb/word_processor_plugin_installation_error#libreoffice");
 }
 
 /*** WIZARD BUTTON HANDLERS ***/
