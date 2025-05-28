@@ -192,7 +192,7 @@ var Plugin = new function() {
 					wrk.close();
 				}
 			} catch(e) {}
-			if(path) {
+			if (path && path.includes("LibreOffice")) {
 				potentialLocations = potentialLocations.slice();
 				potentialLocations.push(path);
 			}
