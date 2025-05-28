@@ -491,11 +491,17 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 
 			// add a paragraph before creating multiline field at end of document
 			// if this is not done, it's hard to add text after the TextSection
-			if(doc.textRangeCompare.compareRegionEnds(doc.text.getEnd(), range.getEnd()) == 0) {
+			if (doc.textRangeCompare.compareRegionEnds(doc.text.getEnd(), range.getEnd()) == 0) {
 				doc.text.insertControlCharacter(doc.text.getEnd(), ControlCharacter.PARAGRAPH_BREAK, false);
 				doc.text.insertControlCharacter(doc.text.getEnd(), ControlCharacter.PARAGRAPH_BREAK, false);
 				XTextCursor cursor = doc.text.createTextCursorByRange(doc.text.getEnd());
 				cursor.goLeft((short) 1, false);
+				cursor.goLeft((short) 1, true);
+				range = cursor;
+			}
+			else {
+				XTextCursor cursor = getReplacementCursor();
+				doc.text.insertControlCharacter(cursor.getStart(), ControlCharacter.PARAGRAPH_BREAK, false);
 				cursor.goLeft((short) 1, true);
 				range = cursor;
 			}
