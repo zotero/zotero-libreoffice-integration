@@ -13,6 +13,7 @@ fi
 
 soffice_bin="$LIBREOFFICE_INSTALL_PATH/program/soffice.bin"
 
-echo "Running LibreOffice Writer with a debugger server"
-JAVA_TOOL_OPTIONS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000" $soffice_bin --writer &
+echo "Running LibreOffice Writer with a debugger server on port 5005"
+export JAVA_TOOL_OPTIONS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+$soffice_bin --writer &
 sleep 1
