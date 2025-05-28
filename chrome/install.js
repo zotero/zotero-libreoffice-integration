@@ -454,15 +454,8 @@ function viewTroubleshootingInstructions() {
 
 function wizardCancelled() {
 	if(wizard.currentPage.pageid != "installation-complete") {
-		var promptService = Services.prompt;
-		var cancel = promptService.confirm(window, "Zotero LibreOffice Integration", "Are you sure you want "+
-			"to cancel Zotero LibreOffice Integration installation? To "+
-			"install later, visit the Cite pane of the Zotero preferences.");
-		if(cancel) {
-			ZoteroPluginInstaller.cancelled();
-			return true;
-		}
-		return false;
+		ZoteroPluginInstaller.cancelled();
+		return true;
 	}
 }
 
