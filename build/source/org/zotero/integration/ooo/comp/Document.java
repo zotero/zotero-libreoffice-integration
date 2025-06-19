@@ -818,8 +818,8 @@ public class Document {
 		XEnumerationAccess xParaAccess = UnoRuntime.queryInterface(
 				XEnumerationAccess.class, xText);
 		XEnumeration xParaEnum = xParaAccess.createEnumeration();
-		boolean mergeIntoLast = false;
 		while (xParaEnum.hasMoreElements()) {
+			boolean mergeIntoLast = false;
 			Object paragraph = xParaEnum.nextElement();
 			XEnumerationAccess xParaPortionAccess = UnoRuntime.queryInterface(
 					XEnumerationAccess.class, paragraph);
@@ -836,7 +836,8 @@ public class Document {
 				XPropertySet propertySet = UnoRuntime.queryInterface(XPropertySet.class, textPortion);
 				XTextRange range = UnoRuntime.queryInterface(XTextRange.class, textPortion);
 				
-				// Handle soft page-breaks
+				// Literal/visual breaks in the page are returned as separate portions of the paragraph
+				// and if a link extends across it, we need to treat it as a single link.
 				String portionType = (String) propertySet.getPropertyValue("TextPortionType");
 				if (portionType.equals("SoftPageBreak")) {
 					mergeIntoLast = true;
@@ -876,7 +877,7 @@ public class Document {
 						}
 						
 						// Different styling, soft-breaks, etc. will separate text into separate sections
-						if (mergeIntoLast || isAdjacentToLast) {
+						if (mergeIntoLast && isAdjacentToLast) {
 							XTextCursor cursor = rangeText.createTextCursorByRange(lastRange);
 							cursor.gotoRange(range.getEnd(), true);
 							importLinks.set(lastElem, cursor);
@@ -885,7 +886,6 @@ public class Document {
 						}
 					}
 				}
-				mergeIntoLast = false;
 			}
 		}
 		return importLinks;
