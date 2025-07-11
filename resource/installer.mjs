@@ -22,13 +22,13 @@
 	***** END LICENSE BLOCK *****
 */
 
-var EXPORTED_SYMBOLS = ["Installer"];
-Components.utils.import("resource://gre/modules/FileUtils.jsm");
-var { Zotero } = ChromeUtils.importESModule("chrome://zotero/content/zotero.mjs");
-var ZoteroPluginInstaller = Components.utils.import("resource://zotero/word-processor-plugin-installer.js").ZoteroPluginInstaller;
-var Installer = function(failSilently=true, force) {
+import { Zotero } from "chrome://zotero/content/zotero.mjs";
+const { FileUtils } = ChromeUtils.importESModule("resource://gre/modules/FileUtils.sys.mjs");
+const { ZoteroPluginInstaller } = ChromeUtils.importESModule("resource://zotero/word-processor-plugin-installer.mjs");
+
+export var Installer = function(failSilently=true, force) {
 	return new ZoteroPluginInstaller(Plugin, failSilently, force);
-}
+};
 
 const UNOPKG_LOCATIONS = {
 	Mac:[
@@ -69,7 +69,7 @@ const UNOPKG_RELPATHS = {
 	]
 };
 
-var Plugin = new function() {
+var Plugin = new (function() {
 	this.UNOPKG_PATHS_PREF = "unopkgPaths";
 	
 	this.EXTENSION_STRING = "Zotero LibreOffice Integration";
@@ -298,4 +298,4 @@ var Plugin = new function() {
 			}});
 		}});
 	}
-}
+})
