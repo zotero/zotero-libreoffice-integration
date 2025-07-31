@@ -323,8 +323,10 @@ var Comm = new function() {
 			'to complete the installation procedure.');
 		
 		if(shouldReinstall) {
-			var ZoteroLibreOfficeInstaller = Components.utils.import("resource://zotero-libreoffice-integration/installer.jsm").Installer;
-			var zpi = new ZoteroLibreOfficeInstaller(false, true);
+			let { Installer } = ChromeUtils.importESModule(
+				"resource://zotero-libreoffice-integration/installer.mjs"
+			);
+			var zpi = new Installer(false, true);
 		}
 		
 		// We throw this error to avoid displaying another error dialog
@@ -496,7 +498,9 @@ for (let cls of [Document, Field]) {
 function initIntegration() {
 	Comm.init();
 	// start plug-in installer
-	var Installer = Components.utils.import("resource://zotero-libreoffice-integration/installer.jsm").Installer;
+	let { Installer } = ChromeUtils.importESModule(
+		"resource://zotero-libreoffice-integration/installer.mjs"
+	);
 	new Installer();
 }
 
