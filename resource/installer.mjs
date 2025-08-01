@@ -198,11 +198,14 @@ var Plugin = new (function() {
 			}
 		}
 		else if (Zotero.isLinux) {
-			await Zotero.File.iterateDirectory('/opt', async (entry) => {
-				if (entry.name.startsWith('libreoffice')) {
-					potentialLocations.push(entry.path + '/program/unopkg');
-				}
-			});
+			let optDir = Plugin.getFile('/opt')
+			if (optDir.exists()) {
+				await Zotero.File.iterateDirectory('/opt', async (entry) => {
+					if (entry.name.startsWith('libreoffice')) {
+						potentialLocations.push(entry.path + '/program/unopkg');
+					}
+				});
+			}
 		}
 
 		for (let potentialLocation of potentialLocations) {
