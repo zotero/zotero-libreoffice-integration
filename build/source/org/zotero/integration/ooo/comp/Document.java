@@ -29,7 +29,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -56,7 +55,6 @@ import com.sun.star.document.XUndoManagerSupplier;
 import com.sun.star.frame.XController;
 import com.sun.star.frame.XDesktop;
 import com.sun.star.frame.XFrame;
-import com.sun.star.io.SequenceInputStream;
 import com.sun.star.lang.IllegalArgumentException;
 import com.sun.star.lang.XComponent;
 import com.sun.star.lang.XMultiServiceFactory;
@@ -303,9 +301,13 @@ public class Document {
 		filterName.Value = "HTML Document";
 		PropertyValue inputStream = new PropertyValue();
 		inputStream.Name = "InputStream";
-        inputStream.Value = SequenceInputStream.createStreamFromSequence(Application.ctx, text.getBytes(StandardCharsets.ISO_8859_1));
-
-        ((XDocumentInsertable) UnoRuntime.queryInterface(XDocumentInsertable.class, cursor)).
+		try {
+			inputStream.Value = new StringInputStream(text.getBytes("ISO-8859-1"));
+		} catch (UnsupportedEncodingException e) {
+			return;
+		}
+		
+		((XDocumentInsertable) UnoRuntime.queryInterface(XDocumentInsertable.class, cursor)).
 			insertDocumentFromURL("private:stream", new PropertyValue[] {filterName, inputStream});
 	}
 	
