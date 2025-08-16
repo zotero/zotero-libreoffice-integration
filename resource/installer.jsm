@@ -80,7 +80,7 @@ var Plugin = new function() {
 	this.VERSION_FILE = 'resource://zotero-libreoffice-integration/version.txt';
 	
 	// Bump if you want to trigger auto-update
-	this.LAST_INSTALLED_FILE_UPDATE = "7.0.4pre";
+	this.LAST_INSTALLED_FILE_UPDATE = "7.0.5pre";
 	this.DISABLE_PROGRESS_WINDOW = true;
 	
 	var zoteroPluginInstaller, pathToAddon, installing, prefBranch, wizardWindow;
