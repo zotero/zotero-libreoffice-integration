@@ -27,6 +27,20 @@
                             <value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
                         </prop>
                         <prop oor:name="URL" oor:type="xs:string">
+                            <value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addAnnotation</value>
+                        </prop>
+                        <prop oor:name="Title" oor:type="xs:string">
+                            <value>Add Annotation</value>
+                        </prop>
+                        <prop oor:name="Target" oor:type="xs:string">
+                            <value>_self</value>
+                        </prop>
+                    </node>
+                    <node oor:name="m3" oor:op="replace">
+                        <prop oor:name="Context" oor:type="xs:string">
+                            <value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
+                        </prop>
+                        <prop oor:name="URL" oor:type="xs:string">
                             <value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addNote</value>
                         </prop>
                         <prop oor:name="Title" oor:type="xs:string">
@@ -36,7 +50,7 @@
                             <value>_self</value>
                         </prop>
                     </node>
-                    <node oor:name="m3" oor:op="replace">
+                    <node oor:name="m4" oor:op="replace">
                         <prop oor:name="Context" oor:type="xs:string">
                             <value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
                         </prop>
@@ -105,84 +119,139 @@
         </node>
 
         <node oor:name="Images">
-            <node oor:name="Zotero.Images.addEditCitation" oor:op="replace">
-                <prop oor:name="URL" oor:type="xs:string">
-                    <value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addEditCitation</value>
-                </prop>
-                <node oor:name="UserDefinedImages">
-                    <prop oor:name="ImageSmallURL">
-                        <value>%origin%/icons/addEditCitation_16.png</value>
-                    </prop>
-                    <prop oor:name="ImageBigURL">
-                        <value>%origin%/icons/addEditCitation_26.png</value>
-                    </prop>
-                </node>
-            </node>
-            <node oor:name="Zotero.Images.addNote" oor:op="replace">
-                <prop oor:name="URL" oor:type="xs:string">
-                    <value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addNote</value>
-                </prop>
-                <node oor:name="UserDefinedImages">
-                    <prop oor:name="ImageSmallURL">
-                        <value>%origin%/icons/addNote_16.png</value>
-                    </prop>
-                    <prop oor:name="ImageBigURL">
-                        <value>%origin%/icons/addNote_26.png</value>
-                    </prop>
-                </node>
-            </node>
-            <node oor:name="Zotero.Images.addEditBibliography" oor:op="replace">
-                <prop oor:name="URL" oor:type="xs:string">
-                    <value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addEditBibliography</value>
-                </prop>
-                <node oor:name="UserDefinedImages">
-                    <prop oor:name="ImageSmallURL">
-                        <value>%origin%/icons/addEditBibliography_16.png</value>
-                    </prop>
-                    <prop oor:name="ImageBigURL">
-                        <value>%origin%/icons/addEditBibliography_26.png</value>
-                    </prop>
-                </node>
-            </node>
-            <node oor:name="Zotero.Images.setDocPrefs" oor:op="replace">
-                <prop oor:name="URL" oor:type="xs:string">
-                    <value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?setDocPrefs</value>
-                </prop>
-                <node oor:name="UserDefinedImages">
-                    <prop oor:name="ImageSmallURL">
-                        <value>%origin%/icons/setDocPrefs_16.png</value>
-                    </prop>
-                    <prop oor:name="ImageBigURL">
-                        <value>%origin%/icons/setDocPrefs_26.png</value>
-                    </prop>
-                </node>
-            </node>
-            <node oor:name="Zotero.Images.refresh" oor:op="replace">
-                <prop oor:name="URL" oor:type="xs:string">
-                    <value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?refresh</value>
-                </prop>
-                <node oor:name="UserDefinedImages">
-                    <prop oor:name="ImageSmallURL">
-                        <value>%origin%/icons/refresh_16.png</value>
-                    </prop>
-                    <prop oor:name="ImageBigURL">
-                        <value>%origin%/icons/refresh_26.png</value>
-                    </prop>
-                </node>
-            </node>
-            <node oor:name="Zotero.Images.removeCodes" oor:op="replace">
-                <prop oor:name="URL" oor:type="xs:string">
-                    <value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?removeCodes</value>
-                </prop>
-                <node oor:name="UserDefinedImages">
-                    <prop oor:name="ImageSmallURL">
-                        <value>%origin%/icons/removeCodes_16.png</value>
-                    </prop>
-                    <prop oor:name="ImageBigURL">
-                        <value>%origin%/icons/removeCodes_26.png</value>
-                    </prop>
-                </node>
-            </node>
-        </node>
+			<node oor:name="Zotero.Images.addEditCitation" oor:op="replace">
+				<prop oor:name="URL" oor:type="xs:string">
+					<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addEditCitation</value>
+				</prop>
+				<node oor:name="UserDefinedImages">
+					<prop oor:name="ImageSmallURL">
+						<value>%origin%/icons/addEditCitation_16.png</value>
+					</prop>
+					<prop oor:name="ImageBigURL">
+						<value>%origin%/icons/addEditCitation_26.png</value>
+					</prop>
+					<prop oor:name="ImageSmallHCURL">
+						<value>%origin%/icons/addEditCitation_dark_16.png</value>
+					</prop>
+					<prop oor:name="ImageBigHCURL">
+						<value>%origin%/icons/addEditCitation_dark_26.png</value>
+					</prop>
+				</node>
+			</node>
+			<node oor:name="Zotero.Images.addAnnotation" oor:op="replace">
+				<prop oor:name="URL" oor:type="xs:string">
+					<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addAnnotation</value>
+				</prop>
+				<node oor:name="UserDefinedImages">
+					<prop oor:name="ImageSmallURL">
+						<value>%origin%/icons/addAnnotation_16.png</value>
+					</prop>
+					<prop oor:name="ImageBigURL">
+						<value>%origin%/icons/addAnnotation_26.png</value>
+					</prop>
+					<prop oor:name="ImageSmallHCURL">
+						<value>%origin%/icons/addAnnotation_dark_16.png</value>
+					</prop>
+					<prop oor:name="ImageBigHCURL">
+						<value>%origin%/icons/addAnnotation_dark_26.png</value>
+					</prop>
+				</node>
+			</node>
+			<node oor:name="Zotero.Images.addNote" oor:op="replace">
+				<prop oor:name="URL" oor:type="xs:string">
+					<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addNote</value>
+				</prop>
+				<node oor:name="UserDefinedImages">
+					<prop oor:name="ImageSmallURL">
+						<value>%origin%/icons/addNote_16.png</value>
+					</prop>
+					<prop oor:name="ImageBigURL">
+						<value>%origin%/icons/addNote_26.png</value>
+					</prop>
+					<prop oor:name="ImageSmallHCURL">
+						<value>%origin%/icons/addNote_dark_16.png</value>
+					</prop>
+					<prop oor:name="ImageBigHCURL">
+						<value>%origin%/icons/addNote_dark_26.png</value>
+					</prop>
+				</node>
+			</node>
+			<node oor:name="Zotero.Images.addEditBibliography" oor:op="replace">
+				<prop oor:name="URL" oor:type="xs:string">
+					<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?addEditBibliography</value>
+				</prop>
+				<node oor:name="UserDefinedImages">
+					<prop oor:name="ImageSmallURL">
+						<value>%origin%/icons/addEditBibliography_16.png</value>
+					</prop>
+					<prop oor:name="ImageBigURL">
+						<value>%origin%/icons/addEditBibliography_26.png</value>
+					</prop>
+					<prop oor:name="ImageSmallHCURL">
+						<value>%origin%/icons/addEditBibliography_dark_16.png</value>
+					</prop>
+					<prop oor:name="ImageBigHCURL">
+						<value>%origin%/icons/addEditBibliography_dark_26.png</value>
+					</prop>
+				</node>
+			</node>
+			<node oor:name="Zotero.Images.setDocPrefs" oor:op="replace">
+				<prop oor:name="URL" oor:type="xs:string">
+					<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?setDocPrefs</value>
+				</prop>
+				<node oor:name="UserDefinedImages">
+					<prop oor:name="ImageSmallURL">
+						<value>%origin%/icons/setDocPrefs_16.png</value>
+					</prop>
+					<prop oor:name="ImageBigURL">
+						<value>%origin%/icons/setDocPrefs_26.png</value>
+					</prop>
+					<prop oor:name="ImageSmallHCURL">
+						<value>%origin%/icons/setDocPrefs_dark_16.png</value>
+					</prop>
+					<prop oor:name="ImageBigHCURL">
+						<value>%origin%/icons/setDocPrefs_dark_26.png</value>
+					</prop>
+				</node>
+			</node>
+			<node oor:name="Zotero.Images.refresh" oor:op="replace">
+				<prop oor:name="URL" oor:type="xs:string">
+					<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?refresh</value>
+				</prop>
+				<node oor:name="UserDefinedImages">
+					<prop oor:name="ImageSmallURL">
+						<value>%origin%/icons/refresh_16.png</value>
+					</prop>
+					<prop oor:name="ImageBigURL">
+						<value>%origin%/icons/refresh_26.png</value>
+					</prop>
+					<prop oor:name="ImageSmallHCURL">
+						<value>%origin%/icons/refresh_dark_16.png</value>
+					</prop>
+					<prop oor:name="ImageBigHCURL">
+						<value>%origin%/icons/refresh_dark_26.png</value>
+					</prop>
+				</node>
+			</node>
+			<node oor:name="Zotero.Images.removeCodes" oor:op="replace">
+				<prop oor:name="URL" oor:type="xs:string">
+					<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?removeCodes</value>
+				</prop>
+				<node oor:name="UserDefinedImages">
+					<prop oor:name="ImageSmallURL">
+						<value>%origin%/icons/removeCodes_16.png</value>
+					</prop>
+					<prop oor:name="ImageBigURL">
+						<value>%origin%/icons/removeCodes_26.png</value>
+					</prop>
+					<prop oor:name="ImageSmallHCURL">
+						<value>%origin%/icons/removeCodes_dark_16.png</value>
+					</prop>
+					<prop oor:name="ImageBigHCURL">
+						<value>%origin%/icons/removeCodes_dark_26.png</value>
+					</prop>
+				</node>
+			</node>
+		</node>
     </node>
 </oor:component-data>
