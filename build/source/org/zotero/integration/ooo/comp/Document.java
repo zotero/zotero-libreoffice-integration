@@ -817,7 +817,6 @@ public class Document {
 				XEnumerationAccess.class, xText);
 		XEnumeration xParaEnum = xParaAccess.createEnumeration();
 		while (xParaEnum.hasMoreElements()) {
-			boolean mergeIntoLast = false;
 			Object paragraph = xParaEnum.nextElement();
 			XEnumerationAccess xParaPortionAccess = UnoRuntime.queryInterface(
 					XEnumerationAccess.class, paragraph);
@@ -835,10 +834,9 @@ public class Document {
 				XTextRange range = UnoRuntime.queryInterface(XTextRange.class, textPortion);
 				
 				// Literal/visual breaks in the page are returned as separate portions of the paragraph
-				// and if a link extends across it, we need to treat it as a single link.
+				// of 0 length. We skip them and isAdjacentToLast will handle merging
 				String portionType = (String) propertySet.getPropertyValue("TextPortionType");
 				if (portionType.equals("SoftPageBreak")) {
-					mergeIntoLast = true;
 					continue;
 				}
 				
@@ -857,7 +855,9 @@ public class Document {
 						url = (String) propertySet.getPropertyValue("HyperLinkURL");
 					} catch (Exception e) {}
 					if (url.contains(IMPORT_LINK_URL)) {
-						// Handle portions separated by text styling, weird chars, etc.
+						// Handle portions separated by text styling, SMP unicode chars,
+						// soft page-breaks, etc. which LibreOffice splits into separate
+						// text portions. Merge adjacent portions of the same hyperlink.
 						XTextRange lastRange = null;
 						XText rangeText = range.getText();
 						XTextRangeCompare rangeCompare = (XTextRangeCompare) UnoRuntime.queryInterface(XTextRangeCompare.class, rangeText);
@@ -874,8 +874,7 @@ public class Document {
 							}
 						}
 						
-						// Different styling, soft-breaks, etc. will separate text into separate sections
-						if (mergeIntoLast && isAdjacentToLast) {
+						if (isAdjacentToLast) {
 							XTextCursor cursor = rangeText.createTextCursorByRange(lastRange);
 							cursor.gotoRange(range.getEnd(), true);
 							importLinks.set(lastElem, cursor);
