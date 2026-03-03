@@ -3,6 +3,10 @@
 set -e
 
 usage() {
+	local current_version
+	current_version=$(sed 's/\.SOURCE$//' "$VERSION_FILE")
+	echo "Current version: $current_version"
+	echo ""
 	echo "Usage: $0 <version>"
 	echo ""
 	echo "Examples:"
@@ -33,7 +37,6 @@ INSTALLER_FILE="$PROJECT_ROOT/resource/installer.mjs"
 DESCRIPTION_FILE="$PROJECT_ROOT/build/oxt/description.xml"
 
 if [ $# -ne 1 ]; then
-	echo "Error: Version argument is required"
 	usage
 fi
 
