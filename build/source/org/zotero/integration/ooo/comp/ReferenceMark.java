@@ -252,7 +252,12 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 				cursor.collapseToStart();
 				moveCursorRight(cursor, previousLen-removeLastNewLine);
 			} else {
-				String oldParaStyle = (String) rangeProps.getPropertyValue("ParaStyleName");
+				// Workaround for tdf#124842: when a paragraph style has "Next Style" != self,
+				// LibreOffice UNO bridge returns com.sun.star.uno.Any instead of String.
+				// See: https://bugs.documentfoundation.org/show_bug.cgi?id=124842
+				// See: https://github.com/zotero/zotero-libreoffice-integration/issues/50
+				Object paraStyleResult = rangeProps.getPropertyValue("ParaStyleName");
+				String oldParaStyle = (String) (paraStyleResult instanceof Any ? ((Any) paraStyleResult).getObject() : paraStyleResult);
 				
 				insertRTF(textString, cursor);
 				
@@ -263,13 +268,23 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 				Object[] oldPropertyValues = new Object[PROPERTIES_CHANGE_TO_DEFAULT.length];
 				for(int i=0; i<PROPERTIES_CHANGE_TO_DEFAULT.length; i++) {
 					Object result = rangeProps.getPropertyValue(PROPERTIES_CHANGE_TO_DEFAULT[i]);
+					// tdf#124842: UNO bridge wraps these values in com.sun.star.uno.Any
+					// when "Next Style" != self. Unwrap before passing back to
+					// setPropertyValue(), which rejects wrapped values.
 					oldPropertyValues[i] = result instanceof Any ? ((Any) result).getObject() : result;
 				}
-				rangeProps.setPropertyValue("ParaStyleName", oldParaStyle);
-				for(int i=0; i<PROPERTIES_CHANGE_TO_DEFAULT.length; i++) {
-					if(oldPropertyValues[i] != null) {
-						rangeProps.setPropertyValue(PROPERTIES_CHANGE_TO_DEFAULT[i], oldPropertyValues[i]);
+				try {
+					rangeProps.setPropertyValue("ParaStyleName", oldParaStyle);
+					for(int i=0; i<PROPERTIES_CHANGE_TO_DEFAULT.length; i++) {
+						if(oldPropertyValues[i] != null) {
+							rangeProps.setPropertyValue(PROPERTIES_CHANGE_TO_DEFAULT[i], oldPropertyValues[i]);
+						}
 					}
+				} catch(com.sun.star.lang.IllegalArgumentException e) {
+					// tdf#124842: LibreOffice rejects restoring ParaStyleName
+					// when "Next Style" != self. Without this catch, the entire
+					// citation update fails. The paragraph style will remain as
+					// document default instead of the original (e.g. "Heading 1").
 				}
 			}
 		} else {
