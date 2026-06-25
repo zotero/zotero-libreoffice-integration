@@ -37,11 +37,10 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Random;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.io.File;
 import java.io.FileWriter;
+import java.net.URI;
 
 import com.sun.jna.Platform;
 import com.sun.star.awt.MessageBoxButtons;
@@ -955,11 +954,6 @@ public class Document {
 		LinkedHashMap<String, Integer> citationCounts = new LinkedHashMap<>();
 		HashMap<String, String> citationNames = new HashMap<>();
 		
-		Pattern uriPattern = Pattern.compile("\"uris\"\\s*:\\s*\\[\\s*\"([^\"]+)\"");
-		Pattern titlePattern = Pattern.compile("\"title\"\\s*:\\s*\"([^\"]*)\"");
-		Pattern familyPattern = Pattern.compile("\"family\"\\s*:\\s*\"([^\"]*)\"");
-		Pattern yearPattern = Pattern.compile("\"date-parts\"\\s*:\\s*\\[\\s*\\[\\s*\"(\\d+)\"");
-		
 		String[] fieldTypes = {"ReferenceMark", "Bookmark"};
 		for (String fieldType : fieldTypes) {
 			ArrayList<ReferenceMark> marks;
@@ -977,20 +971,61 @@ public class Document {
 				if (jsonStart == -1 || jsonEnd == -1) continue;
 				String jsonStr = code.substring(jsonStart, jsonEnd + 1);
 
-				// Extract URIs
-				Matcher uriMatcher = uriPattern.matcher(jsonStr);
+				// Extract URIs: find strings starting with http://zotero.org/ inside "uris":[ ... ]
 				java.util.List<String> uris = new java.util.ArrayList<>();
-				while (uriMatcher.find()) uris.add(uriMatcher.group(1));
+				int uriKey = jsonStr.indexOf("\"uris\"");
+				if (uriKey != -1) {
+					int arrStart = jsonStr.indexOf('[', uriKey);
+					int arrEnd = jsonStr.indexOf(']', arrStart);
+					if (arrStart != -1 && arrEnd != -1) {
+						int pos = arrStart;
+						while (pos < arrEnd) {
+							int q = jsonStr.indexOf("http://zotero.org/", pos);
+							if (q == -1 || q > arrEnd) break;
+							int qEnd = jsonStr.indexOf('"', q);
+							if (qEnd == -1) break;
+							uris.add(jsonStr.substring(q, qEnd));
+							pos = qEnd + 1;
+						}
+					}
+				}
 				if (uris.isEmpty()) continue;
 
-				// Build display name for this citation
-				String displayName = null;
-				Matcher fm = familyPattern.matcher(jsonStr);
+				// Extract author family names from "author":[{... "family":"X" ...}]
 				java.util.List<String> authors = new java.util.ArrayList<>();
-				while (fm.find()) authors.add(fm.group(1));
-				Matcher ym = yearPattern.matcher(jsonStr);
-				String year = ym.find() ? ym.group(1) : "";
+				int authKey = jsonStr.indexOf("\"author\"");
+				if (authKey != -1) {
+					int arrStart = jsonStr.indexOf('[', authKey);
+					int arrEnd = jsonStr.indexOf(']', arrStart);
+					if (arrStart != -1 && arrEnd != -1) {
+						int pos = arrStart;
+						while (pos < arrEnd) {
+							int fam = jsonStr.indexOf("\"family\"", pos);
+							if (fam == -1 || fam > arrEnd) break;
+							int vStart = jsonStr.indexOf('"', fam + 9);
+							if (vStart == -1) break;
+							int vEnd = jsonStr.indexOf('"', vStart + 1);
+							if (vEnd == -1) break;
+							authors.add(jsonStr.substring(vStart + 1, vEnd));
+							pos = vEnd + 1;
+						}
+					}
+				}
 
+				// Extract year: "date-parts":[[ "YYYY" ]]
+				String year = "";
+				int dpKey = jsonStr.indexOf("\"date-parts\"");
+				if (dpKey != -1) {
+					int yStart = jsonStr.indexOf("[[\"", dpKey);
+					if (yStart != -1) {
+						yStart += 3;
+						int yEnd = jsonStr.indexOf('"', yStart);
+						if (yEnd != -1) year = jsonStr.substring(yStart, yEnd);
+					}
+				}
+
+				// Build display name
+				String displayName = null;
 				if (!authors.isEmpty()) {
 					String a = authors.get(0);
 					if (authors.size() == 1) displayName = a;
@@ -998,14 +1033,20 @@ public class Document {
 					else displayName = a + " et al.";
 					if (!year.isEmpty()) displayName += " (" + year + ")";
 				} else {
-					Matcher tm = titlePattern.matcher(jsonStr);
-					if (tm.find()) {
-						displayName = tm.group(1);
-						if (!year.isEmpty()) displayName += " (" + year + ")";
+					// Fall back to title
+					int tKey = jsonStr.indexOf("\"title\"");
+					if (tKey != -1) {
+						int tStart = jsonStr.indexOf('"', tKey + 8);
+						if (tStart != -1) {
+							int tEnd = jsonStr.indexOf('"', tStart + 1);
+							if (tEnd != -1) {
+								displayName = jsonStr.substring(tStart + 1, tEnd);
+								if (!year.isEmpty()) displayName += " (" + year + ")";
+							}
+						}
 					}
 				}
 
-				// Count URIs
 				for (String uri : uris) {
 					Integer cnt = citationCounts.get(uri);
 					citationCounts.put(uri, cnt == null ? 1 : cnt + 1);
@@ -1020,47 +1061,48 @@ public class Document {
 			return;
 		}
 
-		// Sort by count descending
+		// Sort descending
 		ArrayList<Map.Entry<String, Integer>> sorted = new ArrayList<>(citationCounts.entrySet());
 		Collections.sort(sorted, (a, b) -> b.getValue().compareTo(a.getValue()));
 		citationCounts.clear();
 		for (Map.Entry<String, Integer> e : sorted) citationCounts.put(e.getKey(), e.getValue());
+		
+		int totalCitations = 0;
+		for (int c : citationCounts.values()) totalCitations += c;
 
-		// Create results document
+		// Create Calc spreadsheet (instead of Writer) for better data viewing
 		XComponentLoader loader = (XComponentLoader) UnoRuntime.queryInterface(
 			XComponentLoader.class, desktop);
 		XComponent xDoc = loader.loadComponentFromURL(
-			"private:factory/swriter", "_blank", 0, new PropertyValue[] {});
-		XTextDocument resultsDoc = (XTextDocument) UnoRuntime.queryInterface(
-			XTextDocument.class, xDoc);
-		XText resultsText = resultsDoc.getText();
-		XTextCursor cursor = resultsText.createTextCursor();
+			"private:factory/scalc", "_blank", 0, new PropertyValue[] {});
+		com.sun.star.sheet.XSpreadsheetDocument calcDoc = 
+			(com.sun.star.sheet.XSpreadsheetDocument) UnoRuntime.queryInterface(
+				com.sun.star.sheet.XSpreadsheetDocument.class, xDoc);
+		com.sun.star.sheet.XSpreadsheets sheets = calcDoc.getSheets();
+		com.sun.star.container.XIndexAccess sheetsIA = (com.sun.star.container.XIndexAccess)
+			UnoRuntime.queryInterface(com.sun.star.container.XIndexAccess.class, sheets);
+		com.sun.star.sheet.XSpreadsheet sheet = (com.sun.star.sheet.XSpreadsheet)
+			UnoRuntime.queryInterface(com.sun.star.sheet.XSpreadsheet.class,
+				sheetsIA.getByIndex(0));
+		
+		// Rename sheet
+		com.sun.star.container.XNamed sheetNamed = (com.sun.star.container.XNamed)
+			UnoRuntime.queryInterface(com.sun.star.container.XNamed.class, sheet);
+		sheetNamed.setName("Citation Stats");
 
-		// Header
-		resultsText.insertString(cursor, "Zotero Citation Statistics", false);
-		resultsText.insertControlCharacter(cursor, ControlCharacter.PARAGRAPH_BREAK, false);
-		resultsText.insertString(cursor, "Unique works cited: " + citationCounts.size(), false);
-		resultsText.insertControlCharacter(cursor, ControlCharacter.PARAGRAPH_BREAK, false);
-		int total = 0;
-		for (int c : citationCounts.values()) total += c;
-		resultsText.insertString(cursor, "Total citations: " + total, false);
-		resultsText.insertControlCharacter(cursor, ControlCharacter.PARAGRAPH_BREAK, false);
-		resultsText.insertControlCharacter(cursor, ControlCharacter.PARAGRAPH_BREAK, false);
+		// Headers
+		setCalcCell(sheet, 0, 0, "#");
+		setCalcCell(sheet, 0, 1, "Citation");
+		setCalcCell(sheet, 0, 2, "Times Cited");
 
-		// Table
-		int nRows = citationCounts.size() + 1;
-		XMultiServiceFactory f = (XMultiServiceFactory) UnoRuntime.queryInterface(
-			XMultiServiceFactory.class, xDoc);
-		XTextTable table = (XTextTable) UnoRuntime.queryInterface(
-			XTextTable.class, f.createInstance("com.sun.star.text.TextTable"));
-		table.initialize(nRows, 3);
-		resultsText.insertTextContent(cursor, (XTextContent) UnoRuntime.queryInterface(
-			XTextContent.class, table), false);
-
-		// Header row
-		setCellText(table, 0, 0, "#");
-		setCellText(table, 0, 1, "Citation");
-		setCellText(table, 0, 2, "Times Cited");
+		// Bold header row
+		try {
+			com.sun.star.table.XCellRange headerRange = sheet.getCellRangeByPosition(0, 0, 2, 0);
+			XPropertySet headerProps = (XPropertySet) UnoRuntime.queryInterface(
+				XPropertySet.class, headerRange);
+			headerProps.setPropertyValue("CharWeight", 
+				Float.valueOf(com.sun.star.awt.FontWeight.BOLD));
+		} catch (Exception e) {}
 
 		// Data rows
 		int row = 1;
@@ -1070,21 +1112,76 @@ public class Document {
 				int ls = e.getKey().lastIndexOf('/');
 				name = ls != -1 ? e.getKey().substring(ls + 1) : e.getKey();
 			}
-			setCellText(table, row, 0, String.valueOf(row));
-			setCellText(table, row, 1, name);
-			setCellText(table, row, 2, String.valueOf(e.getValue()));
+			setCalcCell(sheet, row, 0, String.valueOf(row));
+			setCalcCell(sheet, row, 1, name);
+			setCalcCell(sheet, row, 2, String.valueOf(e.getValue()));
 			row++;
 		}
 
-		// Footer
-		cursor.gotoEnd(false);
-		resultsText.insertControlCharacter(cursor, ControlCharacter.PARAGRAPH_BREAK, false);
-		resultsText.insertString(cursor, "Generated by Zotero LibreOffice Integration", false);
+		// Auto-fit columns
+		try {
+			com.sun.star.table.XColumnRowRange colRange = 
+				(com.sun.star.table.XColumnRowRange) UnoRuntime.queryInterface(
+					com.sun.star.table.XColumnRowRange.class, sheet);
+			com.sun.star.table.XTableColumns columns = colRange.getColumns();
+			for (int c = 0; c < 3; c++) {
+				Object col = columns.getByIndex(c);
+				XPropertySet colProps = (XPropertySet) UnoRuntime.queryInterface(
+					XPropertySet.class, col);
+				colProps.setPropertyValue("OptimalWidth", Boolean.TRUE);
+			}
+		} catch (Exception e) {}
+
+		// Status row at the bottom
+		setCalcCell(sheet, row + 1, 0, "Total unique works: " + citationCounts.size());
+		setCalcCell(sheet, row + 2, 0, "Total citations: " + totalCitations);
+		setCalcCell(sheet, row + 3, 0, "Generated by Zotero LibreOffice Integration");
+
+		// ---- CSV Export ----
+		try {
+			String csvPath = getCSVPath();
+			FileWriter fw = new FileWriter(csvPath);
+			fw.write('\ufeff'); // BOM for Excel UTF-8
+			fw.write("\"Rank\",\"Citation\",\"Times Cited\"\n");
+			int rank = 1;
+			for (Map.Entry<String, Integer> e : citationCounts.entrySet()) {
+				String name = citationNames.get(e.getKey());
+				if (name == null) {
+					int ls = e.getKey().lastIndexOf('/');
+					name = ls != -1 ? e.getKey().substring(ls + 1) : e.getKey();
+				}
+				fw.write(rank + ",\"" + name.replace("\"", "\"\"") + "\"," + e.getValue() + "\n");
+				rank++;
+			}
+			fw.close();
+			
+			// Show CSV path in spreadsheet
+			setCalcCell(sheet, row + 4, 0, "CSV: " + csvPath);
+		} catch (Exception e) {
+			// CSV export is best-effort
+		}
 	}
 
-	private static void setCellText(XTextTable table, int row, int col, String text) throws Exception {
-		XCell cell = table.getCellByName(table.getCellNames()[row * 3 + col]);
+	private static void setCalcCell(com.sun.star.sheet.XSpreadsheet sheet, 
+			int row, int col, String text) throws Exception {
+		com.sun.star.table.XCell cell = sheet.getCellByPosition(col, row);
 		XText cellText = (XText) UnoRuntime.queryInterface(XText.class, cell);
 		cellText.setString(text);
+	}
+
+	private String getCSVPath() {
+		try {
+			XPropertySet docProps = (XPropertySet) UnoRuntime.queryInterface(
+				XPropertySet.class, textDocument);
+			String url = (String) docProps.getPropertyValue("URL");
+			if (url != null && url.startsWith("file://")) {
+				File docFile = new File(new java.net.URI(url));
+				String name = docFile.getName();
+				int dot = name.lastIndexOf('.');
+				if (dot > 0) name = name.substring(0, dot);
+				return new File(docFile.getParentFile(), name + "_citation_stats.csv").getAbsolutePath();
+			}
+		} catch (Exception e) {}
+		return System.getProperty("user.home") + "/zotero_citation_statistics.csv";
 	}
 }
