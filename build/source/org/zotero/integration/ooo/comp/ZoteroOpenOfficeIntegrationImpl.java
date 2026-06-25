@@ -99,6 +99,31 @@ public final class ZoteroOpenOfficeIntegrationImpl extends WeakBase
 	}
 	
 	public void trigger(String command) {
+		// Citation Statistics: handled locally (no Zotero needed)
+		if (command.equals("citationStatistics")) {
+			try {
+				Document doc = new Document(Comm.application, -1);
+				doc.showCitationStatistics();
+				doc.cleanup();
+			} catch(Exception e) {
+				debugPrint("Citation Statistics error: " + e.getMessage());
+				e.printStackTrace();
+				// Show error via osascript on macOS
+				try {
+					String msg = e.getMessage();
+					if (msg == null) msg = e.toString();
+					msg = msg.replace("\"", "'");
+					if (msg.length() > 300) msg = msg.substring(0, 300);
+					Runtime.getRuntime().exec(new String[]{
+						"/usr/bin/osascript", "-e",
+						"display dialog \"Citation Statistics Error: " + msg + 
+						"\" with title \"Zotero\" with icon stop buttons {\"OK\"}"
+					});
+				} catch (Exception e2) {}
+			}
+			return;
+		}
+		
 		if(Platform.isWindows()) {
 			boolean activateWindow = false;
 			for(String cmd : ACTIVATE_FOR_COMMANDS) {

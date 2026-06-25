@@ -33,8 +33,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.io.File;
+import java.io.FileWriter;
 
 import com.sun.jna.Platform;
 import com.sun.star.awt.MessageBoxButtons;
@@ -53,6 +60,7 @@ import com.sun.star.container.XNamed;
 import com.sun.star.document.XDocumentInsertable;
 import com.sun.star.document.XUndoManager;
 import com.sun.star.document.XUndoManagerSupplier;
+import com.sun.star.frame.XComponentLoader;
 import com.sun.star.frame.XController;
 import com.sun.star.frame.XDesktop;
 import com.sun.star.frame.XFrame;
@@ -935,5 +943,148 @@ public class Document {
 		StringWriter sw = new StringWriter();
 		e.printStackTrace(new PrintWriter(sw));
 		return "An error occurred communicating with Zotero:\n"+sw.toString();
+	}
+
+	/**
+	 * Counts how many times each Zotero reference is cited in the current
+	 * document and displays the results in a new Writer document as a
+	 * formatted table, sorted by citation count descending.
+	 * Uses regex-based JSON parsing (no Jackson dependency).
+	 */
+	public void showCitationStatistics() throws Exception {
+		LinkedHashMap<String, Integer> citationCounts = new LinkedHashMap<>();
+		HashMap<String, String> citationNames = new HashMap<>();
+		
+		Pattern uriPattern = Pattern.compile("\"uris\"\\s*:\\s*\\[\\s*\"([^\"]+)\"");
+		Pattern titlePattern = Pattern.compile("\"title\"\\s*:\\s*\"([^\"]*)\"");
+		Pattern familyPattern = Pattern.compile("\"family\"\\s*:\\s*\"([^\"]*)\"");
+		Pattern yearPattern = Pattern.compile("\"date-parts\"\\s*:\\s*\\[\\s*\\[\\s*\"(\\d+)\"");
+		
+		String[] fieldTypes = {"ReferenceMark", "Bookmark"};
+		for (String fieldType : fieldTypes) {
+			ArrayList<ReferenceMark> marks;
+			try { marks = getFields(fieldType); }
+			catch (Exception e) { continue; }
+
+			for (ReferenceMark mark : marks) {
+				String code;
+				try { code = mark.getCode(); }
+				catch (Exception e) { continue; }
+				
+				if (code == null || code.isEmpty()) continue;
+				int jsonStart = code.indexOf('{');
+				int jsonEnd = code.lastIndexOf('}');
+				if (jsonStart == -1 || jsonEnd == -1) continue;
+				String jsonStr = code.substring(jsonStart, jsonEnd + 1);
+
+				// Extract URIs
+				Matcher uriMatcher = uriPattern.matcher(jsonStr);
+				java.util.List<String> uris = new java.util.ArrayList<>();
+				while (uriMatcher.find()) uris.add(uriMatcher.group(1));
+				if (uris.isEmpty()) continue;
+
+				// Build display name for this citation
+				String displayName = null;
+				Matcher fm = familyPattern.matcher(jsonStr);
+				java.util.List<String> authors = new java.util.ArrayList<>();
+				while (fm.find()) authors.add(fm.group(1));
+				Matcher ym = yearPattern.matcher(jsonStr);
+				String year = ym.find() ? ym.group(1) : "";
+
+				if (!authors.isEmpty()) {
+					String a = authors.get(0);
+					if (authors.size() == 1) displayName = a;
+					else if (authors.size() == 2) displayName = a + " & " + authors.get(1);
+					else displayName = a + " et al.";
+					if (!year.isEmpty()) displayName += " (" + year + ")";
+				} else {
+					Matcher tm = titlePattern.matcher(jsonStr);
+					if (tm.find()) {
+						displayName = tm.group(1);
+						if (!year.isEmpty()) displayName += " (" + year + ")";
+					}
+				}
+
+				// Count URIs
+				for (String uri : uris) {
+					Integer cnt = citationCounts.get(uri);
+					citationCounts.put(uri, cnt == null ? 1 : cnt + 1);
+					if (displayName != null && !citationNames.containsKey(uri))
+						citationNames.put(uri, displayName);
+				}
+			}
+		}
+
+		if (citationCounts.isEmpty()) {
+			displayAlert("No Zotero citations found in this document.", 2, 0);
+			return;
+		}
+
+		// Sort by count descending
+		ArrayList<Map.Entry<String, Integer>> sorted = new ArrayList<>(citationCounts.entrySet());
+		Collections.sort(sorted, (a, b) -> b.getValue().compareTo(a.getValue()));
+		citationCounts.clear();
+		for (Map.Entry<String, Integer> e : sorted) citationCounts.put(e.getKey(), e.getValue());
+
+		// Create results document
+		XComponentLoader loader = (XComponentLoader) UnoRuntime.queryInterface(
+			XComponentLoader.class, desktop);
+		XComponent xDoc = loader.loadComponentFromURL(
+			"private:factory/swriter", "_blank", 0, new PropertyValue[] {});
+		XTextDocument resultsDoc = (XTextDocument) UnoRuntime.queryInterface(
+			XTextDocument.class, xDoc);
+		XText resultsText = resultsDoc.getText();
+		XTextCursor cursor = resultsText.createTextCursor();
+
+		// Header
+		resultsText.insertString(cursor, "Zotero Citation Statistics", false);
+		resultsText.insertControlCharacter(cursor, ControlCharacter.PARAGRAPH_BREAK, false);
+		resultsText.insertString(cursor, "Unique works cited: " + citationCounts.size(), false);
+		resultsText.insertControlCharacter(cursor, ControlCharacter.PARAGRAPH_BREAK, false);
+		int total = 0;
+		for (int c : citationCounts.values()) total += c;
+		resultsText.insertString(cursor, "Total citations: " + total, false);
+		resultsText.insertControlCharacter(cursor, ControlCharacter.PARAGRAPH_BREAK, false);
+		resultsText.insertControlCharacter(cursor, ControlCharacter.PARAGRAPH_BREAK, false);
+
+		// Table
+		int nRows = citationCounts.size() + 1;
+		XMultiServiceFactory f = (XMultiServiceFactory) UnoRuntime.queryInterface(
+			XMultiServiceFactory.class, xDoc);
+		XTextTable table = (XTextTable) UnoRuntime.queryInterface(
+			XTextTable.class, f.createInstance("com.sun.star.text.TextTable"));
+		table.initialize(nRows, 3);
+		resultsText.insertTextContent(cursor, (XTextContent) UnoRuntime.queryInterface(
+			XTextContent.class, table), false);
+
+		// Header row
+		setCellText(table, 0, 0, "#");
+		setCellText(table, 0, 1, "Citation");
+		setCellText(table, 0, 2, "Times Cited");
+
+		// Data rows
+		int row = 1;
+		for (Map.Entry<String, Integer> e : citationCounts.entrySet()) {
+			String name = citationNames.get(e.getKey());
+			if (name == null) {
+				int ls = e.getKey().lastIndexOf('/');
+				name = ls != -1 ? e.getKey().substring(ls + 1) : e.getKey();
+			}
+			setCellText(table, row, 0, String.valueOf(row));
+			setCellText(table, row, 1, name);
+			setCellText(table, row, 2, String.valueOf(e.getValue()));
+			row++;
+		}
+
+		// Footer
+		cursor.gotoEnd(false);
+		resultsText.insertControlCharacter(cursor, ControlCharacter.PARAGRAPH_BREAK, false);
+		resultsText.insertString(cursor, "Generated by Zotero LibreOffice Integration", false);
+	}
+
+	private static void setCellText(XTextTable table, int row, int col, String text) throws Exception {
+		XCell cell = table.getCellByName(table.getCellNames()[row * 3 + col]);
+		XText cellText = (XText) UnoRuntime.queryInterface(XText.class, cell);
+		cellText.setString(text);
 	}
 }

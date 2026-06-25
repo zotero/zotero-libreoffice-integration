@@ -24,4 +24,8 @@ End Sub
 Sub ZoteroSetDocPrefs()
 	createUnoService(&quot;org.zotero.integration.ooo.ZoteroOpenOfficeIntegration&quot;).trigger(&quot;setDocPrefs&quot;)
 End Sub
+
+Sub ZoteroCitationStatistics()
+	createUnoService(&quot;org.zotero.integration.ooo.ZoteroOpenOfficeIntegration&quot;).trigger(&quot;citationStatistics&quot;)
+End Sub
 </script:module>

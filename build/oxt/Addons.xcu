@@ -113,6 +113,28 @@
 						<value>_self</value>
 					</prop>
 				</node>
+				<node oor:name="m9" oor:op="replace">
+					<prop oor:name="Context" oor:type="xs:string">
+						<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
+					</prop>
+					<prop oor:name="URL" oor:type="xs:string">
+						<value>private:separator</value>
+					</prop>
+				</node>
+				<node oor:name="m10" oor:op="replace">
+					<prop oor:name="Context" oor:type="xs:string">
+						<value>com.sun.star.text.TextDocument, com.sun.star.text.GlobalDocument</value>
+					</prop>
+					<prop oor:name="URL" oor:type="xs:string">
+						<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?citationStatistics</value>
+					</prop>
+					<prop oor:name="Title" oor:type="xs:string">
+						<value>Citation Statistics</value>
+					</prop>
+					<prop oor:name="Target" oor:type="xs:string">
+						<value>_self</value>
+					</prop>
+				</node>
 			</node>
 		</node>
 
@@ -247,6 +269,25 @@
 					</prop>
 					<prop oor:name="ImageBigHCURL">
 						<value>%origin%/icons/removeCodes_dark_26.png</value>
+					</prop>
+				</node>
+			</node>
+			<node oor:name="Zotero.Images.citationStatistics" oor:op="replace">
+				<prop oor:name="URL" oor:type="xs:string">
+					<value>service:org.zotero.integration.ooo.ZoteroOpenOfficeIntegration?citationStatistics</value>
+				</prop>
+				<node oor:name="UserDefinedImages">
+					<prop oor:name="ImageSmallURL">
+						<value>%origin%/icons/citationStatistics_16.png</value>
+					</prop>
+					<prop oor:name="ImageBigURL">
+						<value>%origin%/icons/citationStatistics_26.png</value>
+					</prop>
+					<prop oor:name="ImageSmallHCURL">
+						<value>%origin%/icons/citationStatistics_dark_16.png</value>
+					</prop>
+					<prop oor:name="ImageBigHCURL">
+						<value>%origin%/icons/citationStatistics_dark_26.png</value>
 					</prop>
 				</node>
 			</node>
