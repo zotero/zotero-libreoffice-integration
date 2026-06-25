@@ -150,13 +150,30 @@ public final class ZoteroOpenOfficeIntegrationImpl extends WeakBase
 		}
 		
 		debugPrint("Executing "+command);
+		
+		// For addEditCitation and addNote, detect text in parentheses near cursor
+		// to pre-fill the Zotero search dialog
+		String searchText = null;
+		if (command.equals("addEditCitation") || command.equals("addNote")) {
+			try {
+				Document doc = new Document(Comm.application, -1);
+				searchText = doc.getTextInParentheses();
+				doc.cleanup();
+				if (searchText != null) {
+					debugPrint("Detected parenthetical text: " + searchText);
+				}
+			} catch(Exception e) {
+				// Best-effort: if detection fails, proceed without search text
+			}
+		}
+		
 		try {
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
 		
 		try {
-			Comm.sendCommand(command);
+			Comm.sendCommand(command, searchText);
 		} catch(Exception e) {
 			Comm.showError(Comm.COMMUNICATION_ERROR_STRING, e);
 		}

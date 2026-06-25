@@ -1184,4 +1184,126 @@ public class Document {
 		} catch (Exception e) {}
 		return System.getProperty("user.home") + "/zotero_citation_statistics.csv";
 	}
+
+	/**
+	 * Detects text inside parentheses near the current cursor position
+	 * and extracts a search-friendly string (author + year).
+	 * Used to pre-fill the Zotero citation search dialog.
+	 * 
+	 * @return search text like "Wang 1999" or null if nothing found
+	 */
+	public String getTextInParentheses() {
+		try {
+			XTextViewCursor vc = getSelection();
+			XTextCursor cursor = vc.getText().createTextCursorByRange(vc);
+			
+			// Expand range: 300 chars left and right of cursor
+			XTextCursor leftCursor = vc.getText().createTextCursorByRange(vc);
+			leftCursor.goLeft((short) 300, true);
+			String leftText = leftCursor.getString();
+			
+			XTextCursor rightCursor = vc.getText().createTextCursorByRange(vc);
+			rightCursor.goRight((short) 300, true);
+			String rightText = rightCursor.getString();
+			
+			String combined = (leftText != null ? leftText : "") + (rightText != null ? rightText : "");
+			
+			// Find text in parentheses: look for ( ... ) patterns
+			// Strategy: find all (text) patterns and check which one the cursor is near
+			java.util.List<String> candidates = new java.util.ArrayList<>();
+			int depth = 0;
+			int parenStart = -1;
+			for (int i = 0; i < combined.length(); i++) {
+				char c = combined.charAt(i);
+				if (c == '(') {
+					if (depth == 0) parenStart = i;
+					depth++;
+				} else if (c == ')') {
+					depth--;
+					if (depth == 0 && parenStart != -1) {
+						String inside = combined.substring(parenStart + 1, i).trim();
+						if (!inside.isEmpty() && inside.length() < 300) {
+							candidates.add(inside);
+						}
+						parenStart = -1;
+					}
+				}
+			}
+			
+			// If no parentheses found, try Persian parentheses
+			if (candidates.isEmpty()) {
+				for (int i = 0; i < combined.length(); i++) {
+					char c = combined.charAt(i);
+					if (c == '(' || c == '\u0028') {
+						if (depth == 0) parenStart = i;
+						depth++;
+					} else if (c == ')' || c == '\u0029') {
+						depth--;
+						if (depth == 0 && parenStart != -1) {
+							String inside = combined.substring(parenStart + 1, i).trim();
+							if (!inside.isEmpty() && inside.length() < 300) {
+								candidates.add(inside);
+							}
+							parenStart = -1;
+						}
+					}
+				}
+			}
+			
+			if (candidates.isEmpty()) return null;
+			
+			// Find the best candidate: prefer ones with author-year pattern
+			for (String c : candidates) {
+				String cleaned = extractAuthorYear(c);
+				if (cleaned != null) return cleaned;
+			}
+			
+			// Fallback: return the last candidate (closest to cursor)
+			String last = candidates.get(candidates.size() - 1);
+			return last.replaceAll("\\s+", " ").replace(",", "").trim();
+			
+		} catch (Exception e) {
+			return null;
+		}
+	}
+	
+	/**
+	 * Extracts author-year search terms from parenthetical text.
+	 * "Wang, 1999" → "Wang 1999"
+	 * "Smith & Jones, 2020, p. 23" → "Smith Jones 2020"
+	 * "(Wang, 1999)" → "Wang 1999"
+	 */
+	private static String extractAuthorYear(String text) {
+		// Remove common prefixes/suffixes like "see ", "e.g., ", "cf. "
+		text = text.replaceAll("^(see|e\\.g\\.|cf\\.|See|E\\.g\\.|Cf\\.)\\s+", "");
+		// Remove page numbers and other locators
+		text = text.replaceAll("[,;]\\s*p\\.?\\s*\\d+.*$", "");
+		text = text.replaceAll("[,;]\\s*pp\\.?\\s*\\d+.*$", "");
+		// Remove "et al." noise
+		text = text.replace("et al.", "");
+		// Replace "&" with space for search
+		text = text.replace(" & ", " ").replace("&", " ");
+		// Split by common separators
+		String[] parts = text.split("[,;]");
+		java.util.List<String> terms = new java.util.ArrayList<>();
+		for (String p : parts) {
+			p = p.trim();
+			if (!p.isEmpty() && !p.matches("^\\d+$")) {
+				terms.add(p);
+			}
+		}
+		if (terms.isEmpty()) return null;
+		// Join with spaces
+		StringBuilder sb = new StringBuilder();
+		for (String t : terms) {
+			if (sb.length() > 0) sb.append(" ");
+			sb.append(t);
+		}
+		String result = sb.toString().trim();
+		// Must contain at least a year-like pattern or an author name (capitalized)
+		if (result.matches(".*\\d{4}.*") || result.matches(".*[A-Z][a-z]+.*")) {
+			return result;
+		}
+		return null;
+	}
 }

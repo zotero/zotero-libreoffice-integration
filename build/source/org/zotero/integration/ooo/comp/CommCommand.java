@@ -34,6 +34,13 @@ public class CommCommand implements CommFrame {
 		mCommand = "{\"command\": \""+aCommand+"\", \"templateVersion\": "+Comm.PLUGIN_VERSION+"}";
 	}
 	
+	CommCommand(String aCommand, String searchText) {
+		// Escape quotes in search text for JSON
+		String escaped = searchText.replace("\\", "\\\\").replace("\"", "\\\"");
+		mCommand = "{\"command\": \""+aCommand+"\", \"templateVersion\": "+Comm.PLUGIN_VERSION+
+			", \"searchText\": \""+escaped+"\"}";
+	}
+	
 	public int getTransactionID() {
 		return 0;
 	}

@@ -46,6 +46,10 @@ class Comm {
 	 * @param command
 	 */
 	static void sendCommand(String command) {
+		sendCommand(command, null);
+	}
+	
+	static void sendCommand(String command, String searchText) {
 		// Execute command
 		if(serverThread == null || !serverThread.isAlive()) {
 			serverThread = new Thread(new CommServer());
@@ -53,7 +57,11 @@ class Comm {
 		}
 		
 		try {
-			writeQueue.put(new CommCommand(command));
+			if (searchText != null && !searchText.isEmpty()) {
+				writeQueue.put(new CommCommand(command, searchText));
+			} else {
+				writeQueue.put(new CommCommand(command));
+			}
 		} catch (InterruptedException e) {
 			return;
 		}
