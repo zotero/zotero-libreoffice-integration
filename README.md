@@ -4,27 +4,21 @@ Zotero LibreOffice Integration comprises extensions for LibreOffice and Zotero t
 
 ## Build Requirements
 
-- [Eclipse](https://www.eclipse.org/downloads/?)
-- [LibreOffice 5.3+](http://www.libreoffice.org/download/download/)
-- [Oracle JDK](https://www.oracle.com/java/technologies/downloads/) (currently version 18) (NOTE: it won't work with OpenJDK) 
-
-LibreOffice SDK is not required.
+- [LibreOffice 26.2+](http://www.libreoffice.org/download/download/)
+- [JDK](https://www.oracle.com/java/technologies/downloads/) with `javac` and `jar` available on `PATH`
+- `zip`
 
 To build:
 
-1.  Run `scripts/symlink_sdk`.
-1.  Open Eclipse and import this project into your workspace.
-1.  Right-click the project in the Eclipse Package Explorer, click "Properties", select "Java Build Path", then select the "Libraries" tab. Click on "Add JARs" and expand the "Zotero OpenOffice Integration" folder. Make sure there is no "lib" subfolder underneath it. If there is:
-	1. Expand "Zotero OpenOffice Integration" -> "lib" -> "libreoffice-sdk" and select all the JARs underneath it.
-	1. Click "Ok" and then "Apply and Close".
-1.  Double-click Zotero.jardesc. Click "Finish" to build Zotero.jar.
-1.  Run `buildoxt.sh` from within the `build` directory to build `install/Zotero_LibreOffice_Integration.oxt`.
-1.  Install `Zotero_LibreOffice_Integration.oxt` into LibreOffice, either by choosing "Reinstall Extension" from within the Zotero preferences, by installing it manually from within LibreOffice, or by using `unopkg` from the command line.
+1.  Copy `scripts/config.sh-sample` to `scripts/config.sh` and set `LIBREOFFICE_INSTALL_PATH` to your LibreOffice installation path, for example `/opt/libreoffice26.2`. If this is unset, `scripts/symlink_sdk` will try common platform-specific locations.
+1.  Run `scripts/symlink_sdk` to link LibreOffice's Java UNO libraries into `build/lib/libreoffice-sdk`.
+1.  Run `scripts/build.sh` from the repository root. This compiles the Java sources, builds `Zotero.jar`, and packages `install/Zotero_LibreOffice_Integration.oxt`.
+1.  Install `install/Zotero_LibreOffice_Integration.oxt` into LibreOffice, by running `scripts/install_oxt.sh`, choosing "Reinstall Extension" from within the Zotero preferences, or by installing it manually from within LibreOffice.
 	1. If, when you try to install the extension in LibreOffice, you get an error like "Could not create Java implementation loader", it means that LibreOffice is not configured to use Java. Follow [these](https://help.libreoffice.org/Common/Java) instructions to set up a Java VM in LibreOffice. 
 
 ## Development Starter's Guide
 
-This extension is fairly straightforward. It consists of a LibreOffice UNO based java extension for LibreOffice.
+This extension consists of a LibreOffice UNO based java extension for LibreOffice.
 The [UNO runtime](https://wiki.openoffice.org/wiki/Documentation/DevGuide/OpenOffice.org_Developers_Guide) allows various
 programming languages to interface with a running LibreOffice process. The extension code is initialized by LibreOffice
 and starts execution in [ZoteroOpenOfficeIntegrationImpl.java](https://github.com/zotero/zotero-libreoffice-integration/blob/2183efa/build/source/org/zotero/integration/ooo/comp/ZoteroOpenOfficeIntegrationImpl.java#L40-L40).
