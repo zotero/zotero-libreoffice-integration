@@ -32,6 +32,7 @@ import com.sun.star.container.XEnumerationAccess;
 import com.sun.star.container.XNamed;
 import com.sun.star.lang.WrappedTargetException;
 import com.sun.star.lang.XServiceInfo;
+import com.sun.star.text.XTextContent;
 import com.sun.star.text.XTextDocument;
 import com.sun.star.text.XTextRange;
 import com.sun.star.text.XTextTable;
@@ -61,7 +62,17 @@ class TextTableManager {
 			if (xInfo.supportsService("com.sun.star.text.TextTable")) {
 				XTextTable xTable = UnoRuntime.queryInterface(XTextTable.class, elt);
 				XNamed xTextTableName = UnoRuntime.queryInterface(XNamed.class, xTable);
-				hash.put(xTextTableName.getName(), lastTextRange.getEnd());
+				// Use a table anchor, fallback to last text range end
+				// and if all else fails to start of text document to prevent a crash
+				XTextContent xTextContent = UnoRuntime.queryInterface(XTextContent.class, xTable);
+				XTextRange tableRange = xTextContent != null ? xTextContent.getAnchor() : null;
+				if (tableRange == null && lastTextRange != null) {
+					tableRange = lastTextRange.getEnd();
+				}
+				if (tableRange == null) {
+					tableRange = textDocument.getText().getStart();
+				}
+				hash.put(xTextTableName.getName(), tableRange);
 			} else { // it's a paragraph => no bug to get XTextRange
 				lastTextRange = UnoRuntime.queryInterface(XTextRange.class, elt);
 			}
