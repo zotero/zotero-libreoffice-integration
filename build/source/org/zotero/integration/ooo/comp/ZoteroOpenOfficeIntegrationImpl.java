@@ -44,11 +44,11 @@ public final class ZoteroOpenOfficeIntegrationImpl extends WeakBase
 	private static final String[] WINDOW_NAMES = { "ZoteroMessageWindow", "FirefoxMessageWindow",
 		"MinefieldMessageWindow", "BrowserMessageWindow" };
 	private static final String[] ACTIVATE_FOR_COMMANDS = { "addEditCitation", "addNote",
-		"addEditBibliography", "setDocPrefs", "refresh" };
+		"addAnnotation", "addEditBibliography", "setDocPrefs", "refresh" };
 	
 	public interface CLibrary extends Library {
 		CLibrary INSTANCE = (Platform.isWindows() ?
-				(CLibrary) Native.loadLibrary("user32", CLibrary.class)
+				Native.load("user32", CLibrary.class)
 				: null);
 		
 		int FindWindowA(String lpClassName, String lpWindowName);
@@ -109,17 +109,23 @@ public final class ZoteroOpenOfficeIntegrationImpl extends WeakBase
 			}
 			
 			if(activateWindow) {
-				debugPrint("Activating window");
-				// Look for Firefox/Zotero window
-				int hWnd = 0;
-				for(String window : WINDOW_NAMES) {
-					hWnd = CLibrary.INSTANCE.FindWindowA(window, null);
-					if(hWnd != 0) break;
-				}
-				
-				// Activate window
-				if(hWnd != 0) {
-					CLibrary.INSTANCE.SetForegroundWindow(hWnd);
+				try {
+					debugPrint("Activating window");
+					// Look for Firefox/Zotero window
+					int hWnd = 0;
+					for(String window : WINDOW_NAMES) {
+						hWnd = CLibrary.INSTANCE.FindWindowA(window, null);
+						if(hWnd != 0) break;
+					}
+
+					// Activate window
+					if(hWnd != 0) {
+						CLibrary.INSTANCE.SetForegroundWindow(hWnd);
+					}
+				} catch(Throwable e) {
+					// Don't let a window-activation failure (e.g., JNA unavailable on
+					// some platforms) prevent the command from running
+					debugPrint("Error activating window: "+e);
 				}
 			}
 		}
