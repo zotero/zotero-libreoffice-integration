@@ -17,6 +17,8 @@ usage() {
 	echo "  - resource/version.txt (as VERSION.SOURCE)"
 	echo "  - resource/installer.mjs (LAST_INSTALLED_FILE_UPDATE as VERSIONpre)"
 	echo "  - build/oxt/description.xml (version attribute)"
+	echo ""
+	echo "It then runs scripts/build.sh to rebuild the .oxt."
 	exit 1
 }
 
@@ -56,3 +58,7 @@ echo "Updating $DESCRIPTION_FILE"
 sed -i "s/<version value=\"[^\"]*\"\/>/<version value=\"${NEW_VERSION}\"\/>/" "$DESCRIPTION_FILE"
 
 echo "Version successfully bumped to $NEW_VERSION"
+
+echo ""
+echo "Building..."
+"$SCRIPT_DIR/build.sh"
