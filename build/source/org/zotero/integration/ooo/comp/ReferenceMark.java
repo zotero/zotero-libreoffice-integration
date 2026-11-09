@@ -44,6 +44,7 @@ import com.sun.star.text.ControlCharacter;
 import com.sun.star.text.XEndnotesSupplier;
 import com.sun.star.text.XFootnote;
 import com.sun.star.text.XFootnotesSupplier;
+import com.sun.star.text.XReferenceMarksSupplier;
 import com.sun.star.text.XSimpleText;
 import com.sun.star.text.XText;
 import com.sun.star.text.XTextContent;
@@ -155,8 +156,27 @@ public class ReferenceMark implements Comparable<ReferenceMark> {
 				text.removeTextContent(textContent);
 				range = dupRange;
 			} else {
-				// TODO: won't work with formatted text
-				range.setString(oldContents);
+				// Removes the mark but keeps the text and its formatting (LibreOffice 7.6+)
+				String markName = named.getName();
+				PropertyValue typeName = new PropertyValue();
+				typeName.Name = "TypeName";
+				typeName.Value = "SetRef";
+				PropertyValue namePrefix = new PropertyValue();
+				namePrefix.Name = "NamePrefix";
+				namePrefix.Value = markName;
+				XDispatchProvider dispatchProvider = (XDispatchProvider) UnoRuntime.
+					queryInterface(XDispatchProvider.class, doc.controller);
+				XDispatchHelper dispatchHelper = (XDispatchHelper) UnoRuntime.
+					queryInterface(XDispatchHelper.class, doc.factory.createInstance("com.sun.star.frame.DispatchHelper"));
+				dispatchHelper.executeDispatch(dispatchProvider, ".uno:DeleteFields", "", 0,
+					new PropertyValue[] {typeName, namePrefix});
+
+				XReferenceMarksSupplier marksSupplier = (XReferenceMarksSupplier) UnoRuntime.
+					queryInterface(XReferenceMarksSupplier.class, doc.textDocument);
+				if (marksSupplier.getReferenceMarks().hasByName(markName)) {
+					// Older versions: overwriting the text removes the mark, but loses formatting
+					range.setString(oldContents);
+				}
 			}
 		}
 		return originalRange;
